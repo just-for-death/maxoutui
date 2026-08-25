@@ -812,64 +812,7 @@ local function _registerBuiltins()
             is_in_place = true,
             is_async_in_place = true,
             execute = function(ctx)
-                local Manga = _getMangaModule()
-                if not Manga then
-                    local su = ctx.show_unavailable or _unavailToast
-                    su(_("Pinned Manga module not available."))
-                    return
-                end
-                local list = Manga.getPinnedMangaList()
-                if #list == 0 then
-                    local InfoMessage = require("ui/widget/infomessage")
-                    UIManager:show(InfoMessage:new{ text = _("No manga pinned yet."), timeout = 2 })
-                    return
-                end
-
-                local items = {}
-                local Menu = require("ui/widget/menu")
-                local menu
-
-                for _, fp in ipairs(list) do
-                    local _fp = fp
-                    local is_suwayomi = tostring(_fp):match("^suwayomi://manga/(%d+)")
-                    local title = Manga.getPinnedMangaTitle and Manga.getPinnedMangaTitle(_fp) or _fp
-                    local cover_path = Manga.getPinnedMangaCover and Manga.getPinnedMangaCover(_fp)
-
-                    items[#items + 1] = {
-                        text = title,
-                        callback = function()
-                            if menu then UIManager:close(menu) end
-                            if is_suwayomi then
-                                local manga_id = tonumber(is_suwayomi)
-                                local sw_plugin = _getSuwayomiInstance()
-                                if sw_plugin then
-                                    if sw_plugin.resumeMangaStream then
-                                        sw_plugin:resumeMangaStream({ id = manga_id, title = title })
-                                    elseif sw_plugin.showChaptersForManga then
-                                        sw_plugin:showChaptersForManga({ id = manga_id, title = title })
-                                    end
-                                else
-                                    local su = ctx.show_unavailable or _unavailToast
-                                    su(_("Suwayomi plugin not available."))
-                                end
-                            else
-                                if ctx.fm and ctx.fm.openFile then
-                                    ctx.fm:openFile(_fp)
-                                else
-                                    local Event = require("ui/event")
-                                    UIManager:broadcastEvent(Event:new("OpenFile", _fp))
-                                end
-                            end
-                        end,
-                    }
-                end
-
-                menu = Menu:new{
-                    title = _("Pinned Manga"),
-                    item_table = items,
-                    is_full_screen = true,
-                }
-                UIManager:show(menu)
+                QA.showPinnedMangaWindow(ctx.fm)
             end,
         },
         {
@@ -3426,6 +3369,27 @@ local function _recentNormalizeKoboPath(filepath)
 end
 
 local function _recentOpenBook(filepath)
+    if not filepath then return end
+    local is_suwayomi = tostring(filepath):match("^suwayomi://manga/(%d+)")
+    if is_suwayomi then
+        local manga_id = tonumber(is_suwayomi)
+        local sw_plugin = _getSuwayomiInstance()
+        if sw_plugin then
+            local ok_m, Manga = pcall(require, "desktop_modules/module_manga")
+            local title = ok_m and Manga and Manga.getPinnedMangaTitle and Manga.getPinnedMangaTitle(filepath)
+            if sw_plugin.resumeMangaStream then
+                sw_plugin:resumeMangaStream({ id = manga_id, title = title })
+            elseif sw_plugin.showChaptersForManga then
+                sw_plugin:showChaptersForManga({ id = manga_id, title = title })
+            end
+            return
+        else
+            local InfoMessage = require("ui/widget/infomessage")
+            UIManager:show(InfoMessage:new{ text = _("Suwayomi plugin not available."), timeout = 2 })
+            return
+        end
+    end
+
     local BD = require("ui/bidi")
     local doOpen = function()
         local ReaderUI = package.loaded["apps/reader/readerui"]
@@ -3544,6 +3508,67 @@ function QA.showRecentWindow(fm)
             name        = "sui_win_recent",
             title       = _("Recent"),
             screens     = { __root__ = _recentBuildRootScreen },
+            position    = "bottom",
+            auto_height = true,
+            on_close    = restore,
+        }
+        win:show()
+    end)
+end
+
+local function _pinnedMangaBuildRootScreen(ctx)
+    local SUIWindow       = require("sui_window")
+    local SH              = require("desktop_modules/module_books_shared")
+    local Manga           = require("desktop_modules/module_manga")
+    local HorizontalGroup = require("ui/widget/horizontalgroup")
+    local HorizontalSpan  = require("ui/widget/horizontalspan")
+    local VerticalSpan    = require("ui/widget/verticalspan")
+
+    local inner_w = ctx.inner_w
+    local fps = Manga.getPinnedMangaList() or {}
+
+    if #fps == 0 then
+        return { SUIWindow.ListRow{ inner_w = inner_w, title = _("No manga pinned yet.") } }
+    end
+
+    local rows = {}
+    local cols = 4
+    local gap  = ctx.SZ(Screen:scaleBySize(10))
+    local cw   = math.floor((inner_w - (cols - 1) * gap) / cols)
+    local ch   = math.floor(cw * 3 / 2)
+
+    local i = 1
+    while i <= #fps do
+        local hg = HorizontalGroup:new{ align = "top" }
+        for c = 1, cols do
+            local fp = fps[i]
+            if fp then
+                local bd = SH.getBookData(fp)
+                hg[#hg + 1] = _recentMakeCoverCell(SH, fp, bd, cw, ch)
+                i = i + 1
+                if c < cols and fps[i] then
+                    hg[#hg + 1] = HorizontalSpan:new{ width = gap }
+                end
+            end
+        end
+        rows[#rows + 1] = hg
+        if i <= #fps then
+            rows[#rows + 1] = VerticalSpan:new{ width = gap }
+        end
+    end
+
+    return rows
+end
+
+function QA.showPinnedMangaWindow(fm)
+    local SUIWindow = require("sui_window")
+    local plugin = _resolveSimpleUIPlugin(fm)
+
+    QA.trackIndicatorViaCallback(plugin, "pinned_manga", function(restore)
+        local win = SUIWindow:new{
+            name        = "sui_win_pinned_manga",
+            title       = _("Pinned Manga"),
+            screens     = { __root__ = _pinnedMangaBuildRootScreen },
             position    = "bottom",
             auto_height = true,
             on_close    = restore,

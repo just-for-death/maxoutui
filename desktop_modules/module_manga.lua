@@ -47,7 +47,7 @@ local function _migrate()
     if type(raw) ~= "table" or #raw == 0 then return end
     local added = 0
     for _, fp in ipairs(raw) do
-        if type(fp) == "string" and lfs.attributes(fp, "mode") == "file" then
+        if type(fp) == "string" and (fp:match("^suwayomi://") or lfs.attributes(fp, "mode") == "file") then
             RC:addItem(fp, MANGA_COLL_NAME)
             added = added + 1
         end
@@ -67,8 +67,10 @@ local function getPinnedMangaList()
     if RC and RC.coll and RC.coll[MANGA_COLL_NAME] then
         local items = {}
         for _, item in pairs(RC.coll[MANGA_COLL_NAME]) do
-            if tostring(item.file):match("^suwayomi://") or lfs.attributes(item.file, "mode") == "file" then
-                items[#items + 1] = item
+            if type(item) == "table" and type(item.file) == "string" then
+                if item.file:match("^suwayomi://") or (lfs.attributes(item.file, "mode") == "file") then
+                    items[#items + 1] = item
+                end
             end
         end
         table.sort(items, function(a, b) return (a.order or 0) < (b.order or 0) end)
@@ -80,7 +82,7 @@ local function getPinnedMangaList()
     local raw = SUISettings:readSetting(MANGA_SETTING)
     if type(raw) == "table" then
         for _, fp in ipairs(raw) do
-            if not seen[fp] and (tostring(fp):match("^suwayomi://") or lfs.attributes(fp, "mode") == "file") then
+            if type(fp) == "string" and not seen[fp] and (fp:match("^suwayomi://") or (lfs.attributes(fp, "mode") == "file")) then
                 list[#list + 1] = fp
                 seen[fp] = true
             end
@@ -98,6 +100,7 @@ local function getPinnedMangaCount()
 end
 
 local function isPinnedManga(filepath)
+    if not filepath then return false end
     for _, fp in ipairs(getPinnedMangaList()) do
         if fp == filepath then return true end
     end
@@ -111,13 +114,16 @@ local function normalizeCoverPath(path)
     if type(path) == "string" and path ~= "" then
         local real_path = path
         if real_path:sub(1, 2) == "./" then
-            pcall(function()
-                local DataStorage = require("datastorage")
-                local FFIUtil = require("ffi/util")
+            local ok_ds, DataStorage = pcall(require, "datastorage")
+            if ok_ds and DataStorage then
                 local settings_dir = DataStorage:getSettingsDir()
-                real_path = real_path:gsub("^%./settings/", settings_dir .. "/")
-                real_path = real_path:gsub("^%./", DataStorage:getDataDir() .. "/")
-            end)
+                local data_dir = DataStorage:getDataDir()
+                if real_path:sub(1, 11) == "./settings/" then
+                    real_path = settings_dir .. "/" .. real_path:sub(12)
+                else
+                    real_path = data_dir .. "/" .. real_path:sub(3)
+                end
+            end
         end
         if lfs.attributes(real_path, "mode") == "file" then
             return real_path
@@ -127,6 +133,7 @@ local function normalizeCoverPath(path)
 end
 
 local function getPinnedMangaCover(fp)
+    if not fp then return nil end
     local covers = SUISettings:readSetting(COVER_SETTING)
     if type(covers) == "table" and covers[fp] then
         local norm = normalizeCoverPath(covers[fp])
@@ -135,22 +142,22 @@ local function getPinnedMangaCover(fp)
     local manga_id = tostring(fp):match("^suwayomi://manga/(%d+)$")
     if manga_id then
         local ok, SuwayomiSettings = pcall(require, "suwayomi/settings")
-        if ok and SuwayomiSettings and SuwayomiSettings.loadPinnedManga then
-            local pinned = SuwayomiSettings:loadPinnedManga()
-            for _, pm in ipairs(pinned or {}) do
-                if tostring(pm.id) == manga_id and pm.thumbnail_url then
-                    local ok_tc, tc = pcall(require, "suwayomi/ui/thumbnail_cache")
-                    local creds = SuwayomiSettings:load()
-                    local variants = {
-                        { variant = "manga_cover", width = 64, height = 96 },
-                        { variant = "poster", width = 240, height = 360 },
-                        { variant = "thumbnail", width = 64, height = 96 },
-                        { variant = "poster", width = 160, height = 240 },
-                        { variant = "poster", width = 320, height = 480 },
-                        {},
-                    }
-                    for _, opts in ipairs(variants) do
-                        if ok_tc and tc then
+        if ok and SuwayomiSettings then
+            local creds = SuwayomiSettings:load()
+            local ok_tc, tc = pcall(require, "suwayomi/ui/thumbnail_cache")
+            if ok_tc and tc then
+                local variants = {
+                    { variant = "manga_cover", width = 64, height = 96 },
+                    { variant = "poster", width = 240, height = 360 },
+                    { variant = "thumbnail", width = 64, height = 96 },
+                    { variant = "poster", width = 160, height = 240 },
+                    { variant = "poster", width = 320, height = 480 },
+                    {},
+                }
+                local pinned = SuwayomiSettings.loadPinnedManga and SuwayomiSettings:loadPinnedManga() or {}
+                for _, pm in ipairs(pinned) do
+                    if tostring(pm.id) == manga_id and pm.thumbnail_url then
+                        for _, opts in ipairs(variants) do
                             local path = tc.find(creds, pm.thumbnail_url, opts)
                             local norm = normalizeCoverPath(path)
                             if norm then
@@ -160,24 +167,6 @@ local function getPinnedMangaCover(fp)
                                 return norm
                             end
                         end
-                    end
-                end
-            end
-        end
-
-        local DataStorage = require("datastorage")
-        local FFIUtil = require("ffi/util")
-        local thumb_dir = FFIUtil.joinPath(DataStorage:getSettingsDir(), "suwayomi_thumbnails")
-        if lfs.attributes(thumb_dir, "mode") == "directory" then
-            for entry in lfs.dir(thumb_dir) do
-                if entry:match("%.bb$") or entry:match("%.jpg$") or entry:match("%.png$") or entry:match("%.webp$") then
-                    local full_path = FFIUtil.joinPath(thumb_dir, entry)
-                    local norm = normalizeCoverPath(full_path)
-                    if norm then
-                        if type(covers) ~= "table" then covers = {} end
-                        covers[fp] = norm
-                        SUISettings:saveSetting(COVER_SETTING, covers)
-                        return norm
                     end
                 end
             end

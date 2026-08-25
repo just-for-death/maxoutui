@@ -564,7 +564,19 @@ function SH.getBookData(filepath, prefetched)
     end
 
     if not meta.title or meta.title == "" then
-        meta.title = filepath:match("([^/]+)%.[^%.]+$") or "?"
+        if tostring(filepath):match("^suwayomi://") then
+            local ok_m, Manga = pcall(require, "desktop_modules/module_manga")
+            if ok_m and Manga and Manga.getPinnedMangaTitle then
+                local t = Manga.getPinnedMangaTitle(filepath)
+                if t and t ~= "" and not t:match("^suwayomi://") then
+                    meta.title = t
+                end
+            end
+        end
+    end
+
+    if not meta.title or meta.title == "" then
+        meta.title = filepath:match("([^/]+)%.[^%.]+$") or (filepath:match("^suwayomi://") and filepath:gsub(".*/", "")) or "?"
     end
 
     local avg_time

@@ -776,6 +776,40 @@ local function _normalizeKoboPath(filepath)
 end
 
 local function openBook(filepath, pos0, page)
+    if not filepath then return end
+    local is_suwayomi = tostring(filepath):match("^suwayomi://manga/(%d+)")
+    if is_suwayomi then
+        local manga_id = tonumber(is_suwayomi)
+        local FM = package.loaded["apps/filemanager/filemanager"]
+        local fm = FM and FM.instance
+        local sw_plugin = fm and (fm.suwayomiplus or (fm._modules and fm._modules.suwayomiplus))
+        if not sw_plugin then
+            local RUI = package.loaded["apps/reader/readerui"]
+            local rui = RUI and RUI.instance
+            sw_plugin = rui and (rui.suwayomiplus or (rui._modules and rui._modules.suwayomiplus))
+        end
+        if not sw_plugin then
+            local ok_pl, PluginLoader = pcall(require, "pluginloader")
+            if ok_pl and PluginLoader and PluginLoader.getPluginInstance then
+                sw_plugin = PluginLoader:getPluginInstance("suwayomiplus")
+            end
+        end
+        if sw_plugin then
+            local ok_m, Manga = pcall(require, "desktop_modules/module_manga")
+            local title = ok_m and Manga and Manga.getPinnedMangaTitle and Manga.getPinnedMangaTitle(filepath)
+            if sw_plugin.resumeMangaStream then
+                sw_plugin:resumeMangaStream({ id = manga_id, title = title })
+            elseif sw_plugin.showChaptersForManga then
+                sw_plugin:showChaptersForManga({ id = manga_id, title = title })
+            end
+            return
+        else
+            local InfoMessage = require("ui/widget/infomessage")
+            UIManager:show(InfoMessage:new{ text = _("Suwayomi plugin not available."), timeout = 2 })
+            return
+        end
+    end
+
     -- ReaderUI:showReader() broadcasts ShowingReader before its first paint,
     -- closing FM/Homescreen atomically — no need to close HS first.
     local doOpen = function()

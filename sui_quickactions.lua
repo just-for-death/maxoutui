@@ -841,7 +841,6 @@ local function _registerBuiltins()
 
                     items[#items + 1] = {
                         text = title,
-                        mandatory = (cover_path and cover_path ~= "") and cover_path or nil,
                         callback = function()
                             if menu then UIManager:close(menu) end
                             if is_suwayomi then

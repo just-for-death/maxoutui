@@ -110,7 +110,58 @@ local COVER_SETTING = "simpleui_pinned_manga_covers"
 local function getPinnedMangaCover(fp)
     local covers = SUISettings:readSetting(COVER_SETTING)
     if type(covers) == "table" and covers[fp] and covers[fp] ~= "" then
-        return covers[fp]
+        if lfs.attributes(covers[fp], "mode") == "file" then
+            return covers[fp]
+        end
+    end
+    local manga_id = tostring(fp):match("^suwayomi://manga/(%d+)$")
+    if manga_id then
+        local ok, SuwayomiSettings = pcall(require, "suwayomi/settings")
+        if ok and SuwayomiSettings and SuwayomiSettings.loadPinnedManga then
+            local pinned = SuwayomiSettings:loadPinnedManga()
+            for _, pm in ipairs(pinned or {}) do
+                if tostring(pm.id) == manga_id and pm.thumbnail_url then
+                    local ok_tc, tc = pcall(require, "suwayomi/ui/thumbnail_cache")
+                    local creds = SuwayomiSettings:load()
+                    local variants = {
+                        { variant = "manga_cover", width = 64, height = 96 },
+                        { variant = "poster", width = 240, height = 360 },
+                        { variant = "thumbnail", width = 64, height = 96 },
+                        { variant = "poster", width = 160, height = 240 },
+                        { variant = "poster", width = 320, height = 480 },
+                        {},
+                    }
+                    for _, opts in ipairs(variants) do
+                        if ok_tc and tc then
+                            local path = tc.find(creds, pm.thumbnail_url, opts)
+                            if path and lfs.attributes(path, "mode") == "file" then
+                                if type(covers) ~= "table" then covers = {} end
+                                covers[fp] = path
+                                SUISettings:saveSetting(COVER_SETTING, covers)
+                                return path
+                            end
+                        end
+                    end
+                end
+            end
+        end
+
+        local DataStorage = require("datastorage")
+        local FFIUtil = require("ffi/util")
+        local thumb_dir = FFIUtil.joinPath(DataStorage:getSettingsDir(), "suwayomi_thumbnails")
+        if lfs.attributes(thumb_dir, "mode") == "directory" then
+            for entry in lfs.dir(thumb_dir) do
+                if entry:match("%.bb$") or entry:match("%.jpg$") or entry:match("%.png$") or entry:match("%.webp$") then
+                    local full_path = FFIUtil.joinPath(thumb_dir, entry)
+                    if lfs.attributes(full_path, "mode") == "file" then
+                        if type(covers) ~= "table" then covers = {} end
+                        covers[fp] = full_path
+                        SUISettings:saveSetting(COVER_SETTING, covers)
+                        return full_path
+                    end
+                end
+            end
+        end
     end
     return nil
 end

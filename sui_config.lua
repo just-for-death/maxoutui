@@ -1103,6 +1103,10 @@ function M.getCoverBB(filepath, w, h, align, stretch_limit)
         end
     end
 
+    if filepath:match("^suwayomi://") then
+        return nil
+    end
+
     if M.isCoverMissing(filepath) then return nil end
 
     -- Reject non-regular-file paths (e.g. directories, ".." traversals)

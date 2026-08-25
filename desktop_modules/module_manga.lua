@@ -109,15 +109,18 @@ local COVER_SETTING = "simpleui_pinned_manga_covers"
 
 local function normalizeCoverPath(path)
     if type(path) == "string" and path ~= "" then
-        if path:sub(1, 2) == "./" then
+        local real_path = path
+        if real_path:sub(1, 2) == "./" then
             pcall(function()
                 local DataStorage = require("datastorage")
                 local FFIUtil = require("ffi/util")
-                path = FFIUtil.joinPath(DataStorage:getDataDir(), path:sub(3))
+                local settings_dir = DataStorage:getSettingsDir()
+                real_path = real_path:gsub("^%./settings/", settings_dir .. "/")
+                real_path = real_path:gsub("^%./", DataStorage:getDataDir() .. "/")
             end)
         end
-        if lfs.attributes(path, "mode") == "file" then
-            return path
+        if lfs.attributes(real_path, "mode") == "file" then
+            return real_path
         end
     end
     return nil

@@ -1085,6 +1085,9 @@ function M.getCoverBB(filepath, w, h, align, stretch_limit)
         local raw_bb
         if manga_cover:match("%.bb$") then
             pcall(function()
+                if not package.path:find("suwayomiplus.koplugin", 1, true) then
+                    package.path = package.path .. ";./plugins/suwayomiplus.koplugin/?.lua;./plugins/suwayomiplus.koplugin/?/init.lua"
+                end
                 local ThumbnailCache = require("suwayomi/ui/thumbnail_cache")
                 raw_bb = ThumbnailCache.loadDecoded(manga_cover)
             end)

@@ -107,12 +107,27 @@ end
 local TITLE_SETTING = "simpleui_pinned_manga_titles"
 local COVER_SETTING = "simpleui_pinned_manga_covers"
 
+local function normalizeCoverPath(path)
+    if type(path) == "string" and path ~= "" then
+        if path:sub(1, 2) == "./" then
+            pcall(function()
+                local DataStorage = require("datastorage")
+                local FFIUtil = require("ffi/util")
+                path = FFIUtil.joinPath(DataStorage:getDataDir(), path:sub(3))
+            end)
+        end
+        if lfs.attributes(path, "mode") == "file" then
+            return path
+        end
+    end
+    return nil
+end
+
 local function getPinnedMangaCover(fp)
     local covers = SUISettings:readSetting(COVER_SETTING)
-    if type(covers) == "table" and covers[fp] and covers[fp] ~= "" then
-        if lfs.attributes(covers[fp], "mode") == "file" then
-            return covers[fp]
-        end
+    if type(covers) == "table" and covers[fp] then
+        local norm = normalizeCoverPath(covers[fp])
+        if norm then return norm end
     end
     local manga_id = tostring(fp):match("^suwayomi://manga/(%d+)$")
     if manga_id then
@@ -134,11 +149,12 @@ local function getPinnedMangaCover(fp)
                     for _, opts in ipairs(variants) do
                         if ok_tc and tc then
                             local path = tc.find(creds, pm.thumbnail_url, opts)
-                            if path and lfs.attributes(path, "mode") == "file" then
+                            local norm = normalizeCoverPath(path)
+                            if norm then
                                 if type(covers) ~= "table" then covers = {} end
-                                covers[fp] = path
+                                covers[fp] = norm
                                 SUISettings:saveSetting(COVER_SETTING, covers)
-                                return path
+                                return norm
                             end
                         end
                     end
@@ -153,11 +169,12 @@ local function getPinnedMangaCover(fp)
             for entry in lfs.dir(thumb_dir) do
                 if entry:match("%.bb$") or entry:match("%.jpg$") or entry:match("%.png$") or entry:match("%.webp$") then
                     local full_path = FFIUtil.joinPath(thumb_dir, entry)
-                    if lfs.attributes(full_path, "mode") == "file" then
+                    local norm = normalizeCoverPath(full_path)
+                    if norm then
                         if type(covers) ~= "table" then covers = {} end
-                        covers[fp] = full_path
+                        covers[fp] = norm
                         SUISettings:saveSetting(COVER_SETTING, covers)
-                        return full_path
+                        return norm
                     end
                 end
             end

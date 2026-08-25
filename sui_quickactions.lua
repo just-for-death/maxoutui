@@ -73,7 +73,7 @@ local function _getSuwayomiInstance()
             end
         end
     end
-    local ok, main = pcall(require, "plugins/suwayomiplus.koplugin/main")
+    local ok, main = pcall(dofile, "plugins/suwayomiplus.koplugin/main.lua")
     if ok and type(main) == "table" then
         return main.instance or main
     end

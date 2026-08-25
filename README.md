@@ -1,5 +1,7 @@
 # SimpleUI for KOReader
 
+> **Fork Notice**: This repository is a fork of the original [SimpleUI for KOReader](https://github.com/doctorhetfield-cmd/simpleui.koplugin) by [@doctorhetfield-cmd](https://github.com/doctorhetfield-cmd), enhanced with full **Suwayomi+ Pinned Manga** streaming and thumbnail integration.
+
 A clean, distraction-free UI plugin for KOReader that transforms your reading experience. SimpleUI adds a **dedicated Home Screen**, a customisable bottom navigation bar, a top status bar, and a reworked library title bar, giving you instant access to your library, history, collections, and reading stats without navigating through nested menus.
 
 <div style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 10px; max-width: 1000px; justify-content: center;">
@@ -382,7 +384,9 @@ All files are optional — a valid pack can contain as few as one icon.
 
 Contributions are welcome — bug fixes, new features, translations, and documentation improvements. See [CONTRIBUTING.md](CONTRIBUTING.md) for how to get started.
 
-To report a bug, open an **Issue** and include your KOReader version and device model.
+## 🙏 Credits & Acknowledgments
+
+All original credit for the conception, architecture, UI design, and development of SimpleUI belongs to **Doctor Hetfield** ([@doctorhetfield-cmd](https://github.com/doctorhetfield-cmd)) and contributors to the original [SimpleUI repository](https://github.com/doctorhetfield-cmd/simpleui.koplugin).
 
 ---
 

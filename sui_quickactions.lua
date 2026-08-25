@@ -66,16 +66,12 @@ local function _getSuwayomiInstance()
         if rui._modules and rui._modules.suwayomiplus then return rui._modules.suwayomiplus end
     end
     for key, m in pairs(package.loaded) do
-        if type(key) == "string" and (key:find("suwayomi", 1, true)) and type(m) == "table" then
+        if type(key) == "string" and key:find("suwayomi", 1, true) and type(m) == "table" then
             local inst = m.instance or m
-            if type(inst) == "table" and (inst.showHistory or inst.showLibrary or inst.browseSuwayomi or inst.showChaptersForManga) then
+            if type(inst) == "table" and (inst.showHistory or inst.showLibrary or inst.browseSuwayomi or inst.showChaptersForManga or inst.resumeMangaStream) then
                 return inst
             end
         end
-    end
-    local ok, main = pcall(dofile, "plugins/suwayomiplus.koplugin/main.lua")
-    if ok and type(main) == "table" then
-        return main.instance or main
     end
     return nil
 end

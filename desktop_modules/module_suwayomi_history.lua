@@ -8,14 +8,13 @@ local Screen      = Device.screen
 local Blitbuffer  = require("ffi/blitbuffer")
 local Font        = require("ui/font")
 local Geom        = require("ui/geometry")
-local GestureRange= require("ui/gesturerange")
 local UIManager   = require("ui/uimanager")
 
+local CenterContainer = require("ui/widget/container/centercontainer")
 local FrameContainer  = require("ui/widget/container/framecontainer")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
 local HorizontalSpan  = require("ui/widget/horizontalspan")
-local InputContainer  = require("ui/widget/container/inputcontainer")
-local LineWidget      = require("ui/widget/linewidget")
+local TextBoxWidget   = require("ui/widget/textboxwidget")
 local TextWidget      = require("ui/widget/textwidget")
 local VerticalGroup   = require("ui/widget/verticalgroup")
 local VerticalSpan    = require("ui/widget/verticalspan")
@@ -27,6 +26,7 @@ local UI          = require("mui_core")
 local SUISettings = require("mui_store")
 local SUIStyle    = require("mui_style")
 local RowRenderer = require("desktop_modules/mui_book_row")
+local SwBridge    = require("desktop_modules/suwayomi_bridge")
 
 local PAD     = UI.PAD
 local MOD_ID  = "suwayomi_history"
@@ -45,30 +45,7 @@ local _history_cache = nil
 local _history_cache_time = 0
 
 local function getSuwayomiPlugin()
-    for key, m in pairs(package.loaded) do
-        if type(key) == "string" and key:find("suwayomiplus", 1, true) then
-            local inst = type(m) == "table" and (m.instance or m)
-            if inst then return inst end
-        end
-    end
-    for path_entry in (package.path or ""):gmatch("[^;]+") do
-        local plugin_root = path_entry:match("^(.*suwayomiplus%.koplugin)/")
-        if plugin_root then
-            local mainfile = plugin_root .. "/main.lua"
-            local ok, m = pcall(dofile, mainfile)
-            if ok and m then
-                local inst = type(m) == "table" and (m.instance or m)
-                if inst then return inst end
-            end
-        end
-    end
-    local FM = package.loaded["apps/filemanager/filemanager"]
-    local fm = FM and FM.instance
-    if fm and fm.suwayomiplus then return fm.suwayomiplus end
-    local RUI = package.loaded["apps/reader/readerui"]
-    local rui = RUI and RUI.instance
-    if rui and rui.suwayomiplus then return rui.suwayomiplus end
-    return nil
+    return SwBridge.getSuwayomiPlugin()
 end
 
 local function getThumbnailCache()
@@ -276,32 +253,22 @@ function M.build(w, ctx)
             sub_widget,
         }
 
-        -- Wrap in tap container
-        local cell_input = InputContainer:new{
-            cell,
-            gesture_map = {
-                tap = {
-                    GestureRange:new{
-                        range = cell:getSize(),
-                        handler = function()
-                            local sw_inst = getSuwayomiPlugin()
-                            if sw_inst and sw_inst.openFeedEntry then
-                                sw_inst:openFeedEntry(entry)
-                            elseif sw_inst and sw_inst.showHistory then
-                                sw_inst:showHistory()
-                            end
-                            return true
-                        end,
-                    }
-                }
-            }
-        }
-        item_group[#item_group + 1] = cell_input
+        -- Wrap in tap container (ges_events + dynamic dimen — same as book rows)
+        local cell_h = rh + Screen:scaleBySize(20)
+        local entry_ref = entry
+        item_group[#item_group + 1] = SwBridge.makeTappable(cell, cw, cell_h, function()
+            local sw_inst = SwBridge.requireSuwayomi()
+            if not sw_inst then return end
+            if sw_inst.openFeedEntry then
+                sw_inst:openFeedEntry(entry_ref)
+            elseif sw_inst.showHistory then
+                sw_inst:showHistory()
+            end
+        end)
     end
 
     if count == 0 then
-        -- Empty state placeholder
-        item_group[#item_group + 1] = CenterContainer:new{
+        local empty = CenterContainer:new{
             dimen = Geom:new{ w = inner_w, h = rh },
             TextWidget:new{
                 text = _("No recent Suwayomi manga reading history."),
@@ -309,6 +276,12 @@ function M.build(w, ctx)
                 fgcolor = Blitbuffer.gray(0.5),
             }
         }
+        item_group[#item_group + 1] = SwBridge.makeTappable(empty, inner_w, rh, function()
+            local sw_inst = SwBridge.requireSuwayomi()
+            if sw_inst and sw_inst.showHistory then
+                sw_inst:showHistory()
+            end
+        end)
     end
 
     local content = item_group

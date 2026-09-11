@@ -28,6 +28,7 @@ local UI          = require("mui_core")
 local SUISettings = require("mui_store")
 local SUIStyle    = require("mui_style")
 local RowRenderer = require("desktop_modules/mui_book_row")
+local SwBridge    = require("desktop_modules/suwayomi_bridge")
 
 local PAD    = UI.PAD
 local MOD_ID = "suwayomi_status"
@@ -151,6 +152,13 @@ function M.build(w, ctx)
     local border_sz  = show_frame and SUIStyle.BORDER_SZ or 0
     local radius     = has_box and math.floor(Screen:scaleBySize(12) * scale) or 0
 
+    local content = SwBridge.makeTappable(row, inner_w, card_h, function()
+        local sw_inst = SwBridge.requireSuwayomi()
+        if sw_inst and sw_inst.showLibrary then
+            sw_inst:showLibrary()
+        end
+    end)
+
     return FrameContainer:new{
         bordersize     = border_sz,
         radius         = radius,
@@ -159,7 +167,7 @@ function M.build(w, ctx)
         padding        = PAD,
         padding_top    = has_box and PAD or 0,
         padding_bottom = has_box and PAD or 0,
-        row,
+        content,
     }
 end
 

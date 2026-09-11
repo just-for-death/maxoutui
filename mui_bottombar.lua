@@ -217,21 +217,21 @@ function M.invalidateDimCache()
     _vspan_icon_txt  = nil
 end
 
-function M.BAR_H()       return _cached("bar_h",   function() return math.floor(Screen:scaleBySize(96) * _getNavbarScale()) end) end
-function M.ICON_SZ()     return _cached("icon_sz", function() return math.floor(Screen:scaleBySize(44) * _getNavbarScale() * (_getIconScalePct()  / 100)) end) end
-function M.ICON_TOP_SP() return _cached("it_sp",   function() return math.floor(Screen:scaleBySize(10) * _getNavbarScale()) end) end
-function M.ICON_TXT_SP() return _cached("itxt_sp", function() return math.floor(Screen:scaleBySize(4)  * _getNavbarScale()) end) end
+function M.BAR_H()       return _cached("bar_h",   function() return math.floor(Screen:scaleBySize(82) * _getNavbarScale()) end) end
+function M.ICON_SZ()     return _cached("icon_sz", function() return math.floor(Screen:scaleBySize(38) * _getNavbarScale() * (_getIconScalePct()  / 100)) end) end
+function M.ICON_TOP_SP() return _cached("it_sp",   function() return math.floor(Screen:scaleBySize(8)  * _getNavbarScale()) end) end
+function M.ICON_TXT_SP() return _cached("itxt_sp", function() return math.floor(Screen:scaleBySize(3)  * _getNavbarScale()) end) end
 function M.LABEL_FS()    return _cached("lbl_fs",  function()
     local ok, ss = pcall(_SUIStyle)
-    local base = (ok and ss and ss.FS_DETAIL) or 15  -- FS_DETAIL (15)
+    local base = (ok and ss and ss.FS_DETAIL) or 13  -- FS_DETAIL
     return math.floor(base * _getNavbarScale() * (_getLabelScalePct() / 100))
 end) end
 function M.INDIC_H()     return _cached("indic_h", function() return math.floor(Screen:scaleBySize(3)  * _getNavbarScale()) end) end
 
 -- Structural dimensions — not affected by the size setting.
 function M.TOP_SP()      return _cached("top_sp",  function() return Screen:scaleBySize(2)  end) end
-function M.BOT_SP()      return _cached("bot_sp",  function() return math.floor(Screen:scaleBySize(12) * _getBottomMarginPct() / 100) end) end
-function M.SIDE_M()      return _cached("side_m",  function() return Screen:scaleBySize(24) end) end
+function M.BOT_SP()      return _cached("bot_sp",  function() return math.floor(Screen:scaleBySize(8)  * _getBottomMarginPct() / 100) end) end
+function M.SIDE_M()      return _cached("side_m",  function() return Screen:scaleBySize(20) end) end
 function M.SEP_H()
     return _cached("sep_h", function()
         local style = M.getBarStyle()
@@ -677,7 +677,7 @@ end
 local function _buildBarContainer(hg_args, is_navpager)
     local style = M.getBarStyle()
     if style == "framed" then
-        local radius = math.floor(Screen:scaleBySize(12) * _getNavbarScale())
+        local radius = math.floor(Screen:scaleBySize(10) * _getNavbarScale())
         local ok, SUIStyle = pcall(_SUIStyle)
         local border_color = (ok and SUIStyle and SUIStyle.getThemeColor("separator")) or Blitbuffer.gray(0.72)
         local inner_bg = _getBarBg()

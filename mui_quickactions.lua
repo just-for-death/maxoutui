@@ -3653,29 +3653,40 @@ local function _autoDownloadMangaBuildRootScreen(ctx)
         prefetchThumbs()
     end
 
-    local function showHoldMenu(entry)
+    local function showMangaPopup(entry)
         if not sw then return end
         local dialog
+        local cur_mode = entry.mode or "missing"
         dialog = ButtonDialog:new{
             title = entry.title or entry.id,
             buttons = {
                 {
                     {
-                        text = _("Open Manga"),
+                        text = _("Download Missing Chapters"),
                         callback = function()
                             UIManager:close(dialog)
-                            ctx.close()
-                            if sw.showMangaActions then
-                                sw:showMangaActions(entry)
-                            elseif sw.showChaptersForManga then
-                                sw:showChaptersForManga(entry)
+                            if sw.enqueueAutoDownloadForManga then
+                                sw:enqueueAutoDownloadForManga(entry, "missing")
+                                UIManager:show(InfoMessage:new{ text = _("Queued missing chapter downloads"), timeout = 2 })
                             end
                         end,
                     },
                 },
                 {
                     {
-                        text = _("Mode: Missing"),
+                        text = _("Download Now") .. " (" .. modeLabel(cur_mode) .. ")",
+                        callback = function()
+                            UIManager:close(dialog)
+                            if sw.enqueueAutoDownloadForManga then
+                                sw:enqueueAutoDownloadForManga(entry, cur_mode)
+                                UIManager:show(InfoMessage:new{ text = _("Queued auto-download"), timeout = 2 })
+                            end
+                        end,
+                    },
+                },
+                {
+                    {
+                        text = cur_mode == "missing" and (_("Mode: Missing") .. " (Active)") or _("Set Mode: Missing"),
                         callback = function()
                             UIManager:close(dialog)
                             if sw.setAutoDownloadMangaMode then
@@ -3684,10 +3695,8 @@ local function _autoDownloadMangaBuildRootScreen(ctx)
                             ctx.repaint()
                         end,
                     },
-                },
-                {
                     {
-                        text = _("Mode: Latest"),
+                        text = cur_mode == "latest" and (_("Mode: Latest") .. " (Active)") or _("Set Mode: Latest"),
                         callback = function()
                             UIManager:close(dialog)
                             if sw.setAutoDownloadMangaMode then
@@ -3699,18 +3708,33 @@ local function _autoDownloadMangaBuildRootScreen(ctx)
                 },
                 {
                     {
-                        text = _("Download now"),
+                        text = _("Trackers"),
                         callback = function()
                             UIManager:close(dialog)
-                            if sw.enqueueAutoDownloadForManga then
-                                sw:enqueueAutoDownloadForManga(entry, entry.mode or "missing")
+                            ctx.close()
+                            if sw.showMangaTrackers then
+                                sw:showMangaTrackers(entry)
+                            elseif sw.performMangaAction then
+                                sw:performMangaAction(entry, "trackers")
+                            end
+                        end,
+                    },
+                    {
+                        text = _("Open Chapters"),
+                        callback = function()
+                            UIManager:close(dialog)
+                            ctx.close()
+                            if sw.showChaptersForManga then
+                                sw:showChaptersForManga(entry)
+                            elseif sw.showMangaActions then
+                                sw:showMangaActions(entry, { force_menu = true })
                             end
                         end,
                     },
                 },
                 {
                     {
-                        text = _("Remove"),
+                        text = _("Remove from Auto-Download"),
                         callback = function()
                             UIManager:close(dialog)
                             if sw.removeMangaFromAutoDownload then
@@ -3947,20 +3971,11 @@ local function _autoDownloadMangaBuildRootScreen(ctx)
             }},
         }
         function ic:onTap()
-            if sw then
-                ctx.close()
-                if sw.showMangaActions then
-                    sw:showMangaActions(entry)
-                elseif sw.showChaptersForManga then
-                    sw:showChaptersForManga(entry)
-                end
-            else
-                showHoldMenu(entry)
-            end
+            showMangaPopup(entry)
             return true
         end
         function ic:onHold()
-            showHoldMenu(entry)
+            showMangaPopup(entry)
             return true
         end
         return ic

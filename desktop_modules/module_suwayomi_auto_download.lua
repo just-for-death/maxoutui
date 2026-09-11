@@ -115,16 +115,41 @@ local function prefetchThumbnailsAsync(credentials, manga_list)
     end
 end
 
-local function showMangaHoldMenu(entry)
+local function showMangaActionPopup(entry)
     local sw = SwBridge.requireSuwayomi()
     if not sw then return end
     local dialog
+    local cur_mode = entry.mode or "missing"
     dialog = ButtonDialog:new{
-        title = entry.title or entry.id,
+        title = entry.title or tostring(entry.id),
         buttons = {
             {
                 {
-                    text = _("Mode: Missing"),
+                    text = _("Download Missing Chapters"),
+                    callback = function()
+                        UIManager:close(dialog)
+                        if sw.enqueueAutoDownloadForManga then
+                            sw:enqueueAutoDownloadForManga(entry, "missing")
+                            UIManager:show(InfoMessage:new{ text = _("Queued missing chapter downloads"), timeout = 2 })
+                        end
+                    end,
+                },
+            },
+            {
+                {
+                    text = _("Download Now") .. " (" .. modeLabel(cur_mode) .. ")",
+                    callback = function()
+                        UIManager:close(dialog)
+                        if sw.enqueueAutoDownloadForManga then
+                            sw:enqueueAutoDownloadForManga(entry, cur_mode)
+                            UIManager:show(InfoMessage:new{ text = _("Queued auto-download"), timeout = 2 })
+                        end
+                    end,
+                },
+            },
+            {
+                {
+                    text = cur_mode == "missing" and (_("Mode: Missing") .. " (Active)") or _("Set Mode: Missing"),
                     callback = function()
                         UIManager:close(dialog)
                         if sw.setAutoDownloadMangaMode then
@@ -133,10 +158,8 @@ local function showMangaHoldMenu(entry)
                         refreshHome()
                     end,
                 },
-            },
-            {
                 {
-                    text = _("Mode: Latest"),
+                    text = cur_mode == "latest" and (_("Mode: Latest") .. " (Active)") or _("Set Mode: Latest"),
                     callback = function()
                         UIManager:close(dialog)
                         if sw.setAutoDownloadMangaMode then
@@ -148,18 +171,31 @@ local function showMangaHoldMenu(entry)
             },
             {
                 {
-                    text = _("Download now"),
+                    text = _("Trackers"),
                     callback = function()
                         UIManager:close(dialog)
-                        if sw.enqueueAutoDownloadForManga then
-                            sw:enqueueAutoDownloadForManga(entry, entry.mode or "missing")
+                        if sw.showMangaTrackers then
+                            sw:showMangaTrackers(entry)
+                        elseif sw.performMangaAction then
+                            sw:performMangaAction(entry, "trackers")
+                        end
+                    end,
+                },
+                {
+                    text = _("Open Chapters"),
+                    callback = function()
+                        UIManager:close(dialog)
+                        if sw.showChaptersForManga then
+                            sw:showChaptersForManga(entry)
+                        elseif sw.showMangaActions then
+                            sw:showMangaActions(entry, { force_menu = true })
                         end
                     end,
                 },
             },
             {
                 {
-                    text = _("Remove"),
+                    text = _("Remove from Auto-Download"),
                     callback = function()
                         UIManager:close(dialog)
                         if sw.removeMangaFromAutoDownload then
@@ -358,15 +394,9 @@ function M.build(w, ctx)
         local _manga = manga
         local cell_h = rh + Screen:scaleBySize(20)
         item_group[#item_group + 1] = SwBridge.makeTappable(cell, cw, cell_h, function()
-            local sw_inst = SwBridge.requireSuwayomi()
-            if not sw_inst then return end
-            if sw_inst.showMangaActions then
-                sw_inst:showMangaActions(_manga)
-            elseif sw_inst.showChaptersForManga then
-                sw_inst:showChaptersForManga(_manga)
-            end
+            showMangaActionPopup(_manga)
         end, function()
-            showMangaHoldMenu(_manga)
+            showMangaActionPopup(_manga)
         end)
     end
 

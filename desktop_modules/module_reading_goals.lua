@@ -81,23 +81,23 @@ local function _getYearStr()  return os.date("%Y") end
 local function _getMonthStr() return os.date("%b") end
 
 -- Settings keys
-local SHOW_ANNUAL  = "simpleui_reading_goals_show_annual"
-local SHOW_MONTHLY = "simpleui_reading_goals_show_monthly"
-local SHOW_DAILY   = "simpleui_reading_goals_show_daily"
-local LAYOUT_KEY   = "simpleui_reading_goals_layout"  -- "default" | "compact"
+local SHOW_ANNUAL  = "maxoutui_reading_goals_show_annual"
+local SHOW_MONTHLY = "maxoutui_reading_goals_show_monthly"
+local SHOW_DAILY   = "maxoutui_reading_goals_show_daily"
+local LAYOUT_KEY   = "maxoutui_reading_goals_layout"  -- "default" | "compact"
 
 local function isCompact()    return SUISettings:readSetting(LAYOUT_KEY) == "compact" end
 local function showAnnual()   return SUISettings:readSetting(SHOW_ANNUAL) ~= false end
 local function showMonthly()  return SUISettings:readSetting(SHOW_MONTHLY) ~= false end
 local function showDaily()    return SUISettings:readSetting(SHOW_DAILY)  ~= false end
 
-local function getAnnualGoal()      return tonumber(SUISettings:readSetting("simpleui_reading_goal")) or 0 end
-local function getAnnualPhysical()  return tonumber(SUISettings:readSetting("simpleui_reading_goal_physical")) or 0 end
-local function getMonthlyGoalSecs() return tonumber(SUISettings:readSetting("simpleui_monthly_reading_goal_secs")) or 0 end
-local function getDailyGoalSecs()   return tonumber(SUISettings:readSetting("simpleui_daily_reading_goal_secs")) or 0 end
+local function getAnnualGoal()      return tonumber(SUISettings:readSetting("maxoutui_reading_goal")) or 0 end
+local function getAnnualPhysical()  return tonumber(SUISettings:readSetting("maxoutui_reading_goal_physical")) or 0 end
+local function getMonthlyGoalSecs() return tonumber(SUISettings:readSetting("maxoutui_monthly_reading_goal_secs")) or 0 end
+local function getDailyGoalSecs()   return tonumber(SUISettings:readSetting("maxoutui_daily_reading_goal_secs")) or 0 end
 
 local function _getElemOrder(pfx)
-    local saved = SUISettings:readSetting((pfx or "simpleui_hs_") .. "reading_goals_elem_order")
+    local saved = SUISettings:readSetting((pfx or "maxoutui_hs_") .. "reading_goals_elem_order")
     if type(saved) ~= "table" or #saved == 0 then return { "annual", "monthly", "daily" } end
     local seen, result = {}, {}
     for _, v in ipairs(saved) do
@@ -390,7 +390,7 @@ local function showAnnualGoalDialog(on_confirm)
         value_min   = 0, value_max = 365, value_step = 1,
         ok_text     = _("Save"), cancel_text = _("Cancel"),
         callback    = function(spin)
-            SUISettings:saveSetting("simpleui_reading_goal", math.floor(spin.value))
+            SUISettings:saveSetting("maxoutui_reading_goal", math.floor(spin.value))
             _refreshHS()
             if on_confirm then on_confirm() end
         end,
@@ -406,7 +406,7 @@ local function showAnnualPhysicalDialog(on_confirm)
         value       = getAnnualPhysical(), value_min = 0, value_max = 365, value_step = 1,
         ok_text     = _("Save"), cancel_text = _("Cancel"),
         callback    = function(spin)
-            SUISettings:saveSetting("simpleui_reading_goal_physical", math.floor(spin.value))
+            SUISettings:saveSetting("maxoutui_reading_goal_physical", math.floor(spin.value))
             _refreshHS()
             if on_confirm then on_confirm() end
         end,
@@ -423,7 +423,7 @@ local function showMonthlySettingsDialog(on_confirm)
         value       = cur_hours, value_min = 0, value_max = 350, value_step = 1,
         ok_text     = _("Save"), cancel_text = _("Cancel"),
         callback    = function(spin)
-            SUISettings:saveSetting("simpleui_monthly_reading_goal_secs",
+            SUISettings:saveSetting("maxoutui_monthly_reading_goal_secs",
                 math.floor(spin.value) * 3600)
             _refreshHS()
             if on_confirm then on_confirm() end
@@ -441,7 +441,7 @@ local function showDailySettingsDialog(on_confirm)
         value       = cur_minutes, value_min = 0, value_max = 720, value_step = 5,
         ok_text     = _("Save"), cancel_text = _("Cancel"),
         callback    = function(spin)
-            SUISettings:saveSetting("simpleui_daily_reading_goal_secs",
+            SUISettings:saveSetting("maxoutui_daily_reading_goal_secs",
                 math.floor(spin.value) * 60)
             _refreshHS()
             if on_confirm then on_confirm() end

@@ -590,14 +590,14 @@ local function _tick()
     -- Two complementary guards:
     -- • hs._suspended — set by HomescreenWidget:onSuspend() when the Suspend
     --   event reaches the widget via broadcastEvent.
-    -- • plugin._simpleui_suspended — set by SimpleUIPlugin:onSuspend(), which
+    -- • plugin._maxoutui_suspended — set by SimpleUIPlugin:onSuspend(), which
     --   runs in the same broadcastEvent pass but may arrive before or after the
     --   widget handler depending on stack order. Checking both closes the race
     --   window where the UIManager has already dequeued this timer for execution
     --   in the current tick before either flag was set.
     local FM = package.loaded["apps/filemanager/filemanager"]
-    local plugin = FM and FM.instance and (FM.instance.maxoutui or FM.instance._simpleui_plugin or FM.instance._maxoutui_plugin)
-    if hs._suspended or (plugin and plugin._simpleui_suspended) or Device.screen_saver_mode then
+    local plugin = FM and FM.instance and (FM.instance.maxoutui or FM.instance._maxoutui_plugin or FM.instance._maxoutui_plugin)
+    if hs._suspended or (plugin and plugin._maxoutui_suspended) or Device.screen_saver_mode then
         return
     end
 
@@ -689,7 +689,7 @@ local function _tick()
     --
     -- `plugin` was resolved above for the suspend guard — reuse it here.
     -- ---------------------------------------------------------------------------
-    if plugin and not plugin._simpleui_suspended then
+    if plugin and not plugin._maxoutui_suspended then
         local Topbar = package.loaded["mui_topbar"]
         if Topbar then
             -- Cancel the topbar's own pending timer before refreshing — without

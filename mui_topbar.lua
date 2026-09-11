@@ -33,7 +33,7 @@ local M = {}
 -- SUIStyle.getThemeColor() via the _FALLBACKS chain.
 -- ---------------------------------------------------------------------------
 local function _getBarBg()
-    if SUISettings:isTrue("simpleui_statusbar_transparent") then return nil end
+    if SUISettings:isTrue("maxoutui_statusbar_transparent") then return nil end
     local c = SUIStyle.getThemeColor("statusbar_bg")
     if c then return c end
     return Blitbuffer.COLOR_WHITE
@@ -149,7 +149,7 @@ local _topbar_disk_time = 0
 local _topbar_ram_mb    = nil
 local _topbar_ram_time  = 0
 
--- Cached result of "simpleui_topbar_enabled" setting.
+-- Cached result of "maxoutui_topbar_enabled" setting.
 -- This setting is read on every timer tick (shouldRunTimer) and on every
 -- touch-zone registration. Caching it avoids repeated settings lookups on
 -- the hot path. Invalidated by invalidateDimCache() on any settings change.
@@ -453,7 +453,7 @@ function M.buildTopbarWidget()
         end
     end
 
-    local show_swipe = (not center_has_items) and SUISettings:nilOrTrue("simpleui_topbar_swipe_indicator")
+    local show_swipe = (not center_has_items) and SUISettings:nilOrTrue("maxoutui_topbar_swipe_indicator")
     local center_w
     if center_has_items then
         center_w = CenterContainer:new{
@@ -538,7 +538,7 @@ function M.registerTouchZones(plugin, fm_self)
     end
 
     if _topbar_enabled_cache == nil then
-        _topbar_enabled_cache = SUISettings:nilOrTrue("simpleui_topbar_enabled")
+        _topbar_enabled_cache = SUISettings:nilOrTrue("maxoutui_topbar_enabled")
     end
     if not _topbar_enabled_cache then return end
 
@@ -558,7 +558,7 @@ function M.registerTouchZones(plugin, fm_self)
             ges         = "hold_release",
             screen_zone = topbar_zone,
             handler = function(_ges)
-                if not SUISettings:nilOrTrue("simpleui_topbar_settings_on_hold") then
+                if not SUISettings:nilOrTrue("maxoutui_topbar_settings_on_hold") then
                     return true
                 end
                 _showTopbarSettingsWindow(plugin)
@@ -577,7 +577,7 @@ end
 -- for deciding whether to *reschedule* the recurring timer after a tick.
 local function shouldRefreshTopbar(plugin)
     if _topbar_enabled_cache == nil then
-        _topbar_enabled_cache = SUISettings:nilOrTrue("simpleui_topbar_enabled")
+        _topbar_enabled_cache = SUISettings:nilOrTrue("maxoutui_topbar_enabled")
     end
     if not _topbar_enabled_cache then return false end
     -- Use package.loaded to avoid any pcall overhead; ReaderUI is only present
@@ -588,8 +588,8 @@ local function shouldRefreshTopbar(plugin)
     -- the suspend transition on some devices (Kobo) before the scheduler pauses.
     -- Also guard against screen_saver_mode, which is set before broadcastEvent("Suspend")
     -- fires on Kindle (framework mode) and closes the race window where the timer
-    -- is already dequeued but _simpleui_suspended has not yet been set.
-    if plugin and plugin._simpleui_suspended then return false end
+    -- is already dequeued but _maxoutui_suspended has not yet been set.
+    if plugin and plugin._maxoutui_suspended then return false end
     local Device = require("device")
     if Device.screen_saver_mode then return false end
     return true
@@ -616,14 +616,14 @@ end
 
 function M.refresh(plugin)
     if not shouldRefreshTopbar(plugin) then return end
-    -- shouldRefreshTopbar already checks _simpleui_suspended and screen_saver_mode,
+    -- shouldRefreshTopbar already checks _maxoutui_suspended and screen_saver_mode,
     -- but there is a narrow race on Kobo: the UIManager may have already dequeued
     -- this timer for execution in the current event-loop tick *before* onSuspend ran
-    -- and set _simpleui_suspended = true. shouldRefreshTopbar therefore passed with
+    -- and set _maxoutui_suspended = true. shouldRefreshTopbar therefore passed with
     -- the flag still false. Re-check immediately after, before doing any work,
     -- so we never build a widget or call setDirty during the suspend transition.
     local Device = require("device")
-    if (plugin and plugin._simpleui_suspended) or Device.screen_saver_mode then return end
+    if (plugin and plugin._maxoutui_suspended) or Device.screen_saver_mode then return end
     local UI    = require("mui_core")
     local stack = UI.getWindowStack()  -- read once
     -- Each widget gets its own topbar instance. Sharing a single object across
@@ -634,7 +634,7 @@ function M.refresh(plugin)
     -- Re-check suspended state after buildTopbarWidget() — the device may have
     -- suspended during that call. If so, discard the widget and do not setDirty
     -- or reschedule: onResume will restart the chain cleanly.
-    if (plugin and plugin._simpleui_suspended) or Device.screen_saver_mode then return end
+    if (plugin and plugin._maxoutui_suspended) or Device.screen_saver_mode then return end
     local seen = {}
     local function refreshWidget(w)
         if not w or not w._navbar_container or seen[w] then return end
@@ -645,7 +645,7 @@ function M.refresh(plugin)
     refreshWidget(plugin.ui)
     for _, entry in ipairs(stack) do
         local ok, err = pcall(refreshWidget, entry.widget)
-        if not ok then logger.warn("simpleui: topbar refreshWidget failed:", tostring(err)) end
+        if not ok then logger.warn("maxoutui: topbar refreshWidget failed:", tostring(err)) end
     end
     -- Only keep the recurring minute-tick alive when the topbar clock is
     -- visible.  One-shot refreshes (brightness, wifi, battery events) arrive

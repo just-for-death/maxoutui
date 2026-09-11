@@ -15,11 +15,11 @@
 --   2. A panel tab entry  { icon="...", remember=false, panel=<fn> }  is
 --      inserted into tab_item_table by patching FileManagerMenu:setUpdateItemTable.
 --   3. Action buttons are built from the user-configured slots stored under
---      "simpleui_qs_bar_slots".  Execution delegates to QA.execute().
+--      "maxoutui_qs_bar_slots".  Execution delegates to QA.execute().
 --
 -- SETTINGS KEY
---   "simpleui_qs_bar_slots"  → ordered array of action-id strings
---   "simpleui_qs_bar_enabled" → bool (default true)
+--   "maxoutui_qs_bar_slots"  → ordered array of action-id strings
+--   "maxoutui_qs_bar_enabled" → bool (default true)
 
 local Device     = require("device")
 local Screen     = Device.screen
@@ -60,14 +60,14 @@ local _showQSBarSettingsWindow
 -- Storage
 -- ---------------------------------------------------------------------------
 
-local SLOTS_KEY      = "simpleui_qs_bar_slots"
-local ENABLED_KEY    = "simpleui_qs_bar_enabled"
-local SHAPE_KEY      = "simpleui_qs_bar_shape"
-local BG_KEY         = "simpleui_qs_bar_bg"
-local FRONTLIGHT_KEY = "simpleui_qs_bar_frontlight"
-local WARMTH_KEY     = "simpleui_qs_bar_warmth"
-local LABELS_KEY     = "simpleui_qs_bar_labels"
-local LABEL_SCALE_KEY= "simpleui_qs_bar_label_scale_pct"
+local SLOTS_KEY      = "maxoutui_qs_bar_slots"
+local ENABLED_KEY    = "maxoutui_qs_bar_enabled"
+local SHAPE_KEY      = "maxoutui_qs_bar_shape"
+local BG_KEY         = "maxoutui_qs_bar_bg"
+local FRONTLIGHT_KEY = "maxoutui_qs_bar_frontlight"
+local WARMTH_KEY     = "maxoutui_qs_bar_warmth"
+local LABELS_KEY     = "maxoutui_qs_bar_labels"
+local LABEL_SCALE_KEY= "maxoutui_qs_bar_label_scale_pct"
 local MAX_SLOTS      = 6
 
 local function getSlots()
@@ -264,7 +264,7 @@ local function buildPanel(touch_menu)
 
                     local FM  = package.loaded["apps/filemanager/filemanager"]
                     local fm  = FM and FM.instance
-                    local plugin = fm and (fm.maxoutui or fm._simpleui_plugin or fm._maxoutui_plugin)
+                    local plugin = fm and (fm.maxoutui or fm._maxoutui_plugin or fm._maxoutui_plugin)
                     
                     if not plugin then
                         local ctx = { fm = fm }
@@ -301,7 +301,7 @@ local function buildPanel(touch_menu)
                     UIManager:scheduleIn(0, function()
                         local FM_live = package.loaded["apps/filemanager/filemanager"]
                         local fm_live = FM_live and FM_live.instance
-                        local plugin_live = fm_live and fm_(live.maxoutui or live._simpleui_plugin or live._maxoutui_plugin) or plugin
+                        local plugin_live = fm_live and fm_(live.maxoutui or live._maxoutui_plugin or live._maxoutui_plugin) or plugin
 
                         if in_reader and not is_in_place then
                             if _aid == "homescreen" then
@@ -316,7 +316,7 @@ local function buildPanel(touch_menu)
                                 UIManager:scheduleIn(0, function()
                                     local FM_new = package.loaded["apps/filemanager/filemanager"]
                                     local fm_new = FM_new and FM_new.instance
-                                    local plugin_new = fm_new and (fm_new.maxoutui or fm_new._simpleui_plugin or fm_new._maxoutui_plugin) or plugin_live
+                                    local plugin_new = fm_new and (fm_new.maxoutui or fm_new._maxoutui_plugin or fm_new._maxoutui_plugin) or plugin_live
                                     plugin_new:_navigate(_aid, fm_new, _Config().loadTabConfig(), false)
                                 end)
                             end
@@ -609,7 +609,7 @@ local function buildPanel(touch_menu)
         },
     }
     function ic:onHoldPanel()
-        if not SUISettings:nilOrTrue("simpleui_qs_bar_settings_on_hold") then
+        if not SUISettings:nilOrTrue("maxoutui_qs_bar_settings_on_hold") then
             return false
         end
         if _showQSBarSettingsWindow then
@@ -799,7 +799,7 @@ end
 
 local _panel_tab = {
     id       = "_sui_qs_panel",  -- lets sui_style.lua's icon-slot system (Style ▸ Icons ▸ Tab Bar) reference this tab
-    icon     = "simpleui_settings",
+    icon     = "maxoutui_settings",
     remember = false,
     -- _sui_qs_panel flag consumed by the patched updateItems
     _sui_qs_panel = true,
@@ -807,7 +807,7 @@ local _panel_tab = {
 
 --- Applies the user's stored icon override (Style ▸ Icons ▸ Tab Bar ▸
 --- "SimpleUI Quick Settings") to the shared panel-tab descriptor, or falls
---- back to the default "simpleui_settings" icon. `_panel_tab` is the exact
+--- back to the default "maxoutui_settings" icon. `_panel_tab` is the exact
 --- same table object inserted by reference into both FileManagerMenu's and
 --- ReaderMenu's tab_item_table, so mutating its `.icon` field here updates
 --- the tab everywhere it appears, independent of injection/patch ordering.
@@ -818,7 +818,7 @@ function QSBar.refreshPanelTabIcon()
     if override_path and ok_ss and SUIStyle.registerTabIconName then
         name = SUIStyle.registerTabIconName("sui_tab_qs_panel", override_path)
     end
-    _panel_tab.icon = name or "simpleui_settings"
+    _panel_tab.icon = name or "maxoutui_settings"
 end
 
 local function injectPanelTab(m_self)
@@ -862,7 +862,7 @@ function QSBar.install()
     -- already correct the first time the tab is injected.
     pcall(QSBar.refreshPanelTabIcon)
 
-    -- 0. Icon registration: make "simpleui_settings" resolve to settings.svg
+    -- 0. Icon registration: make "maxoutui_settings" resolve to settings.svg
     --    independently.  Three layers:
     --
     --    Layer 1 — copy SVG to DataStorage/icons/ so ICONS_DIRS disk lookup
@@ -890,7 +890,7 @@ function QSBar.install()
                 local icon_src = plugin_root .. "/icons/settings.svg"
                 if lfs.attributes(icon_src, "mode") == "file" then
 
-                    -- Layer 1: copy to DataStorage/icons/simpleui_settings.svg
+                    -- Layer 1: copy to DataStorage/icons/maxoutui_settings.svg
                     pcall(function()
                         local DataStorage = require("datastorage")
                         local ffiutil     = require("ffi/util")
@@ -898,7 +898,7 @@ function QSBar.install()
                         if lfs.attributes(user_dir, "mode") ~= "directory" then
                             lfs.mkdir(user_dir)
                         end
-                        local dst = user_dir .. "/simpleui_settings.svg"
+                        local dst = user_dir .. "/maxoutui_settings.svg"
                         if lfs.attributes(dst, "mode") ~= "file" then
                             ffiutil.copyFile(icon_src, dst)
                         end
@@ -910,7 +910,7 @@ function QSBar.install()
                         local iw      = require("ui/widget/iconwidget")
                         -- Prefer the unwrapped init so the scan finds ICONS_PATH/ICONS_DIRS
                         -- even when sui_patches' alpha patch has already replaced iw.init.
-                        local iw_init = iw._simpleui_orig_init_for_scan or rawget(iw, "init")
+                        local iw_init = iw._maxoutui_orig_init_for_scan or rawget(iw, "init")
                         if type(iw_init) ~= "function" then return end
                         local icons_path, icons_dirs
                         for i = 1, 64 do
@@ -924,8 +924,8 @@ function QSBar.install()
                             if icons_path and icons_dirs then break end
                         end
                         if icons_path then
-                            if not icons_path["simpleui_settings"] then
-                                icons_path["simpleui_settings"] = icon_src
+                            if not icons_path["maxoutui_settings"] then
+                                icons_path["maxoutui_settings"] = icon_src
                             end
                             injected = true
                         end
@@ -948,7 +948,7 @@ function QSBar.install()
                             local iw = require("ui/widget/iconwidget")
                             local orig_init = iw.init
                             iw.init = function(self_iw, ...)
-                                if self_iw.icon == "simpleui_settings"
+                                if self_iw.icon == "maxoutui_settings"
                                         and not self_iw.file
                                         and not self_iw.image then
                                     self_iw.file = icon_src
@@ -1388,12 +1388,12 @@ function QSBar.makeMenuItems(ctx_menu)
         text           = _("Settings on Long Tap"),
         help_text      = _("When enabled, long-pressing the Quick Settings Bar opens its settings menu.\nDisable this to prevent the settings menu from appearing on long tap."),
         checked_func   = function()
-            return SUISettings:nilOrTrue("simpleui_qs_bar_settings_on_hold")
+            return SUISettings:nilOrTrue("maxoutui_qs_bar_settings_on_hold")
         end,
         keep_menu_open = true,
         callback       = function()
-            local on = SUISettings:nilOrTrue("simpleui_qs_bar_settings_on_hold")
-            SUISettings:saveSetting("simpleui_qs_bar_settings_on_hold", not on)
+            local on = SUISettings:nilOrTrue("maxoutui_qs_bar_settings_on_hold")
+            SUISettings:saveSetting("maxoutui_qs_bar_settings_on_hold", not on)
             refresh()
         end,
     }

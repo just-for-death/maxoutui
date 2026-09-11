@@ -85,7 +85,7 @@ local function buildQAWidget(w, action_ids, show_labels, on_tap_fn, d, shape, bg
     local clr_sub = colors and colors.sub or CLR_TEXT_SUB
     local ph_fs = math.max(8, math.floor(_BASE_PH_FS * (d.frame_sz / (_BASE_ICON_SZ + _BASE_FRAME_PAD * 2))))
     local function _placeholder()
-        local hold_on = SUISettings:nilOrTrue("simpleui_hs_settings_on_hold")
+        local hold_on = SUISettings:nilOrTrue("maxoutui_hs_settings_on_hold")
         local ph_text = hold_on and _("No actions configured  —  long press to configure")
                                  or _("No actions configured")
         return CenterContainer:new{

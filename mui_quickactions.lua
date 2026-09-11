@@ -144,7 +144,7 @@ function QA.getIconsDir()
     if not _icons_dir_cache then
         local ok_ds, DataStorage = pcall(require, "datastorage")
         if ok_ds and DataStorage then
-            _icons_dir_cache = DataStorage:getSettingsDir() .. "/simpleui/sui_icons"
+            _icons_dir_cache = DataStorage:getSettingsDir() .. "/maxoutui/mui_icons"
         else
             local _qa_plugin_dir = debug.getinfo(1, "S").source:match("^@(.+/)[^/]+$") or "./"
             _icons_dir_cache = _qa_plugin_dir .. "icons/custom"
@@ -196,12 +196,12 @@ local function _liveFM()
 end
 
 -- Helper: resolve the live SimpleUIPlugin instance. Tries the given fm first
--- (set as (fm.maxoutui or fm._simpleui_plugin or fm._maxoutui_plugin) during plugin init), then the live FM, then
+-- (set as (fm.maxoutui or fm._maxoutui_plugin or fm._maxoutui_plugin) during plugin init), then the live FM, then
 -- ReaderUI (where the plugin is registered as reade(rui.maxoutui or rui.simpleui)).
 local function _resolveMaxOutUIPlugin(fm)
-    if fm and (fm.maxoutui or fm._simpleui_plugin or fm._maxoutui_plugin) then return (fm.maxoutui or fm._simpleui_plugin or fm._maxoutui_plugin) end
+    if fm and (fm.maxoutui or fm._maxoutui_plugin or fm._maxoutui_plugin) then return (fm.maxoutui or fm._maxoutui_plugin or fm._maxoutui_plugin) end
     local live_fm = _liveFM()
-    if live_fm and live_(fm.maxoutui or fm._simpleui_plugin or fm._maxoutui_plugin) then return live_(fm.maxoutui or fm._simpleui_plugin or fm._maxoutui_plugin) end
+    if live_fm and live_(fm.maxoutui or fm._maxoutui_plugin or fm._maxoutui_plugin) then return live_(fm.maxoutui or fm._maxoutui_plugin or fm._maxoutui_plugin) end
     local RUI = package.loaded["apps/reader/readerui"]
     local rui = RUI and RUI.instance
     return rui and (rui.maxoutui or rui.simpleui)
@@ -270,7 +270,7 @@ local function _doWifiToggle(plugin)
         Config.wifi_optimistic = true
         local ok_on, err = pcall(function() NetworkMgr:turnOnWifi() end)
         if not ok_on then
-            logger.warn("simpleui: Wi-Fi turn-on error:", tostring(err))
+            logger.warn("maxoutui: Wi-Fi turn-on error:", tostring(err))
             Config.wifi_optimistic = nil
         end
     end
@@ -409,7 +409,7 @@ local function _showBookmarkBrowserSourceDialog(bb_ui)
         return
     end
     local FM         = package.loaded["apps/filemanager/filemanager"]
-    local plugin     = FM and FM.instance and (FM.instance.maxoutui or FM.instance._simpleui_plugin or FM.instance._maxoutui_plugin)
+    local plugin     = FM and FM.instance and (FM.instance.maxoutui or FM.instance._maxoutui_plugin or FM.instance._maxoutui_plugin)
     local prev_action = plugin and plugin.active_action
     local BB         = _Bottombar()
     if plugin then BB.setTempTabActive(plugin, "bookmark_browser", true, prev_action) end
@@ -583,7 +583,7 @@ QA.showBookmarkBrowserSourceDialog = _showBookmarkBrowserSourceDialog
 -- Safe to call from within this module (built-ins) or from external plugins.
 local function _registerDescriptor(desc)
     if not desc or not desc.id then
-        logger.warn("simpleui: QA.register: descriptor missing 'id'")
+        logger.warn("maxoutui: QA.register: descriptor missing 'id'")
         return
     end
     local id = desc.id
@@ -596,10 +596,10 @@ end
 -- Register all built-in actions.
 -- Called once at module load time (bottom of this file).
 local function _registerBuiltins()
-    local function _simpleui_plugin()
+    local function _maxoutui_plugin()
         -- Resolve the live plugin instance via the FM first.
         local fm = _liveFM()
-        if fm and (fm.maxoutui or fm._simpleui_plugin or fm._maxoutui_plugin) then return (fm.maxoutui or fm._simpleui_plugin or fm._maxoutui_plugin) end
+        if fm and (fm.maxoutui or fm._maxoutui_plugin or fm._maxoutui_plugin) then return (fm.maxoutui or fm._maxoutui_plugin or fm._maxoutui_plugin) end
         -- Inside the reader the FM may not be the active instance.
         -- The plugin is registered on ReaderUI as reade(rui.maxoutui or rui.simpleui).
         local RUI = package.loaded["apps/reader/readerui"]
@@ -642,7 +642,7 @@ local function _registerBuiltins()
             icon  = Config.ICON.ko_home,
             is_in_place = false,
             execute = function(ctx)
-                local plugin = ctx.plugin or _simpleui_plugin()
+                local plugin = ctx.plugin or _maxoutui_plugin()
                 local ok_hs, HS = pcall(require, "mui_homescreen")
                 if ok_hs and HS and type(HS.show) == "function" then
                     local saved_page = HS._current_page or 1
@@ -709,7 +709,7 @@ local function _registerBuiltins()
         {
             id    = "suwayomi_continue",
             label = _("Continue Reading"),
-            icon  = Config.ICON.recent or Config.ICON.history,
+            icon  = Config.ICON.manga_continue,
             is_in_place = false,
             is_async_in_place = true,
             execute = function(ctx)
@@ -729,7 +729,7 @@ local function _registerBuiltins()
         {
             id    = "recent_manga",
             label = _("Recent Manga"),
-            icon  = Config.ICON.recent,
+            icon  = Config.ICON.manga_recent,
             is_in_place = true,
             is_async_in_place = true,
             execute = function(ctx)
@@ -745,7 +745,7 @@ local function _registerBuiltins()
         {
             id    = "suwayomi_library",
             label = _("Manga Library"),
-            icon  = Config.ICON.collections,
+            icon  = Config.ICON.manga_library,
             is_in_place = true,
             is_async_in_place = true,
             execute = function(ctx)
@@ -761,7 +761,7 @@ local function _registerBuiltins()
         {
             id    = "suwayomi_sources",
             label = _("Manga Sources"),
-            icon  = Config.ICON.search,
+            icon  = Config.ICON.manga_sources,
             is_in_place = true,
             is_async_in_place = true,
             execute = function(ctx)
@@ -777,7 +777,7 @@ local function _registerBuiltins()
         {
             id    = "suwayomi_updates",
             label = _("Manga Updates"),
-            icon  = Config.ICON.sync,
+            icon  = Config.ICON.manga_updates,
             is_in_place = true,
             is_async_in_place = true,
             execute = function(ctx)
@@ -793,7 +793,7 @@ local function _registerBuiltins()
         {
             id    = "suwayomi_downloads",
             label = _("Manga Downloads"),
-            icon  = Config.ICON.folder,
+            icon  = Config.ICON.manga_downloads,
             is_in_place = true,
             is_async_in_place = true,
             execute = function(ctx)
@@ -809,7 +809,7 @@ local function _registerBuiltins()
         {
             id    = "pinned_manga",
             label = _("Pinned Manga"),
-            icon  = Config.ICON.series,
+            icon  = Config.ICON.manga_pinned,
             is_in_place = true,
             is_async_in_place = true,
             execute = function(ctx)
@@ -819,7 +819,7 @@ local function _registerBuiltins()
         {
             id    = "toggle_pin_manga",
             label = _("Pin / Unpin Manga"),
-            icon  = Config.ICON.heart or Config.ICON.collections,
+            icon  = Config.ICON.manga_pin,
             is_in_place = true,
             execute = function(ctx)
                 local Manga = _getMangaModule()
@@ -1039,7 +1039,7 @@ local function _registerBuiltins()
             end,
             is_in_place = true,
             execute = function(ctx)
-                _doWifiToggle(ctx.plugin or _simpleui_plugin())
+                _doWifiToggle(ctx.plugin or _maxoutui_plugin())
             end,
         },
         {
@@ -1048,7 +1048,7 @@ local function _registerBuiltins()
             icon  = Config.ICON.frontlight,
             is_in_place = true,
             execute = function(ctx)
-                _showFrontlightDialog(ctx.plugin or _simpleui_plugin())
+                _showFrontlightDialog(ctx.plugin or _maxoutui_plugin())
             end,
         },
         {
@@ -1067,7 +1067,7 @@ local function _registerBuiltins()
             is_in_place = true,
             execute = function(ctx)
                 local su = ctx.show_unavailable or _unavailToast
-                local plugin = ctx.plugin or _simpleui_plugin()
+                local plugin = ctx.plugin or _maxoutui_plugin()
                 local ok, SW = pcall(require, "mui_stats_windows")
                 if ok and SW and SW.showReadingInsightsWindow then
                     QA.trackIndicatorViaCallback(plugin, "stats_calendar", function(restore)
@@ -1088,7 +1088,7 @@ local function _registerBuiltins()
             is_in_place = true,
             is_async_in_place = true,
             execute = function(ctx)
-                _showPowerDialog(ctx.plugin or _simpleui_plugin())
+                _showPowerDialog(ctx.plugin or _maxoutui_plugin())
             end,
         },
         {
@@ -1097,7 +1097,7 @@ local function _registerBuiltins()
             icon  = Config.ICON.ko_settings,
             is_in_place = true,
             execute = function(ctx)
-                local plugin = ctx.plugin or _simpleui_plugin()
+                local plugin = ctx.plugin or _maxoutui_plugin()
                 QA.trackIndicatorViaCallback(plugin, "sui_settings", function(restore)
                     require("mui_settings_window"):show(restore)
                 end)
@@ -1174,15 +1174,15 @@ end
 -- Safe to call multiple times with the same id (replaces previous entry).
 function QA.register(descriptor)
     if not descriptor or not descriptor.id then
-        logger.warn("simpleui: QA.register: descriptor missing 'id'")
+        logger.warn("maxoutui: QA.register: descriptor missing 'id'")
         return
     end
     if not descriptor.execute then
-        logger.warn("simpleui: QA.register: descriptor missing 'execute' for id=" .. tostring(descriptor.id))
+        logger.warn("maxoutui: QA.register: descriptor missing 'execute' for id=" .. tostring(descriptor.id))
         return
     end
     _registerDescriptor(descriptor)
-    logger.dbg("simpleui: QA.register: registered external action", descriptor.id)
+    logger.dbg("maxoutui: QA.register: registered external action", descriptor.id)
 end
 
 -- Remove a registered external action.
@@ -1192,7 +1192,7 @@ function QA.unregister(id)
     -- Prevent removal of built-ins.
     for _, desc in ipairs(_builtin_descriptors) do
         if desc.id == id then
-            logger.warn("simpleui: QA.unregister: cannot unregister built-in action", id)
+            logger.warn("maxoutui: QA.unregister: cannot unregister built-in action", id)
             return
         end
     end
@@ -1202,7 +1202,7 @@ function QA.unregister(id)
         if oid ~= id then new_order[#new_order + 1] = oid end
     end
     _registry_order = new_order
-    logger.dbg("simpleui: QA.unregister: removed", id)
+    logger.dbg("maxoutui: QA.unregister: removed", id)
 end
 
 -- Returns true when `id` is a registered built-in action.
@@ -1299,14 +1299,14 @@ function QA.execute(id, ctx)
 
     local desc = _registry[id]
     if not desc then
-        logger.warn("simpleui: QA.execute: unknown action id=" .. tostring(id))
+        logger.warn("maxoutui: QA.execute: unknown action id=" .. tostring(id))
         su(string.format(_("Action not available: %s"), tostring(id)))
         return
     end
 
     local ok, err = pcall(desc.execute, ctx)
     if not ok then
-        logger.warn("simpleui: QA.execute: error in", id, tostring(err))
+        logger.warn("maxoutui: QA.execute: error in", id, tostring(err))
         su(string.format(_("Action error: %s"), tostring(err)))
     end
 end
@@ -1319,18 +1319,18 @@ local _qa_key_cache = {}
 local function getQASettingsKey(qa_id)
     local k = _qa_key_cache[qa_id]
     if not k then
-        k = "simpleui_qa_" .. qa_id
+        k = "maxoutui_qa_" .. qa_id
         _qa_key_cache[qa_id] = k
     end
     return k
 end
 
 function QA.getCustomQAList()
-    return SUISettings:get("simpleui_qa_list") or {}
+    return SUISettings:get("maxoutui_qa_list") or {}
 end
 
 function QA.saveCustomQAList(list)
-    SUISettings:set("simpleui_qa_list", list)
+    SUISettings:set("maxoutui_qa_list", list)
 end
 
 function QA.getCustomQAConfig(qa_id)
@@ -1368,7 +1368,7 @@ end
 -- ---------------------------------------------------------------------------
 
 local function getQAFolderItemsKey(qa_id)
-    return "simpleui_qa_" .. qa_id .. "_folder_items"
+    return "maxoutui_qa_" .. qa_id .. "_folder_items"
 end
 
 function QA.getQAFolderItems(qa_id)
@@ -1410,15 +1410,15 @@ function QA.deleteCustomQA(qa_id)
     QA.saveCustomQAList(new_list)
     local mqa = package.loaded["desktop_modules/module_quick_actions"]
     if mqa and mqa.invalidateCustomQACache then mqa.invalidateCustomQACache() end
-    local tabs = SUISettings:get("simpleui_bar_tabs")
+    local tabs = SUISettings:get("maxoutui_bar_tabs")
     if type(tabs) == "table" then
         local new_tabs = {}
         for _i, id in ipairs(tabs) do
             if id ~= qa_id then new_tabs[#new_tabs + 1] = id end
         end
-        SUISettings:set("simpleui_bar_tabs", new_tabs)
+        SUISettings:set("maxoutui_bar_tabs", new_tabs)
     end
-    for _i, pfx in ipairs({ "simpleui_hs_qa_" }) do
+    for _i, pfx in ipairs({ "maxoutui_hs_qa_" }) do
         for slot = 1, 3 do
             local key = pfx .. slot .. "_items"
             local dqa = SUISettings:get(key)
@@ -1513,7 +1513,7 @@ function QA.sanitizeQASlots()
         end
     end
 
-    for _, pfx in ipairs({ "simpleui_hs_qa_" }) do
+    for _, pfx in ipairs({ "maxoutui_hs_qa_" }) do
         for slot = 1, 3 do
             local key  = pfx .. slot .. "_items"
             local items = SUISettings:get(key)
@@ -1533,7 +1533,7 @@ function QA.sanitizeQASlots()
         end
     end
 
-    local tabs = SUISettings:get("simpleui_bar_tabs")
+    local tabs = SUISettings:get("maxoutui_bar_tabs")
     if type(tabs) == "table" then
         local clean_tabs = {}
         local tabs_changed = false
@@ -1547,7 +1547,7 @@ function QA.sanitizeQASlots()
             end
         end
         if tabs_changed then
-            SUISettings:set("simpleui_bar_tabs", clean_tabs)
+            SUISettings:set("maxoutui_bar_tabs", clean_tabs)
             Config.invalidateTabsCache()
         end
     end
@@ -1567,7 +1567,7 @@ function QA.nextCustomQAId()
         if n and n > max_n then max_n = n end
     end
     local n = max_n + 1
-    while SUISettings:get("simpleui_qa_custom_qa_" .. n) do n = n + 1 end
+    while SUISettings:get("maxoutui_qa_custom_qa_" .. n) do n = n + 1 end
     return "custom_qa_" .. n
 end
 
@@ -1579,8 +1579,8 @@ end
 -- Default-action label / icon overrides
 -- ---------------------------------------------------------------------------
 
-local function _defaultLabelKey(id) return "simpleui_action_" .. id .. "_label" end
-local function _defaultIconKey(id)  return "simpleui_action_" .. id .. "_icon"  end
+local function _defaultLabelKey(id) return "maxoutui_action_" .. id .. "_label" end
+local function _defaultIconKey(id)  return "maxoutui_action_" .. id .. "_icon"  end
 
 function QA.getDefaultActionLabel(id)
     return SUISettings:get(_defaultLabelKey(id))
@@ -1608,14 +1608,14 @@ end
 
 function QA.performResetAllQAIcons(plugin)
     for _k, a in ipairs(Config.ALL_ACTIONS) do
-        SUISettings:del("simpleui_action_" .. a.id .. "_icon")
+        SUISettings:del("maxoutui_action_" .. a.id .. "_icon")
     end
-    SUISettings:del("simpleui_action_wifi_toggle_off_icon")
+    SUISettings:del("maxoutui_action_wifi_toggle_off_icon")
     for _i, qa_id in ipairs(QA.getCustomQAList()) do
-        local cfg = SUISettings:get("simpleui_qa_" .. qa_id)
+        local cfg = SUISettings:get("maxoutui_qa_" .. qa_id)
         if type(cfg) == "table" then
             cfg.icon = nil
-            SUISettings:set("simpleui_qa_" .. qa_id, cfg)
+            SUISettings:set("maxoutui_qa_" .. qa_id, cfg)
         end
     end
     local ok_ss, SUIStyle = pcall(require, "mui_style")
@@ -1979,7 +1979,7 @@ local _wifi_entry = { icon = "", label = "" }
 function QA.getEntry(id)
     -- Custom QA
     if id and id:match("^custom_qa_%d+$") then
-        local cfg = SUISettings:get("simpleui_qa_" .. id) or {}
+        local cfg = SUISettings:get("maxoutui_qa_" .. id) or {}
         local default_icon
         local ok_ss, SUIStyle = pcall(require, "mui_style")
         if cfg.qa_folder then
@@ -2011,7 +2011,7 @@ function QA.getEntry(id)
         -- code that still calls getEntry() for actions not yet registered.
         local a = Config.ACTION_BY_ID[id]
         if not a then
-            logger.warn("simpleui: QA.getEntry: unknown id " .. tostring(id))
+            logger.warn("maxoutui: QA.getEntry: unknown id " .. tostring(id))
             return { icon = Config.ICON.library, label = tostring(id) }
         end
         desc = a
@@ -2241,7 +2241,7 @@ local function _scanFMPlugins()
         dictionary=true, wikipedia=true, devicestatus=true, devicelistener=true,
         networklistener=true,
     }
-    local our_name  = "simpleui"
+    local our_name  = "maxoutui"
     local seen_keys = {}
     local fm_val_to_key = {}
     for k, v in pairs(fm) do
@@ -2727,14 +2727,14 @@ function QA.makeIconsMenuItems(plugin)
         keep_menu_open = true,
         callback       = function()
             for _k, a in ipairs(Config.ALL_ACTIONS) do
-                SUISettings:del("simpleui_action_" .. a.id .. "_icon")
+                SUISettings:del("maxoutui_action_" .. a.id .. "_icon")
             end
-            SUISettings:del("simpleui_action_wifi_toggle_off_icon")
+            SUISettings:del("maxoutui_action_wifi_toggle_off_icon")
             for _i, qa_id in ipairs(QA.getCustomQAList()) do
-                local cfg = SUISettings:get("simpleui_qa_" .. qa_id)
+                local cfg = SUISettings:get("maxoutui_qa_" .. qa_id)
                 if type(cfg) == "table" then
                     cfg.icon = nil
-                    SUISettings:set("simpleui_qa_" .. qa_id, cfg)
+                    SUISettings:set("maxoutui_qa_" .. qa_id, cfg)
                 end
             end
             local ok_ss, SUIStyle = pcall(require, "mui_style")
@@ -3010,7 +3010,7 @@ function QA.executeCustomQA(action_id, fm, show_unavailable_fn)
         end
     end
 
-    local cfg = SUISettings:get("simpleui_qa_" .. action_id) or {}
+    local cfg = SUISettings:get("maxoutui_qa_" .. action_id) or {}
 
     if cfg.qa_folder then
         QA.showQAFolderDialog(action_id, cfg.label, fm, show_unavailable_fn)
@@ -3022,7 +3022,7 @@ function QA.executeCustomQA(action_id, fm, show_unavailable_fn)
                 Dispatcher:execute({ [cfg.dispatcher_action] = true })
             end)
             if not ok then
-                logger.warn("simpleui: dispatcher_action failed:", cfg.dispatcher_action, tostring(err))
+                logger.warn("maxoutui: dispatcher_action failed:", cfg.dispatcher_action, tostring(err))
                 _unavail(string.format(_("System action error: %s"), tostring(err)))
             end
         else
@@ -3371,24 +3371,10 @@ end
 
 local function _recentOpenBook(filepath)
     if not filepath then return end
-    local is_suwayomi = tostring(filepath):match("^suwayomi://manga/(%d+)")
-    if is_suwayomi then
-        local manga_id = tonumber(is_suwayomi)
-        local sw_plugin = _getSuwayomiInstance()
-        if sw_plugin then
-            local ok_m, Manga = pcall(require, "desktop_modules/module_manga")
-            local title = ok_m and Manga and Manga.getPinnedMangaTitle and Manga.getPinnedMangaTitle(filepath)
-            if sw_plugin.resumeMangaStream then
-                sw_plugin:resumeMangaStream({ id = manga_id, title = title })
-            elseif sw_plugin.showChaptersForManga then
-                sw_plugin:showChaptersForManga({ id = manga_id, title = title })
-            end
-            return
-        else
-            local InfoMessage = require("ui/widget/infomessage")
-            UIManager:show(InfoMessage:new{ text = _("Suwayomi plugin not available."), timeout = 2 })
-            return
-        end
+    local ok_m, Manga = pcall(require, "desktop_modules/module_manga")
+    if ok_m and Manga and Manga.openPinnedManga
+        and Manga.openPinnedManga(filepath, nil) then
+        return
     end
 
     local BD = require("ui/bidi")
@@ -3583,7 +3569,7 @@ end
 -- ---------------------------------------------------------------------------
 
 function QA.isInPlaceCustomQA(action_id)
-    local cfg = SUISettings:get("simpleui_qa_" .. action_id) or {}
+    local cfg = SUISettings:get("maxoutui_qa_" .. action_id) or {}
     if cfg.qa_folder then return true end
     if cfg.dispatcher_action and cfg.dispatcher_action ~= "" then return true end
     if cfg.plugin_key and cfg.plugin_method and cfg.plugin_key ~= "" then return true end
@@ -3601,7 +3587,7 @@ end
 -- ---------------------------------------------------------------------------
 
 function QA.isAsyncInPlaceCustomQA(action_id)
-    local cfg = SUISettings:get("simpleui_qa_" .. action_id) or {}
+    local cfg = SUISettings:get("maxoutui_qa_" .. action_id) or {}
     return cfg.qa_folder == true
 end
 

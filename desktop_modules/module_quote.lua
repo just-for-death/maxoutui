@@ -100,10 +100,10 @@ local MAX_POOL_HIGHLIGHTS = 100
 
 
 
-local SETTING_SOURCE      = "simpleui_quote_source"
-local SETTING_CUSTOM_FILE = "simpleui_quote_custom_file"
-local SETTING_ALIGN       = "simpleui_quote_align"
-local SETTING_FIXED_H     = "simpleui_quote_fixed_height"
+local SETTING_SOURCE      = "maxoutui_quote_source"
+local SETTING_CUSTOM_FILE = "maxoutui_quote_custom_file"
+local SETTING_ALIGN       = "maxoutui_quote_align"
+local SETTING_FIXED_H     = "maxoutui_quote_fixed_height"
 
 local _FIXED_LINES = 3  -- number of quote-body lines when fixed height is active
 
@@ -156,19 +156,19 @@ end
 
 -- Returns the absolute path to the sui_quotes directory.
 -- Since version X.X this lives outside the plugin folder
--- (DataStorage/simpleui/sui_quotes/) so it survives plugin updates.
+-- (DataStorage/maxoutui/mui_quotes/) so it survives plugin updates.
 local _CUSTOM_DIR
 local function customDir()
     if not _CUSTOM_DIR then
         local ok_ds, DataStorage = pcall(require, "datastorage")
         if ok_ds and DataStorage then
-            _CUSTOM_DIR = DataStorage:getSettingsDir() .. "/simpleui/sui_quotes"
+            _CUSTOM_DIR = DataStorage:getSettingsDir() .. "/maxoutui/mui_quotes"
         else
             -- Fallback: old in-plugin location.
             local info = debug.getinfo(1, "S")
             local src  = info and info.source and info.source:match("^@(.+)$")
             if src then
-                _CUSTOM_DIR = src:match("(.+)/[^/]+$") .. "/sui_quotes"
+                _CUSTOM_DIR = src:match("(.+)/[^/]+$") .. "/mui_quotes"
             else
                 _CUSTOM_DIR = "desktop_modules/custom_quotes"
             end
@@ -177,7 +177,7 @@ local function customDir()
     return _CUSTOM_DIR
 end
 
--- Scans sui_quotes/ for .lua files; returns a sorted list of filenames.
+-- Scans mui_quotes/ for .lua files; returns a sorted list of filenames.
 local function listCustomQuoteFiles()
     local dir   = customDir()
     local files = {}
@@ -266,23 +266,23 @@ local function loadCustomQuotes(filename)
     if not filename or filename == "" then return nil end
     local path = customDir() .. "/" .. filename
     if lfs.attributes(path, "mode") ~= "file" then
-        logger.warn("simpleui: quote: custom file not found: " .. tostring(path))
+        logger.warn("maxoutui: quote: custom file not found: " .. tostring(path))
         return nil
     end
     local ok, data = pcall(dofile, path)
     if ok and type(data) == "table" and #data > 0 then
         _custom_quotes_cache = data; _custom_quotes_cache_file = filename
-        logger.info("simpleui: quote: loaded " .. #data .. " custom quotes from " .. filename)
+        logger.info("maxoutui: quote: loaded " .. #data .. " custom quotes from " .. filename)
         return _custom_quotes_cache
     end
-    logger.warn("simpleui: quote: failed to load " .. tostring(path) .. ": " .. tostring(data))
+    logger.warn("maxoutui: quote: failed to load " .. tostring(path) .. ": " .. tostring(data))
     return nil
 end
 
-local _CUSTOM_DECK_KEY  = "simpleui_quote_custom_deck_order"
-local _CUSTOM_POS_KEY   = "simpleui_quote_custom_deck_pos"
-local _CUSTOM_COUNT_KEY = "simpleui_quote_custom_deck_count"
-local _CUSTOM_FILE_KEY  = "simpleui_quote_custom_deck_file"
+local _CUSTOM_DECK_KEY  = "maxoutui_quote_custom_deck_order"
+local _CUSTOM_POS_KEY   = "maxoutui_quote_custom_deck_pos"
+local _CUSTOM_COUNT_KEY = "maxoutui_quote_custom_deck_count"
+local _CUSTOM_FILE_KEY  = "maxoutui_quote_custom_deck_file"
 
 local function pickCustomQuote(pfx)
     local filename = getCustomFile(pfx)
@@ -330,11 +330,11 @@ end
 
 -- order are persisted in settings so the sequence survives restarts.
 
-local _DECK_KEY  = "simpleui_quote_deck_order"
+local _DECK_KEY  = "maxoutui_quote_deck_order"
 
-local _POS_KEY   = "simpleui_quote_deck_pos"
+local _POS_KEY   = "maxoutui_quote_deck_pos"
 
-local _COUNT_KEY = "simpleui_quote_deck_count"
+local _COUNT_KEY = "maxoutui_quote_deck_count"
 
 -- In-memory deck + short reuse window for home rebuild storms.
 local _mem_deck, _mem_pos, _mem_n
@@ -366,7 +366,7 @@ end
 local function _saveDeck(deck, pos)
     _mem_deck, _mem_pos, _mem_n = deck, pos, #deck
     -- Keep settings in memory; coalesce disk flush so open-home rebuild storms
-    -- do not rewrite sui_settings.lua three times in a row.
+    -- do not rewrite mui_settings.lua three times in a row.
     SUISettings:setNoFlush(_DECK_KEY,  table.concat(deck, ","))
     SUISettings:setNoFlush(_POS_KEY,   pos)
     SUISettings:setNoFlush(_COUNT_KEY, #deck)
@@ -656,7 +656,7 @@ local function _buildPool()
         end
     end
 
-    logger.dbg("simpleui: quote: _buildPool: " .. #pool .. " highlights from "
+    logger.dbg("maxoutui: quote: _buildPool: " .. #pool .. " highlights from "
         .. books_read .. "/" .. n_cand .. " candidate books ("
         .. n_hist .. " in history)")
     return pool
@@ -685,11 +685,11 @@ end
 
 -- separately so the two decks are independent.
 
-local _HL_DECK_KEY  = "simpleui_quote_hl_deck_order"
+local _HL_DECK_KEY  = "maxoutui_quote_hl_deck_order"
 
-local _HL_POS_KEY   = "simpleui_quote_hl_deck_pos"
+local _HL_POS_KEY   = "maxoutui_quote_hl_deck_pos"
 
-local _HL_COUNT_KEY = "simpleui_quote_hl_deck_count"
+local _HL_COUNT_KEY = "maxoutui_quote_hl_deck_count"
 
 
 
@@ -822,7 +822,7 @@ local function buildWidget(inner_w, text_str, attr_str, face_quote, face_attr, v
                 if ok_tbx then
                     return tbx
                 else
-                    logger.warn("simpleui: module_quote: makeAlphaTextBox failed, falling back: " .. tostring(tbx))
+                    logger.warn("maxoutui: module_quote: makeAlphaTextBox failed, falling back: " .. tostring(tbx))
                     return TextBoxWidget:new(args)
                 end
             else
@@ -850,7 +850,7 @@ local function buildFromCustomQuote(inner_w, face_quote, face_attr, vspan_gap, p
 
         return TextBoxWidget:new{
 
-            text    = _("No custom quotes found. Add a .lua file to the plugin's sui_quotes/ folder and select it in Settings."),
+            text    = _("No custom quotes found. Add a .lua file to the plugin's mui_quotes/ folder and select it in Settings."),
 
             face    = face_quote,
 
@@ -916,7 +916,7 @@ local function buildFromHighlight(inner_w, face_quote, face_attr, vspan_gap, has
 
     if not h then
 
-        logger.warn("simpleui: quote: buildFromHighlight: pool empty, showing fallback")
+        logger.warn("maxoutui: quote: buildFromHighlight: pool empty, showing fallback")
 
         return buildWidget(
 
@@ -932,7 +932,7 @@ local function buildFromHighlight(inner_w, face_quote, face_attr, vspan_gap, has
 
     end
 
-    logger.warn("simpleui: quote: showing highlight from '" .. tostring(h.title) .. "': " .. tostring(h.text):sub(1, 60))
+    logger.warn("maxoutui: quote: showing highlight from '" .. tostring(h.title) .. "': " .. tostring(h.text):sub(1, 60))
 
     local attr = "— " .. h.title
 
@@ -1098,7 +1098,7 @@ function M.build(w, ctx)
 
     local has_wallpaper = ctx and ctx.has_wallpaper
 
-    logger.warn("simpleui: quote: build source=" .. source .. " align=" .. alignment)
+    logger.warn("maxoutui: quote: build source=" .. source .. " align=" .. alignment)
 
     local content
     local hl_filepath
@@ -1389,7 +1389,7 @@ function M.getMenuItems(ctx_menu)
 
                         if #files == 0 then
                             subitems[#subitems + 1] = {
-                                text    = _lc("No .lua files found in sui_quotes/"),
+                                text    = _lc("No .lua files found in mui_quotes/"),
                                 enabled = false,
                             }
                         else
@@ -1414,7 +1414,7 @@ function M.getMenuItems(ctx_menu)
                         end
 
                         subitems[#subitems + 1] = {
-                            text    = _lc("Place .lua files in the plugin's sui_quotes/ folder"),
+                            text    = _lc("Place .lua files in the plugin's mui_quotes/ folder"),
                             enabled = false,
                         }
 
@@ -1438,7 +1438,7 @@ function M.getMenuItems(ctx_menu)
 
                         if #files == 0 then
                             subitems[#subitems + 1] = {
-                                text    = _lc("No .lua files found in sui_quotes/"),
+                                text    = _lc("No .lua files found in mui_quotes/"),
                                 enabled = false,
                             }
                         else
@@ -1463,7 +1463,7 @@ function M.getMenuItems(ctx_menu)
                         end
 
                         subitems[#subitems + 1] = {
-                            text    = _lc("Place .lua files in the plugin's sui_quotes/ folder"),
+                            text    = _lc("Place .lua files in the plugin's mui_quotes/ folder"),
                             enabled = false,
                         }
 

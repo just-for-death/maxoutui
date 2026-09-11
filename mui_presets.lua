@@ -9,7 +9,7 @@
 -- Saves and restores complete snapshots of the homescreen configuration.
 -- Covers: modules, order, quick actions per slot, wallpaper, transparent bars.
 -- Does NOT include: topbar/bottombar, the preset storage key itself.
--- Storage: "simpleui_hs_presets" → { [name] = {k=v, ...}, ... }
+-- Storage: "maxoutui_hs_presets" → { [name] = {k=v, ...}, ... }
 --
 -- API:
 --   SUIPresets.save(name)       SUIPresets.apply(name)    SUIPresets.delete(name)
@@ -20,11 +20,11 @@
 -- 2. ICON PRESETS  (SUIIconPresets)
 -- ══════════════════════════════════════════════════════════════════════════
 -- Saves and restores snapshots of all icon customizations:
---   • System icon overrides      simpleui_sysicon_*
---   • Default action icon overr. simpleui_action_*_icon
---   • Custom QA icon fields      simpleui_qa_<id>.icon  (only the icon field)
+--   • System icon overrides      maxoutui_sysicon_*
+--   • Default action icon overr. maxoutui_action_*_icon
+--   • Custom QA icon fields      maxoutui_qa_<id>.icon  (only the icon field)
 -- Does NOT include: labels, paths/collections of CQAs, the storage key itself.
--- Storage: "simpleui_icon_presets" → { [name] = {_scalar={}, _cqa={}}, ... }
+-- Storage: "maxoutui_icon_presets" → { [name] = {_scalar={}, _cqa={}}, ... }
 --
 -- API:
 --   SUIIconPresets.save(name)           SUIIconPresets.apply(name, QA_module)
@@ -40,29 +40,29 @@ local _           = require("mui_i18n").translate
 -- § 1  HOMESCREEN PRESETS
 -- ============================================================================
 
-local HS_PRESET_KEY = "simpleui_hs_presets"
+local HS_PRESET_KEY = "maxoutui_hs_presets"
 
 local HS_PREFIXES = {
-    "simpleui_hs_",
-    "simpleui_style_",
+    "maxoutui_hs_",
+    "maxoutui_style_",
 }
 
 local HS_EXACT = {
-    ["simpleui_layout"]                 = true,
-    ["simpleui_statusbar_transparent"]  = true,
-    ["simpleui_navbar_transparent"]     = true,
-    ["simpleui_wallpaper_show_in_fm"]   = true,  -- "show wallpaper in file manager" toggle
-    ["simpleui_coll_list"]           = true,
-    ["simpleui_coll_badge_position"] = true,
-    ["simpleui_coll_badge_color"]    = true,
-    ["simpleui_coll_badge_hidden"]   = true,
-    ["simpleui_reading_goals_show_annual"]  = true,
-    ["simpleui_reading_goals_show_monthly"] = true,
-    ["simpleui_reading_goals_show_daily"]   = true,
-    ["simpleui_reading_goals_layout"]       = true,
-    ["simpleui_qa_row_instances"]           = true,
-    ["simpleui_spacer_row_instances"]       = true,
-    ["simpleui_coll_row_instances"]         = true,
+    ["maxoutui_layout"]                 = true,
+    ["maxoutui_statusbar_transparent"]  = true,
+    ["maxoutui_navbar_transparent"]     = true,
+    ["maxoutui_wallpaper_show_in_fm"]   = true,  -- "show wallpaper in file manager" toggle
+    ["maxoutui_coll_list"]           = true,
+    ["maxoutui_coll_badge_position"] = true,
+    ["maxoutui_coll_badge_color"]    = true,
+    ["maxoutui_coll_badge_hidden"]   = true,
+    ["maxoutui_reading_goals_show_annual"]  = true,
+    ["maxoutui_reading_goals_show_monthly"] = true,
+    ["maxoutui_reading_goals_show_daily"]   = true,
+    ["maxoutui_reading_goals_layout"]       = true,
+    ["maxoutui_qa_row_instances"]           = true,
+    ["maxoutui_spacer_row_instances"]       = true,
+    ["maxoutui_coll_row_instances"]         = true,
 }
 
 local function _hsMatchesKey(key)
@@ -70,7 +70,7 @@ local function _hsMatchesKey(key)
     for _i, pfx in ipairs(HS_PREFIXES) do
         if key:sub(1, #pfx) == pfx then
             if key == HS_PRESET_KEY then return false end
-            if key == HS_PRESET_KEY or key == "simpleui_hs_active_preset" then return false end
+            if key == HS_PRESET_KEY or key == "maxoutui_hs_active_preset" then return false end
             return true
         end
     end
@@ -80,9 +80,9 @@ end
 local function _getDirs()
     local ok_ds, DataStorage = pcall(require, "datastorage")
     if not ok_ds or not DataStorage then return nil, nil end
-    local base = DataStorage:getSettingsDir() .. "/simpleui/sui_presets"
-    local exp_dir = base .. "/sui_presets_export"
-    local imp_dir = base .. "/sui_presets_import"
+    local base = DataStorage:getSettingsDir() .. "/maxoutui/mui_presets"
+    local exp_dir = base .. "/mui_presets_export"
+    local imp_dir = base .. "/mui_presets_import"
     local ok_lfs, lfs = pcall(require, "libs/libkoreader-lfs")
     if ok_lfs and lfs then
         if lfs.attributes(base, "mode") ~= "directory" then lfs.mkdir(base) end
@@ -138,33 +138,33 @@ local BUILTIN_PRESETS = {
         desc = _("Clock") .. ", " .. _("Currently Reading") .. ", " .. _("Recent Books"),
         layout = { pages = { { id = 1, modules = { "clock", "currently", "recent" } } } },
         settings = {
-            simpleui_hs_clock_scale = 100,
-            simpleui_hide_label_clock = false,
-            simpleui_hs_currently_show_title = true,
-            simpleui_hs_currently_show_author = true,
-            simpleui_hs_currently_show_progress = true,
-            simpleui_hs_currently_show_percent = true,
-            simpleui_hs_currently_show_book_days = false,
-            simpleui_hs_currently_show_book_time = false,
-            simpleui_hs_currently_show_book_remaining = false,
-            simpleui_hs_currently_bar_style = "with_pct",
-            simpleui_hs_currently_stats_style = "default",
-            simpleui_hs_currently_elem_order = { "title", "author", "progress", "percent" },
-            simpleui_hs_currently_scale = 100,
-            simpleui_hs_currently_thumb_scale = 100,
-            simpleui_hs_currently_item_label_scale = 100,
-            simpleui_hs_currently_show_frame = false,
-            simpleui_hs_currently_solid_bg = false,
-            simpleui_hide_label_currently = false,
-            simpleui_hs_recent_show_progress = true,
-            simpleui_hs_recent_show_text = true,
-            simpleui_hs_recent_show_overlay = false,
-            simpleui_hs_recent_scale = 100,
-            simpleui_hs_recent_thumb_scale = 100,
-            simpleui_hs_recent_item_label_scale = 100,
-            simpleui_hs_recent_show_frame = false,
-            simpleui_hs_recent_solid_bg = false,
-            simpleui_hide_label_recent = false,
+            maxoutui_hs_clock_scale = 100,
+            maxoutui_hide_label_clock = false,
+            maxoutui_hs_currently_show_title = true,
+            maxoutui_hs_currently_show_author = true,
+            maxoutui_hs_currently_show_progress = true,
+            maxoutui_hs_currently_show_percent = true,
+            maxoutui_hs_currently_show_book_days = false,
+            maxoutui_hs_currently_show_book_time = false,
+            maxoutui_hs_currently_show_book_remaining = false,
+            maxoutui_hs_currently_bar_style = "with_pct",
+            maxoutui_hs_currently_stats_style = "default",
+            maxoutui_hs_currently_elem_order = { "title", "author", "progress", "percent" },
+            maxoutui_hs_currently_scale = 100,
+            maxoutui_hs_currently_thumb_scale = 100,
+            maxoutui_hs_currently_item_label_scale = 100,
+            maxoutui_hs_currently_show_frame = false,
+            maxoutui_hs_currently_solid_bg = false,
+            maxoutui_hide_label_currently = false,
+            maxoutui_hs_recent_show_progress = true,
+            maxoutui_hs_recent_show_text = true,
+            maxoutui_hs_recent_show_overlay = false,
+            maxoutui_hs_recent_scale = 100,
+            maxoutui_hs_recent_thumb_scale = 100,
+            maxoutui_hs_recent_item_label_scale = 100,
+            maxoutui_hs_recent_show_frame = false,
+            maxoutui_hs_recent_solid_bg = false,
+            maxoutui_hide_label_recent = false,
         }
     },
     {
@@ -173,33 +173,33 @@ local BUILTIN_PRESETS = {
         desc = _("Quote of the Day") .. ", " .. _("Currently Reading") .. ", " .. _("Recent Books"),
         layout = { pages = { { id = 1, modules = { "quote", "currently", "recent" } } } },
         settings = {
-            simpleui_hs_quote_source = "quotes",
-            simpleui_hs_quote_align = "center",
-            simpleui_hs_currently_show_title = true,
-            simpleui_hs_currently_show_author = true,
-            simpleui_hs_currently_show_progress = false,
-            simpleui_hs_currently_show_percent = false,
-            simpleui_hs_currently_show_book_days = true,
-            simpleui_hs_currently_show_book_time = true,
-            simpleui_hs_currently_show_book_remaining = false,
-            simpleui_hs_currently_bar_style = "simple",
-            simpleui_hs_currently_stats_style = "compact",
-            simpleui_hs_currently_elem_order = { "title", "author", "book_days", "book_time" },
-            simpleui_hs_currently_scale = 100,
-            simpleui_hs_currently_thumb_scale = 100,
-            simpleui_hs_currently_item_label_scale = 100,
-            simpleui_hs_currently_show_frame = false,
-            simpleui_hs_currently_solid_bg = false,
-            simpleui_hide_label_currently = false,
-            simpleui_hs_recent_show_progress = false,
-            simpleui_hs_recent_show_text = false,
-            simpleui_hs_recent_show_overlay = false,
-            simpleui_hs_recent_scale = 100,
-            simpleui_hs_recent_thumb_scale = 100,
-            simpleui_hs_recent_item_label_scale = 100,
-            simpleui_hs_recent_show_frame = false,
-            simpleui_hs_recent_solid_bg = false,
-            simpleui_hide_label_recent = false,
+            maxoutui_hs_quote_source = "quotes",
+            maxoutui_hs_quote_align = "center",
+            maxoutui_hs_currently_show_title = true,
+            maxoutui_hs_currently_show_author = true,
+            maxoutui_hs_currently_show_progress = false,
+            maxoutui_hs_currently_show_percent = false,
+            maxoutui_hs_currently_show_book_days = true,
+            maxoutui_hs_currently_show_book_time = true,
+            maxoutui_hs_currently_show_book_remaining = false,
+            maxoutui_hs_currently_bar_style = "simple",
+            maxoutui_hs_currently_stats_style = "compact",
+            maxoutui_hs_currently_elem_order = { "title", "author", "book_days", "book_time" },
+            maxoutui_hs_currently_scale = 100,
+            maxoutui_hs_currently_thumb_scale = 100,
+            maxoutui_hs_currently_item_label_scale = 100,
+            maxoutui_hs_currently_show_frame = false,
+            maxoutui_hs_currently_solid_bg = false,
+            maxoutui_hide_label_currently = false,
+            maxoutui_hs_recent_show_progress = false,
+            maxoutui_hs_recent_show_text = false,
+            maxoutui_hs_recent_show_overlay = false,
+            maxoutui_hs_recent_scale = 100,
+            maxoutui_hs_recent_thumb_scale = 100,
+            maxoutui_hs_recent_item_label_scale = 100,
+            maxoutui_hs_recent_show_frame = false,
+            maxoutui_hs_recent_solid_bg = false,
+            maxoutui_hide_label_recent = false,
         }
     },
     {
@@ -208,21 +208,21 @@ local BUILTIN_PRESETS = {
         desc = _("Cover Deck") .. ", " .. _("Reading Goals") .. ", " .. _("Reading Stats"),
         layout = { pages = { { id = 1, modules = { "coverdeck", "reading_goals", "reading_stats" } } } },
         settings = {
-            simpleui_hs_coverdeck_source = "recent",
-            simpleui_hs_coverdeck_title_pos = "above",
-            simpleui_hs_coverdeck_main_order = { "title", "author", "covers", "progress", "stats" },
-            simpleui_hs_coverdeck_show_title = false,
-            simpleui_hs_coverdeck_show_author = false,
-            simpleui_hs_coverdeck_show_progress = true,
-            simpleui_hs_coverdeck_show_percent = true,
-            simpleui_hs_coverdeck_show_book_days = true,
-            simpleui_hs_coverdeck_show_book_time = false,
-            simpleui_hs_coverdeck_show_book_remaining = false,
-            simpleui_hs_coverdeck_stats_order = { "percent", "book_days" },
-            simpleui_hs_coverdeck_scale = 100,
-            simpleui_hs_coverdeck_thumb_scale = 100,
-            simpleui_hs_coverdeck_item_label_scale = 100,
-            simpleui_hide_label_coverdeck = false,
+            maxoutui_hs_coverdeck_source = "recent",
+            maxoutui_hs_coverdeck_title_pos = "above",
+            maxoutui_hs_coverdeck_main_order = { "title", "author", "covers", "progress", "stats" },
+            maxoutui_hs_coverdeck_show_title = false,
+            maxoutui_hs_coverdeck_show_author = false,
+            maxoutui_hs_coverdeck_show_progress = true,
+            maxoutui_hs_coverdeck_show_percent = true,
+            maxoutui_hs_coverdeck_show_book_days = true,
+            maxoutui_hs_coverdeck_show_book_time = false,
+            maxoutui_hs_coverdeck_show_book_remaining = false,
+            maxoutui_hs_coverdeck_stats_order = { "percent", "book_days" },
+            maxoutui_hs_coverdeck_scale = 100,
+            maxoutui_hs_coverdeck_thumb_scale = 100,
+            maxoutui_hs_coverdeck_item_label_scale = 100,
+            maxoutui_hide_label_coverdeck = false,
         }
     },
     {
@@ -231,30 +231,30 @@ local BUILTIN_PRESETS = {
         desc = _("Cover Deck") .. ", " .. _("Recent Books"),
         layout = { pages = { { id = 1, modules = { "coverdeck", "recent" } } } },
         settings = {
-            simpleui_hs_coverdeck_source = "tbr",
-            simpleui_hs_coverdeck_title_pos = "below",
-            simpleui_hs_coverdeck_main_order = { "covers", "title", "author", "progress", "stats" },
-            simpleui_hs_coverdeck_show_title = true,
-            simpleui_hs_coverdeck_show_author = false,
-            simpleui_hs_coverdeck_show_progress = false,
-            simpleui_hs_coverdeck_show_percent = false,
-            simpleui_hs_coverdeck_show_book_days = false,
-            simpleui_hs_coverdeck_show_book_time = false,
-            simpleui_hs_coverdeck_show_book_remaining = false,
-            simpleui_hs_coverdeck_stats_order = {},
-            simpleui_hs_coverdeck_scale = 100,
-            simpleui_hs_coverdeck_thumb_scale = 100,
-            simpleui_hs_coverdeck_item_label_scale = 100,
-            simpleui_hide_label_coverdeck = false,
-            simpleui_hs_recent_show_progress = true,
-            simpleui_hs_recent_show_text = true,
-            simpleui_hs_recent_show_overlay = false,
-            simpleui_hs_recent_scale = 100,
-            simpleui_hs_recent_thumb_scale = 100,
-            simpleui_hs_recent_item_label_scale = 100,
-            simpleui_hs_recent_show_frame = false,
-            simpleui_hs_recent_solid_bg = false,
-            simpleui_hide_label_recent = false,
+            maxoutui_hs_coverdeck_source = "tbr",
+            maxoutui_hs_coverdeck_title_pos = "below",
+            maxoutui_hs_coverdeck_main_order = { "covers", "title", "author", "progress", "stats" },
+            maxoutui_hs_coverdeck_show_title = true,
+            maxoutui_hs_coverdeck_show_author = false,
+            maxoutui_hs_coverdeck_show_progress = false,
+            maxoutui_hs_coverdeck_show_percent = false,
+            maxoutui_hs_coverdeck_show_book_days = false,
+            maxoutui_hs_coverdeck_show_book_time = false,
+            maxoutui_hs_coverdeck_show_book_remaining = false,
+            maxoutui_hs_coverdeck_stats_order = {},
+            maxoutui_hs_coverdeck_scale = 100,
+            maxoutui_hs_coverdeck_thumb_scale = 100,
+            maxoutui_hs_coverdeck_item_label_scale = 100,
+            maxoutui_hide_label_coverdeck = false,
+            maxoutui_hs_recent_show_progress = true,
+            maxoutui_hs_recent_show_text = true,
+            maxoutui_hs_recent_show_overlay = false,
+            maxoutui_hs_recent_scale = 100,
+            maxoutui_hs_recent_thumb_scale = 100,
+            maxoutui_hs_recent_item_label_scale = 100,
+            maxoutui_hs_recent_show_frame = false,
+            maxoutui_hs_recent_solid_bg = false,
+            maxoutui_hide_label_recent = false,
         }
     }
 }
@@ -320,7 +320,7 @@ function SUIPresets.applyBuiltin(id)
     end
     if not bp then return false end
 
-    SUISettings:set("simpleui_layout", bp.layout)
+    SUISettings:set("maxoutui_layout", bp.layout)
 
     local active_set = {}
     for _, page in ipairs(bp.layout.pages) do
@@ -337,10 +337,10 @@ function SUIPresets.applyBuiltin(id)
     for _, mod in ipairs(Registry.list()) do
         if not active_set[mod.id] then table.insert(flat_order, mod.id) end
         local is_active = (active_set[mod.id] == true)
-        if type(mod.setEnabled) == "function" then mod.setEnabled("simpleui_hs_", is_active)
-        elseif mod.enabled_key then SUISettings:set("simpleui_hs_" .. mod.enabled_key, is_active) end
+        if type(mod.setEnabled) == "function" then mod.setEnabled("maxoutui_hs_", is_active)
+        elseif mod.enabled_key then SUISettings:set("maxoutui_hs_" .. mod.enabled_key, is_active) end
     end
-    SUISettings:set("simpleui_hs_module_order", flat_order)
+    SUISettings:set("maxoutui_hs_module_order", flat_order)
 
     if bp.settings then
         for k, v in pairs(bp.settings) do
@@ -398,7 +398,7 @@ function SUIPresets.export(name)
     if not ok or not LuaSettings then return nil, _("LuaSettings module unavailable") end
 
     local f = LuaSettings:open(filepath)
-    f:saveSetting("type", "simpleui_homescreen_preset")
+    f:saveSetting("type", "maxoutui_homescreen_preset")
     f:saveSetting("name", name)
     f:saveSetting("data", preset)
     f:flush()
@@ -411,7 +411,7 @@ function SUIPresets.import(filepath)
 
     local f = LuaSettings:open(filepath)
     local typ = f:readSetting("type")
-    if typ ~= "simpleui_homescreen_preset" then
+    if typ ~= "maxoutui_homescreen_preset" then
         return nil, _("Invalid preset file")
     end
     local name = f:readSetting("name") or "Imported Preset"
@@ -438,10 +438,10 @@ end
 -- § 2  ICON PRESETS
 -- ============================================================================
 
-local ICON_PRESET_KEY  = "simpleui_icon_presets"
-local ICON_PREFIXES    = { "simpleui_sysicon_", "simpleui_action_" }
-local CQA_PREFIX       = "simpleui_qa_"
-local CQA_LIST_KEY     = "simpleui_qa_list"
+local ICON_PRESET_KEY  = "maxoutui_icon_presets"
+local ICON_PREFIXES    = { "maxoutui_sysicon_", "maxoutui_action_" }
+local CQA_PREFIX       = "maxoutui_qa_"
+local CQA_LIST_KEY     = "maxoutui_qa_list"
 
 local function _isScalarIconKey(key)
     if key == ICON_PRESET_KEY then return false end
@@ -578,7 +578,7 @@ function SUIIconPresets.export(name)
     if not ok or not LuaSettings then return nil, _("LuaSettings module unavailable") end
 
     local f = LuaSettings:open(filepath)
-    f:saveSetting("type", "simpleui_icon_preset")
+    f:saveSetting("type", "maxoutui_icon_preset")
     f:saveSetting("name", name)
     f:saveSetting("data", preset)
     f:flush()
@@ -591,7 +591,7 @@ function SUIIconPresets.import(filepath)
 
     local f = LuaSettings:open(filepath)
     local typ = f:readSetting("type")
-    if typ ~= "simpleui_icon_preset" then
+    if typ ~= "maxoutui_icon_preset" then
         return nil, _("Invalid preset file")
     end
     local name = f:readSetting("name") or "Imported Icon Preset"
@@ -683,10 +683,10 @@ function SUIPresets.makeMenuItems(opts)
         select_items[#select_items + 1] = {
             text_func    = function() return _bp.name .. "\n" .. _bp.desc end,
             radio        = true,
-            checked_func = function() return SUISettings:get("simpleui_hs_active_preset") == _bp.id end,
+            checked_func = function() return SUISettings:get("maxoutui_hs_active_preset") == _bp.id end,
             callback = function()
                 SUIPresets.applyBuiltin(_bp.id)
-                SUISettings:set("simpleui_hs_active_preset", _bp.id)
+                SUISettings:set("maxoutui_hs_active_preset", _bp.id)
                 UIManager:nextTick(on_apply)
             end,
         }
@@ -702,11 +702,11 @@ function SUIPresets.makeMenuItems(opts)
             text_func    = function() return _name end,
             radio        = true,
             checked_func = function()
-                return SUISettings:get("simpleui_hs_active_preset") == _name
+                return SUISettings:get("maxoutui_hs_active_preset") == _name
             end,
             callback = function()
                 if SUIPresets.apply(_name) then
-                    SUISettings:set("simpleui_hs_active_preset", _name)
+                    SUISettings:set("maxoutui_hs_active_preset", _name)
                     UIManager:nextTick(on_apply)
                 else
                     showDialog(InfoMessage():new{
@@ -749,10 +749,10 @@ function SUIPresets.makeMenuItems(opts)
                                                 subtitle = bp.desc,
                                                 inner_w  = ctx2.inner_w,
                                                 radio    = true,
-                                                checked  = (SUISettings:get("simpleui_hs_active_preset") == bp.id),
+                                                checked  = (SUISettings:get("maxoutui_hs_active_preset") == bp.id),
                                                 on_tap   = function()
                                                     SUIPresets.applyBuiltin(bp.id)
-                                                    SUISettings:set("simpleui_hs_active_preset", bp.id)
+                                                    SUISettings:set("maxoutui_hs_active_preset", bp.id)
                                                     ctx2.repaint()
                                                     UIManager:nextTick(on_apply)
                                                 end,
@@ -781,10 +781,10 @@ function SUIPresets.makeMenuItems(opts)
                                                 title   = _name,
                                                 inner_w = ctx2.inner_w,
                                                 radio   = true,
-                                                checked = (SUISettings:get("simpleui_hs_active_preset") == _name),
+                                                checked = (SUISettings:get("maxoutui_hs_active_preset") == _name),
                                                 on_tap  = function()
                                                     if SUIPresets.apply(_name) then
-                                                        SUISettings:set("simpleui_hs_active_preset", _name)
+                                                        SUISettings:set("maxoutui_hs_active_preset", _name)
                                                         ctx2.repaint()
                                                         UIManager:nextTick(on_apply)
                                                     else
@@ -842,7 +842,7 @@ function SUIPresets.makeMenuItems(opts)
                             end
                             local function doSave()
                                 SUIPresets.save(name)
-                                SUISettings:set("simpleui_hs_active_preset", name)
+                                SUISettings:set("maxoutui_hs_active_preset", name)
                                 closeDialog(dialog)
                                 showDialog(InfoMessage():new{
                                     text    = string.format(_("Preset \"%s\" saved."), name),
@@ -889,7 +889,7 @@ function SUIPresets.makeMenuItems(opts)
                                     ok_callback = function()
                                         unlock_overlay()
                                         SUIPresets.save(_name)
-                                        SUISettings:set("simpleui_hs_active_preset", _name)
+                                        SUISettings:set("maxoutui_hs_active_preset", _name)
                                         showDialog(InfoMessage():new{ text = string.format(_("Preset \"%s\" updated."), _name), timeout = 2 })
                                         UIManager:nextTick(on_save)
                                     end,
@@ -916,8 +916,8 @@ function SUIPresets.makeMenuItems(opts)
                                                 return
                                             end
                                             SUIPresets.rename(_name, new_name)
-                                            local active = SUISettings:get("simpleui_hs_active_preset")
-                                            if active == _name then SUISettings:set("simpleui_hs_active_preset", new_name) end
+                                            local active = SUISettings:get("maxoutui_hs_active_preset")
+                                            if active == _name then SUISettings:set("maxoutui_hs_active_preset", new_name) end
                                             closeDialog(d)
                                             UIManager:nextTick(on_save)
                                         end },
@@ -934,8 +934,8 @@ function SUIPresets.makeMenuItems(opts)
                                     ok_callback = function()
                                         unlock_overlay()
                                         SUIPresets.delete(_name)
-                                        local active = SUISettings:get("simpleui_hs_active_preset")
-                                        if active == _name then SUISettings:del("simpleui_hs_active_preset") end
+                                        local active = SUISettings:get("maxoutui_hs_active_preset")
+                                        if active == _name then SUISettings:del("maxoutui_hs_active_preset") end
                                         UIManager:nextTick(on_save)
                                     end,
                                     cancel_callback = function() unlock_overlay() end,
@@ -974,8 +974,8 @@ function SUIPresets.makeMenuItems(opts)
                                                             ok_callback = function()
                                                                 unlock_overlay()
                                                                 SUIPresets.delete(_name)
-                                                                local active = SUISettings:get("simpleui_hs_active_preset")
-                                                                if active == _name then SUISettings:del("simpleui_hs_active_preset") end
+                                                                local active = SUISettings:get("maxoutui_hs_active_preset")
+                                                                if active == _name then SUISettings:del("maxoutui_hs_active_preset") end
                                                                 ctx2.repaint()
                                                                 UIManager:nextTick(on_save)
                                                             end,
@@ -1002,8 +1002,8 @@ function SUIPresets.makeMenuItems(opts)
                                                                         return
                                                                     end
                                                                     SUIPresets.rename(_name, new_name)
-                                                                    local active = SUISettings:get("simpleui_hs_active_preset")
-                                                                    if active == _name then SUISettings:set("simpleui_hs_active_preset", new_name) end
+                                                                    local active = SUISettings:get("maxoutui_hs_active_preset")
+                                                                    if active == _name then SUISettings:set("maxoutui_hs_active_preset", new_name) end
                                                                     closeDialog(d)
                                                                     ctx2.repaint()
                                                                     UIManager:nextTick(on_save)
@@ -1021,7 +1021,7 @@ function SUIPresets.makeMenuItems(opts)
                                                             ok_callback = function()
                                                                 unlock_overlay()
                                                                 SUIPresets.save(_name)
-                                                                SUISettings:set("simpleui_hs_active_preset", _name)
+                                                                SUISettings:set("maxoutui_hs_active_preset", _name)
                                                                 showDialog(InfoMessage():new{ text = string.format(_("Preset \"%s\" updated."), _name), timeout = 2 })
                                                                 ctx2.repaint()
                                                                 UIManager:nextTick(on_save)

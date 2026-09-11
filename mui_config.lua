@@ -76,6 +76,15 @@ M.ICON = {
     author         = _P .. "author.svg",
     series         = _P .. "series.svg",
     tags           = _P .. "tags.svg",
+    -- Suwayomi+ / manga-specific Quick Action icons (not generic library/recent).
+    manga_continue  = _P .. "manga_continue.svg",
+    manga_library   = _P .. "manga_library.svg",
+    manga_recent    = _P .. "manga_recent.svg",
+    manga_sources   = _P .. "manga_sources.svg",
+    manga_updates   = _P .. "manga_updates.svg",
+    manga_downloads = _P .. "manga_downloads.svg",
+    manga_pinned    = _P .. "manga_pinned.svg",
+    manga_pin       = _P .. "manga_pin.svg",
     nav_prev       = _KO .. "chevron.left.svg",
     nav_next       = _KO .. "chevron.right.svg",
     ko_home        = _KO .. "home.svg",
@@ -182,7 +191,7 @@ local TOPBAR_CUSTOM_TEXT_MAX = 32
 M.TOPBAR_CUSTOM_TEXT_MAX = TOPBAR_CUSTOM_TEXT_MAX
 
 function M.getTopbarCustomText()
-    return SUISettings:get("simpleui_topbar_custom_text") or ""
+    return SUISettings:get("maxoutui_topbar_custom_text") or ""
 end
 
 function M.setTopbarCustomText(s)
@@ -200,11 +209,11 @@ function M.setTopbarCustomText(s)
     else
         s = ""
     end
-    SUISettings:set("simpleui_topbar_custom_text", s)
+    SUISettings:set("maxoutui_topbar_custom_text", s)
 end
 
 function M.getTopbarConfig()
-    local raw = SUISettings:get("simpleui_topbar_config")
+    local raw = SUISettings:get("maxoutui_topbar_config")
     local cfg = { side = {}, order_left = {}, order_right = {}, order_center = {}, show = {}, order = {} }
     if type(raw) == "table" then
         if type(raw.side) == "table" then
@@ -259,7 +268,7 @@ function M.getTopbarConfig()
 end
 
 function M.saveTopbarConfig(cfg)
-    SUISettings:set("simpleui_topbar_config", cfg)
+    SUISettings:set("maxoutui_topbar_config", cfg)
     M.invalidateTopbarConfigCache()
     local tb = package.loaded["mui_topbar"]
     if tb and tb.invalidateConfigCache then tb.invalidateConfigCache() end
@@ -273,7 +282,7 @@ end
 
 function M.loadTabConfig()
     if _tabs_cache then return _tabs_cache end
-    local cfg = SUISettings:get("simpleui_bar_tabs")
+    local cfg = SUISettings:get("maxoutui_bar_tabs")
     local result = {}
     local min_tabs = M.isNavpagerEnabled() and 1 or 2
     if type(cfg) == "table" and #cfg >= min_tabs and #cfg <= M.effectiveMaxTabs() then
@@ -282,7 +291,7 @@ function M.loadTabConfig()
             if M.ACTION_BY_ID[id] or id:match("^custom_qa_%d+$") then
                 result[#result + 1] = id
             else
-                logger.warn("simpleui: loadTabConfig: ignoring unknown tab id: " .. tostring(id))
+                logger.warn("maxoutui: loadTabConfig: ignoring unknown tab id: " .. tostring(id))
             end
         end
     else
@@ -297,7 +306,7 @@ end
 
 function M.saveTabConfig(tabs)
     _tabs_cache = nil
-    SUISettings:set("simpleui_bar_tabs", tabs)
+    SUISettings:set("maxoutui_bar_tabs", tabs)
 end
 
 function M.getNumTabs()
@@ -309,14 +318,14 @@ local _navbar_mode_cache = nil
 
 function M.getNavbarMode()
     if not _navbar_mode_cache then
-        _navbar_mode_cache = SUISettings:get("simpleui_bar_mode") or "both"
+        _navbar_mode_cache = SUISettings:get("maxoutui_bar_mode") or "both"
     end
     return _navbar_mode_cache
 end
 
 function M.saveNavbarMode(mode)
     _navbar_mode_cache = nil
-    SUISettings:set("simpleui_bar_mode", mode)
+    SUISettings:set("maxoutui_bar_mode", mode)
 end
 
 function M._ensureHomePresent(tabs)
@@ -358,10 +367,10 @@ M.wifi_optimistic    = nil
 M.wifi_broadcast_self = nil
 
 function M.getWifiHideWhenOff()
-    return SUISettings:isTrue("simpleui_topbar_wifi_hide_when_off")
+    return SUISettings:isTrue("maxoutui_topbar_wifi_hide_when_off")
 end
 function M.setWifiHideWhenOff(v)
-    SUISettings:set("simpleui_topbar_wifi_hide_when_off", v)
+    SUISettings:set("maxoutui_topbar_wifi_hide_when_off", v)
 end
 
 function M.homeLabel()
@@ -486,17 +495,17 @@ end
 -- ===========================================================================
 
 local SCALE_MIN, SCALE_MAX, SCALE_STEP, SCALE_DEF = 50, 200, 10, 100
-local MODULE_SCALE_KEY = "simpleui_hs_module_scale"
-local LABEL_SCALE_KEY  = "simpleui_hs_label_scale"
-local SCALE_LINKED_KEY = "simpleui_hs_scale_linked"
+local MODULE_SCALE_KEY = "maxoutui_hs_module_scale"
+local LABEL_SCALE_KEY  = "maxoutui_hs_label_scale"
+local SCALE_LINKED_KEY = "maxoutui_hs_scale_linked"
 local ITEM_LABEL_SCALE_SUFFIX = "_item_label_scale"
 
 local function _clamp(n) return math_max(SCALE_MIN, math_min(SCALE_MAX, math_floor(n))) end
-local function _modKey(mod_id, pfx) return (pfx or "simpleui_hs_") .. (mod_id or "") .. "_scale" end
-local function _itemLabelKey(mod_id, pfx) return (pfx or "simpleui_hs_") .. (mod_id or "") .. ITEM_LABEL_SCALE_SUFFIX end
+local function _modKey(mod_id, pfx) return (pfx or "maxoutui_hs_") .. (mod_id or "") .. "_scale" end
+local function _itemLabelKey(mod_id, pfx) return (pfx or "maxoutui_hs_") .. (mod_id or "") .. ITEM_LABEL_SCALE_SUFFIX end
 
 -- Bottom Bar Size
-local BAR_SIZE_KEY     = "simpleui_bar_size_pct"
+local BAR_SIZE_KEY     = "maxoutui_bar_size_pct"
 local BAR_SIZE_DEF     = 100
 local BAR_SIZE_MIN     = 50
 local BAR_SIZE_MAX     = 150
@@ -519,7 +528,7 @@ M.BAR_SIZE_MAX  = BAR_SIZE_MAX
 M.BAR_SIZE_STEP = SCALE_STEP
 
 -- Topbar Size
-local TOPBAR_SIZE_KEY = "simpleui_topbar_size_pct"
+local TOPBAR_SIZE_KEY = "maxoutui_topbar_size_pct"
 local TOPBAR_SIZE_DEF = 100
 local TOPBAR_SIZE_MIN = 50
 local TOPBAR_SIZE_MAX = 150
@@ -542,7 +551,7 @@ M.TOPBAR_SIZE_MAX  = TOPBAR_SIZE_MAX
 M.TOPBAR_SIZE_STEP = SCALE_STEP
 
 -- Bottom Margin
-local BOT_MARGIN_KEY  = "simpleui_bar_bottom_margin_pct"
+local BOT_MARGIN_KEY  = "maxoutui_bar_bottom_margin_pct"
 local BOT_MARGIN_DEF  = 100
 local BOT_MARGIN_MIN  = 0
 local BOT_MARGIN_MAX  = 300
@@ -566,7 +575,7 @@ M.BOT_MARGIN_MAX  = BOT_MARGIN_MAX
 M.BOT_MARGIN_STEP = BOT_MARGIN_STEP
 
 -- Reading Stats Text Scale
-local RS_TEXT_SCALE_KEY  = "simpleui_bar_rs_text_scale_pct"
+local RS_TEXT_SCALE_KEY  = "maxoutui_bar_rs_text_scale_pct"
 local RS_TEXT_SCALE_DEF  = 100
 local RS_TEXT_SCALE_MIN  = 50
 local RS_TEXT_SCALE_MAX  = 200
@@ -589,7 +598,7 @@ M.RS_TEXT_SCALE_MAX  = RS_TEXT_SCALE_MAX
 M.RS_TEXT_SCALE_STEP = SCALE_STEP
 
 -- Navbar Icon Scale
-local ICON_SCALE_KEY  = "simpleui_bar_icon_scale_pct"
+local ICON_SCALE_KEY  = "maxoutui_bar_icon_scale_pct"
 local ICON_SCALE_DEF  = 100
 local ICON_SCALE_MIN  = 50
 local ICON_SCALE_MAX  = 200
@@ -612,7 +621,7 @@ M.ICON_SCALE_MAX  = ICON_SCALE_MAX
 M.ICON_SCALE_STEP = SCALE_STEP
 
 -- Navbar Label Scale
-local NAVBAR_LABEL_SCALE_KEY  = "simpleui_bar_label_scale_pct"
+local NAVBAR_LABEL_SCALE_KEY  = "maxoutui_bar_label_scale_pct"
 local NAVBAR_LABEL_SCALE_DEF  = 100
 local NAVBAR_LABEL_SCALE_MIN  = 50
 local NAVBAR_LABEL_SCALE_MAX  = 200
@@ -639,7 +648,7 @@ M.NAVBAR_LABEL_SCALE_STEP = SCALE_STEP
 -- detail/caption). Unlike the per-bar scales above, FS_* is baked into
 -- module-level constants at sui_style.lua load time, so a change here only
 -- takes full effect after a restart — mirrors the UI Font picker.
-local FONT_SCALE_KEY  = "simpleui_style_font_scale_pct"
+local FONT_SCALE_KEY  = "maxoutui_style_font_scale_pct"
 local FONT_SCALE_DEF  = 100
 local FONT_SCALE_MIN  = 50
 local FONT_SCALE_MAX  = 150
@@ -712,7 +721,7 @@ end
 local THUMB_SCALE_KEY_SUFFIX = "_thumb_scale"
 
 local function _thumbKey(mod_id, pfx)
-    return (pfx or "simpleui_hs_") .. (mod_id or "") .. THUMB_SCALE_KEY_SUFFIX
+    return (pfx or "maxoutui_hs_") .. (mod_id or "") .. THUMB_SCALE_KEY_SUFFIX
 end
 
 function M.getThumbScale(mod_id, pfx)
@@ -791,13 +800,13 @@ function M.resetAllScales(pfx, pfx_qa)
     SUISettings:del(BAR_SIZE_KEY)
     SUISettings:del(TOPBAR_SIZE_KEY)
     SUISettings:del(NAVBAR_LABEL_SCALE_KEY)
-    SUISettings:del("simpleui_bar_icon_scale_pct")
-    SUISettings:del("simpleui_bar_rs_text_scale_pct")
+    SUISettings:del("maxoutui_bar_icon_scale_pct")
+    SUISettings:del("maxoutui_bar_rs_text_scale_pct")
     local Registry = require("desktop_modules/moduleregistry")
     for _, mod in ipairs(Registry.list()) do
         if mod.id then
-            SUISettings:del((pfx or "simpleui_hs_") .. mod.id .. "_scale")
-            SUISettings:del((pfx or "simpleui_hs_") .. mod.id .. THUMB_SCALE_KEY_SUFFIX)
+            SUISettings:del((pfx or "maxoutui_hs_") .. mod.id .. "_scale")
+            SUISettings:del((pfx or "maxoutui_hs_") .. mod.id .. THUMB_SCALE_KEY_SUFFIX)
             SUISettings:del(_itemLabelKey(mod.id, pfx))
         end
     end
@@ -874,7 +883,7 @@ M.GAP_STEP = GAP_STEP
 M.GAP_DEF  = GAP_DEF
 
 local function _gapKey(mod_id, pfx)
-    return (pfx or "simpleui_hs_") .. (mod_id or "") .. "_gap_pct"
+    return (pfx or "maxoutui_hs_") .. (mod_id or "") .. "_gap_pct"
 end
 
 local function _clampGap(n)
@@ -936,7 +945,7 @@ end
 
 -- Module Labels (Section Title) Toggle
 local function _labelHideKey(mod_id)
-    return "simpleui_hide_label_" .. (mod_id or "")
+    return "maxoutui_hide_label_" .. (mod_id or "")
 end
 
 function M.isLabelHidden(mod_id)
@@ -1223,9 +1232,9 @@ function M.openStatsDB()
     if not (ok and conn) then return nil end
     if not _indexes_created then
         local idx_ok = pcall(function()
-            conn:exec("CREATE INDEX IF NOT EXISTS idx_simpleui_book_md5 ON book(md5);")
-            conn:exec("CREATE INDEX IF NOT EXISTS idx_simpleui_pagestat_book ON page_stat(id_book);")
-            conn:exec("CREATE INDEX IF NOT EXISTS idx_simpleui_pagestat_time ON page_stat(start_time);")
+            conn:exec("CREATE INDEX IF NOT EXISTS idx_maxoutui_book_md5 ON book(md5);")
+            conn:exec("CREATE INDEX IF NOT EXISTS idx_maxoutui_pagestat_book ON page_stat(id_book);")
+            conn:exec("CREATE INDEX IF NOT EXISTS idx_maxoutui_pagestat_time ON page_stat(start_time);")
         end)
         if idx_ok then _indexes_created = true end
     end
@@ -1282,8 +1291,8 @@ function M.isFavoritesWidget(w)
 end
 
 -- Navpager
-function M.isNavpagerEnabled() return SUISettings:isTrue("simpleui_bar_navpager_enabled") end
-function M.isDotPagerEnabled() return SUISettings:nilOrTrue("simpleui_bar_dotpager_always") end
+function M.isNavpagerEnabled() return SUISettings:isTrue("maxoutui_bar_navpager_enabled") end
+function M.isDotPagerEnabled() return SUISettings:nilOrTrue("maxoutui_bar_dotpager_always") end
 function M.effectiveMaxTabs() return M.isNavpagerEnabled() and M.MAX_TABS_NAVPAGER or M.MAX_TABS end
 
 local function _stateFromMenu(menu)
@@ -1338,11 +1347,11 @@ end
 -- ===========================================================================
 
 function M.migrateOldCustomSlots()
-    if SUISettings:get("simpleui_qa_migrated_v1") then return end
+    if SUISettings:get("maxoutui_qa_migrated_v1") then return end
     local id_map, qa_list, qa_set = {}, M.getCustomQAList(), {}
     for _, id in ipairs(qa_list) do qa_set[id] = true end
     for slot = 1, 4 do
-        local old_id, cfg = "custom_" .. slot, SUISettings:get("simpleui_custom_" .. slot)
+        local old_id, cfg = "custom_" .. slot, SUISettings:get("maxoutui_custom_" .. slot)
         if type(cfg) == "table" and (cfg.path or cfg.collection) then
             local new_id = M.nextCustomQAId()
             M.saveCustomQAConfig(new_id, cfg.label or (_("Custom") .. " " .. slot), cfg.path, cfg.collection)
@@ -1351,7 +1360,7 @@ function M.migrateOldCustomSlots()
         end
     end
     M.saveCustomQAList(qa_list)
-    local tabs = SUISettings:get("simpleui_bar_tabs")
+    local tabs = SUISettings:get("maxoutui_bar_tabs")
     if type(tabs) == "table" then
         local new_tabs, changed = {}, false
         for _, id in ipairs(tabs) do
@@ -1359,9 +1368,9 @@ function M.migrateOldCustomSlots()
             elseif id:match("^custom_%d+$") and not id:match("^custom_qa_") then changed = true
             else new_tabs[#new_tabs + 1] = id end
         end
-        if changed then SUISettings:set("simpleui_bar_tabs", new_tabs) end
+        if changed then SUISettings:set("maxoutui_bar_tabs", new_tabs) end
     end
-    for _, pfx in ipairs({"simpleui_hs_qa_"}) do
+    for _, pfx in ipairs({"maxoutui_hs_qa_"}) do
         for slot = 1, 3 do
             local key, dqa = pfx .. slot .. "_items", SUISettings:get(pfx .. slot .. "_items")
             if type(dqa) == "table" then
@@ -1375,10 +1384,10 @@ function M.migrateOldCustomSlots()
             end
         end
     end
-    SUISettings:set("simpleui_qa_migrated_v1", true)
-    local legacy_enabled = SUISettings:get("simpleui_bar_enabled")
-    if legacy_enabled ~= nil and SUISettings:get("simpleui_enabled") == nil then
-        SUISettings:set("simpleui_enabled", legacy_enabled)
+    SUISettings:set("maxoutui_qa_migrated_v1", true)
+    local legacy_enabled = SUISettings:get("maxoutui_bar_enabled")
+    if legacy_enabled ~= nil and SUISettings:get("maxoutui_enabled") == nil then
+        SUISettings:set("maxoutui_enabled", legacy_enabled)
     end
 end
 
@@ -1396,16 +1405,16 @@ function M.applyFirstRunDefaults()
     end
 
     -- Navbar
-    def("simpleui_bar_enabled",  true)
-    def("simpleui_topbar_enabled", true)
-    def("simpleui_bar_mode",     "both")
-    def("simpleui_bar_tabs",     { "home", "sui_settings", "homescreen", "history", "power" })
-    if SUISettings:get("simpleui_topbar_config") == nil then
+    def("maxoutui_bar_enabled",  true)
+    def("maxoutui_topbar_enabled", true)
+    def("maxoutui_bar_mode",     "both")
+    def("maxoutui_bar_tabs",     { "home", "sui_settings", "homescreen", "history", "power" })
+    if SUISettings:get("maxoutui_topbar_config") == nil then
         M.saveTopbarConfig({ side = { clock = "left", battery = "right", wifi = "right" }, order_left = { "clock" }, order_right = { "wifi", "battery" } })
     end
 
     -- Homescreen modules (default preset)
-    local PFX = "simpleui_hs_"
+    local PFX = "maxoutui_hs_"
     def(PFX .. "quote_enabled",           true)
     def(PFX .. "currently_enabled",       true)
     def(PFX .. "recent_enabled",          true)
@@ -1437,35 +1446,35 @@ function M.applyFirstRunDefaults()
     def(PFX .. "recent_show_finished",          true)
 
     -- Updater
-    def("simpleui_updater_auto_check",          true)
+    def("maxoutui_updater_auto_check",          true)
 
     -- Quick Actions Row instances (three stable ids that won't clash with
     -- runtime-generated ones, which use os.time() as suffix).
-    if SUISettings:get("simpleui_qa_row_instances") == nil then
+    if SUISettings:get("maxoutui_qa_row_instances") == nil then
         local QA_INSTANCES = { "quick_actions_row_000001", "quick_actions_row_000002", "quick_actions_row_000003" }
-        SUISettings:set("simpleui_qa_row_instances", QA_INSTANCES)
+        SUISettings:set("maxoutui_qa_row_instances", QA_INSTANCES)
         for _, iid in ipairs(QA_INSTANCES) do
             def(PFX .. iid .. "_enabled", false)
         end
     end
 
     -- Reading Goals: only the annual goal shown by default.
-    def("simpleui_reading_goals_show_annual",  true)
-    def("simpleui_reading_goals_show_monthly", false)
-    def("simpleui_reading_goals_show_daily",   false)
+    def("maxoutui_reading_goals_show_annual",  true)
+    def("maxoutui_reading_goals_show_monthly", false)
+    def("maxoutui_reading_goals_show_daily",   false)
 
     -- Folder covers / browse meta
-    def("simpleui_fc_enabled",          true)
-    def("simpleui_fc_folder_style",     "auto")
-    def("simpleui_fc_cover_mode",       "2_3")
-    def("simpleui_fc_subfolder_cover",  true)
-    def("simpleui_browsemeta_enabled",  true)
+    def("maxoutui_fc_enabled",          true)
+    def("maxoutui_fc_folder_style",     "auto")
+    def("maxoutui_fc_cover_mode",       "2_3")
+    def("maxoutui_fc_subfolder_cover",  true)
+    def("maxoutui_browsemeta_enabled",  true)
 
     -- Titlebar: search visible, browse visible left of menu
-    def("simpleui_tb_item_fm_search", true)
-    def("simpleui_tb_item_fm_browse", true)
-    if SUISettings:get("simpleui_tb_fm_cfg") == nil then
-        SUISettings:set("simpleui_tb_fm_cfg", {
+    def("maxoutui_tb_item_fm_search", true)
+    def("maxoutui_tb_item_fm_browse", true)
+    if SUISettings:get("maxoutui_tb_fm_cfg") == nil then
+        SUISettings:set("maxoutui_tb_fm_cfg", {
             side        = { fm_menu = "right", fm_back = "left", fm_search = "left", fm_browse = "right" },
             order_left  = { "fm_back", "fm_search" },
             order_right = { "fm_browse", "fm_menu" },
@@ -1473,13 +1482,13 @@ function M.applyFirstRunDefaults()
     end
 
     -- Quick Settings bar
-    def("simpleui_qs_bar_enabled",          true)
-    def("simpleui_qs_bar_frontlight",       false)
-    def("simpleui_qs_bar_warmth",           false)
-    def("simpleui_qs_bar_shape",            "round")
-    def("simpleui_qs_bar_bg",              "flat")
-    def("simpleui_qs_bar_settings_on_hold", true)
-    def("simpleui_qs_bar_slots",            { "wifi_toggle", "bookmark_browser", "frontlight", "night_mode", "power", "sui_settings" })
+    def("maxoutui_qs_bar_enabled",          true)
+    def("maxoutui_qs_bar_frontlight",       false)
+    def("maxoutui_qs_bar_warmth",           false)
+    def("maxoutui_qs_bar_shape",            "round")
+    def("maxoutui_qs_bar_bg",              "flat")
+    def("maxoutui_qs_bar_settings_on_hold", true)
+    def("maxoutui_qs_bar_slots",            { "wifi_toggle", "bookmark_browser", "frontlight", "night_mode", "power", "sui_settings" })
 
     -- KOReader global: open homescreen on launch (only set once on fresh install)
     gdef("start_with", "homescreen_simpleui")

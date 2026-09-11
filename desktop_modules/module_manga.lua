@@ -22,7 +22,7 @@ local logger = require("logger")
 local SUISettings = require("mui_store")
 
 local MANGA_MAX       = 999
-local MANGA_SETTING   = "simpleui_pinned_manga_list"
+local MANGA_SETTING   = "maxoutui_pinned_manga_list"
 local MANGA_COLL_NAME = "Pinned Manga"
 
 local function getRC()
@@ -54,7 +54,7 @@ local function _migrate()
     end
     if added > 0 then
         RC:write({ [MANGA_COLL_NAME] = true })
-        logger.dbg("simpleui: module_manga: migrated", added, "entries to ReadCollection")
+        logger.dbg("maxoutui: module_manga: migrated", added, "entries to ReadCollection")
     end
 end
 
@@ -107,8 +107,8 @@ local function isPinnedManga(filepath)
     return false
 end
 
-local TITLE_SETTING = "simpleui_pinned_manga_titles"
-local COVER_SETTING = "simpleui_pinned_manga_covers"
+local TITLE_SETTING = "maxoutui_pinned_manga_titles"
+local COVER_SETTING = "maxoutui_pinned_manga_covers"
 
 local function normalizeCoverPath(path)
     if type(path) == "string" and path ~= "" then
@@ -147,11 +147,12 @@ local function getPinnedMangaCover(fp)
             local ok_tc, tc = pcall(require, "suwayomi/ui/thumbnail_cache")
             if ok_tc and tc then
                 local variants = {
+                    -- Homescreen Suwayomi modules cache this exact key.
+                    { variant = "thumbnail" },
+                    { variant = "thumbnail", width = 64, height = 96 },
                     { variant = "manga_cover", width = 64, height = 96 },
                     { variant = "poster", width = 240, height = 360 },
-                    { variant = "thumbnail", width = 64, height = 96 },
                     { variant = "poster", width = 160, height = 240 },
-                    { variant = "poster", width = 320, height = 480 },
                     {},
                 }
                 local pinned = SuwayomiSettings.loadPinnedManga and SuwayomiSettings:loadPinnedManga() or {}
@@ -481,6 +482,97 @@ M.arrangeMenuItems    = arrangeMenuItems
 
 function M.getDisplayName()
     return _("Pinned Manga")
+end
+
+--- Open a pinned Suwayomi manga URI with an explicit choice:
+---   Resume  — continue from first unread / left-off chapter
+---   Browse  — full Suwayomi+ manga screen (chapters, download, trackers, …)
+--- Local file pins fall through to on_local(filepath).
+--- Returns true when the URI was handled.
+function M.openPinnedManga(filepath, on_local)
+    if not filepath then return false end
+    local manga_id = tostring(filepath):match("^suwayomi://manga/(%d+)")
+    if not manga_id then
+        if on_local then on_local(filepath) end
+        return false
+    end
+
+    local UIManager = require("ui/uimanager")
+    local ButtonDialog = require("ui/widget/buttondialog")
+    local InfoMessage = require("ui/widget/infomessage")
+    local SwBridge = require("desktop_modules/suwayomi_bridge")
+    local sw = SwBridge.getSuwayomiPlugin and SwBridge.getSuwayomiPlugin()
+    if not sw then
+        UIManager:show(InfoMessage:new{ text = _("Suwayomi plugin not available."), timeout = 2 })
+        return true
+    end
+
+    local title = getPinnedMangaTitle(filepath)
+    local manga = { id = tonumber(manga_id), title = title }
+    -- Seed from Suwayomi pin cache when available (thumbnail / library flags).
+    pcall(function()
+        local Settings = package.loaded["suwayomi/settings"] or require("suwayomi/settings")
+        if Settings and Settings.loadPinnedManga then
+            for _, pin in ipairs(Settings:loadPinnedManga() or {}) do
+                if tostring(pin.id) == tostring(manga_id) then
+                    manga.title = pin.title or manga.title
+                    manga.thumbnail_url = pin.thumbnail_url
+                    manga.in_library = pin.in_library
+                    manga.source = pin.source
+                    break
+                end
+            end
+        end
+    end)
+    local cover = getPinnedMangaCover(filepath)
+    if cover then
+        manga.thumbnail_path = cover
+    end
+    local dialog
+    dialog = ButtonDialog:new{
+        title = (manga.title and manga.title ~= "" and manga.title) or _("Pinned Manga"),
+        title_align = "center",
+        buttons = {
+            {
+                {
+                    text = _("Resume"),
+                    callback = function()
+                        UIManager:close(dialog)
+                        if sw.resumeMangaStream then
+                            sw:resumeMangaStream(manga)
+                        elseif sw.showChaptersForManga then
+                            sw:showChaptersForManga(manga)
+                        end
+                    end,
+                },
+            },
+            {
+                {
+                    text = _("Browse"),
+                    callback = function()
+                        UIManager:close(dialog)
+                        -- Same entry as library tap: full manga information
+                        -- (Suwayomi+ fetches details when the stub is incomplete).
+                        if sw.showMangaActions then
+                            sw:showMangaActions(manga)
+                        elseif sw.showChaptersForManga then
+                            sw:showChaptersForManga(manga)
+                        end
+                    end,
+                },
+            },
+            {
+                {
+                    text = _("Cancel"),
+                    callback = function()
+                        UIManager:close(dialog)
+                    end,
+                },
+            },
+        },
+    }
+    UIManager:show(dialog)
+    return true
 end
 
 function M.genPinnedMangaButton(file, close_cb)

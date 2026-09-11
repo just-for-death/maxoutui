@@ -137,7 +137,7 @@ function M.sepColor() return _sepColor() end
 -- SUIStyle.getThemeColor() via the _FALLBACKS chain.
 -- ---------------------------------------------------------------------------
 local function _getBarBg()
-    if M.getBarStyle() == "bare" or SUISettings:isTrue("simpleui_navbar_transparent") then return nil end
+    if M.getBarStyle() == "bare" or SUISettings:isTrue("maxoutui_navbar_transparent") then return nil end
     local ok, style = pcall(_SUIStyle)
     if ok and style then
         local c = style.getThemeColor("bottombar_bg")
@@ -203,7 +203,7 @@ local function _getBottomMarginPct()
 end
 
 function M.getBarStyle()
-    return SUISettings:readSetting("simpleui_bar_style") or "default"
+    return SUISettings:readSetting("maxoutui_bar_style") or "default"
 end
 
 -- VerticalSpan and LineWidget singletons — created once per layout, reused
@@ -243,7 +243,7 @@ function M.SEP_H()
 end
 
 function M.TOTAL_H()
-    if not SUISettings:nilOrTrue("simpleui_bar_enabled") then return 0 end
+    if not SUISettings:nilOrTrue("maxoutui_bar_enabled") then return 0 end
     return M.BAR_H() + M.TOP_SP() + M.BOT_SP()
 end
 
@@ -257,7 +257,7 @@ end
 -- getPaginationFontSize when both are called in the same render pass.
 local function _getPaginationKey()
     return _cached("pag_key", function()
-        return SUISettings:readSetting("simpleui_bar_pagination_size") or "s"
+        return SUISettings:readSetting("maxoutui_bar_pagination_size") or "s"
     end)
 end
 
@@ -533,7 +533,7 @@ function M.buildTabCell(action_id, active, tab_w, mode)
                 background     = fg,   -- active underline tracks fg
                 overlap_offset = { 0, 0 },
             }
-        elseif not SUISettings:isTrue("simpleui_navbar_transparent") then
+        elseif not SUISettings:isTrue("maxoutui_navbar_transparent") then
             og[#og + 1] = LineWidget():new{
                 dimen          = Geom():new{ w = tab_w, h = M.INDIC_H() },
                 background     = _getBarBg() or Blitbuffer.COLOR_WHITE,
@@ -606,7 +606,7 @@ function M.buildNavpagerArrowCell(is_prev, enabled, tab_w, mode)
 
 -- Arrow cells never have an active indicator; pin a white (invisible)
     -- LineWidget to the top for visual consistency with buildTabCell.
-    -- (Omitted when simpleui_bars_transparent is true to reveal the wallpaper).
+    -- (Omitted when maxoutui_bars_transparent is true to reveal the wallpaper).
     local og = OverlapGroup():new{
         allow_mirroring = false,
         dimen           = Geom():new{ w = tab_w, h = M.BAR_H() },
@@ -614,7 +614,7 @@ function M.buildNavpagerArrowCell(is_prev, enabled, tab_w, mode)
     }
 
     local bar_style = M.getBarStyle()
-    if bar_style == "default" and not SUISettings:isTrue("simpleui_navbar_transparent") then
+    if bar_style == "default" and not SUISettings:isTrue("maxoutui_navbar_transparent") then
         og[#og + 1] = LineWidget():new{
             dimen          = Geom():new{ w = tab_w, h = M.INDIC_H() },
             background     = _getBarBg() or Blitbuffer.COLOR_WHITE,
@@ -727,7 +727,7 @@ local function _buildBarContainer(hg_args, is_navpager)
     local sep_h = M.SEP_H()
     
     if style == "default" and sep_h > 0 then
-        local sep_bg = SUISettings:isTrue("simpleui_navbar_transparent") and nil or M.sepColor()
+        local sep_bg = SUISettings:isTrue("maxoutui_navbar_transparent") and nil or M.sepColor()
         local pad_above = M.TOP_SP() - sep_h
         if pad_above > 0 then
             top_vg[#top_vg + 1] = VerticalSpan():new{ width = pad_above }
@@ -903,7 +903,7 @@ end
 
 -- Swaps the bar widget inside an already-wrapped widget, preserving overlap_offset.
 function M.replaceBar(widget, new_bar, tabs)
-    if not SUISettings:nilOrTrue("simpleui_bar_enabled") then
+    if not SUISettings:nilOrTrue("maxoutui_bar_enabled") then
         if widget and tabs then widget._navbar_tabs = tabs end
         return
     end
@@ -911,12 +911,12 @@ function M.replaceBar(widget, new_bar, tabs)
     if not container then return end
     local idx = widget._navbar_bar_idx
     if not idx then
-        logger.err("simpleui: replaceBar called without _navbar_bar_idx — widget not initialised.")
+        logger.err("maxoutui: replaceBar called without _navbar_bar_idx — widget not initialised.")
         return
     end
-    local topbar_on = SUISettings:nilOrTrue("simpleui_topbar_enabled")
+    local topbar_on = SUISettings:nilOrTrue("maxoutui_topbar_enabled")
     if widget._navbar_bar_idx_topbar_on ~= nil and widget._navbar_bar_idx_topbar_on ~= topbar_on then
-        logger.warn("simpleui: replaceBar — bar_idx out of sync, skipping.")
+        logger.warn("maxoutui: replaceBar — bar_idx out of sync, skipping.")
         return
     end
     local old_bar = container[idx]
@@ -943,7 +943,7 @@ function M.registerTouchZones(plugin, fm_self)
     local tabs_snap = Config.loadTabConfig()
     local screen_w  = Screen:getWidth()
     local screen_h  = Screen:getHeight()
-    local navbar_on = SUISettings:nilOrTrue("simpleui_bar_enabled")
+    local navbar_on = SUISettings:nilOrTrue("maxoutui_bar_enabled")
     -- Full navbar strip height (separator + bar + bottom padding) — must match
     -- wrapWithNavbar / TOTAL_H so touch targets cover the entire bottom region.
     -- Using BAR_H() alone leaves the top separator and bottom safe-area bands
@@ -981,7 +981,7 @@ function M.registerTouchZones(plugin, fm_self)
         "tap_left_bottom_corner", "tap_right_bottom_corner",
         "TapBook", "TapColl", "TapQA", "TapGoal", "TapSelect", "TapStatCard",
         -- Homescreen footer zone covers the same strip; navbar tabs must win.
-        "simpleui_hs_footer_tap",
+        "maxoutui_hs_footer_tap",
     }
 
     -- Helper: find and call a page-navigation method on the topmost pageable widget.
@@ -1216,7 +1216,7 @@ function M.registerTouchZones(plugin, fm_self)
                 end
             end
             -- Held anywhere else on the bar → open settings menu.
-            if not SUISettings:nilOrTrue("simpleui_bar_settings_on_hold") then
+            if not SUISettings:nilOrTrue("maxoutui_bar_settings_on_hold") then
                 return true
             end
             _showNavbarSettingsWindow(plugin)
@@ -1431,7 +1431,7 @@ function M.navigate(plugin, action_id, fm_self, tabs, force)
             fm = live
             -- Also sync active_action to the live plugin so the indicator is
             -- updated on the correct plugin instance.
-            local live_plugin = (live.maxoutui or live._simpleui_plugin or live._maxoutui_plugin)
+            local live_plugin = (live.maxoutui or live._maxoutui_plugin or live._maxoutui_plugin)
             if live_plugin and live_plugin ~= plugin then
                 live_plugin.active_action = plugin.active_action
                 plugin = live_plugin
@@ -1526,7 +1526,7 @@ end
 -- ---------------------------------------------------------------------------
 
 function M.rebuildAllNavbars(plugin)
-    if plugin and plugin._simpleui_suspended then return end
+    if plugin and plugin._maxoutui_suspended then return end
     local UI        = require("mui_core")
     local Topbar    = require("mui_topbar")
     M.invalidateDimCache()
@@ -1534,7 +1534,7 @@ function M.rebuildAllNavbars(plugin)
     local tabs      = Config.loadTabConfig()
     local num_tabs  = Config.getNumTabs()
     local mode      = Config.getNavbarMode()
-    local topbar_on = SUISettings:nilOrTrue("simpleui_topbar_enabled")
+    local topbar_on = SUISettings:nilOrTrue("maxoutui_topbar_enabled")
     local stack     = UI.getWindowStack()  -- read once for the entire operation
 
     -- Build topbar once and reuse across all widgets — it is identical for all.
@@ -1554,10 +1554,10 @@ function M.rebuildAllNavbars(plugin)
 
     rebuildWidget(plugin.ui)
     local ok_icon, err_icon = pcall(function() plugin:_updateFMHomeIcon() end)
-    if not ok_icon then logger.warn("simpleui: _updateFMHomeIcon failed:", tostring(err_icon)) end
+    if not ok_icon then logger.warn("maxoutui: _updateFMHomeIcon failed:", tostring(err_icon)) end
     for _i, entry in ipairs(stack) do
         local ok, err = pcall(rebuildWidget, entry.widget)
-        if not ok then logger.warn("simpleui: rebuildWidget failed:", tostring(err)) end
+        if not ok then logger.warn("maxoutui: rebuildWidget failed:", tostring(err)) end
     end
 end
 
@@ -1586,7 +1586,7 @@ function M.setTempTabActive(plugin, action_id, active, prev_action)
     updateWidget(plugin.ui)
     for _i, entry in ipairs(stack) do
         local ok, err = pcall(updateWidget, entry.widget)
-        if not ok then logger.warn("simpleui: setPowerTabActive updateWidget failed:", tostring(err)) end
+        if not ok then logger.warn("maxoutui: setPowerTabActive updateWidget failed:", tostring(err)) end
     end
 end
 
@@ -1675,7 +1675,7 @@ function M.rewrapAllWidgets(plugin)
     rewrapWidget(plugin.ui)
     for _i, entry in ipairs(stack) do
         local ok, err = pcall(rewrapWidget, entry.widget)
-        if not ok then logger.warn("simpleui: rewrapWidget failed:", tostring(err)) end
+        if not ok then logger.warn("maxoutui: rewrapWidget failed:", tostring(err)) end
     end
 end
 

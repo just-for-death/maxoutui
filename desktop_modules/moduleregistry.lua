@@ -33,7 +33,7 @@
 --   M.instanciable = true
 --   M.makeInstance(id) → sub-module descriptor
 -- e não têm id próprio no registry — só as instâncias têm.
--- As instâncias persistem em "simpleui_qa_row_instances" (lista de ids).
+-- As instâncias persistem em "maxoutui_qa_row_instances" (lista de ids).
 --
 -- ADICIONAR UM MÓDULO BUILT-IN: append de uma linha em MODULES. Nada mais.
 --
@@ -72,6 +72,8 @@ local MODULES = {
     { require_mod = "desktop_modules/module_suwayomi_history"    },
     { require_mod = "desktop_modules/module_suwayomi_categories" },
     { require_mod = "desktop_modules/module_suwayomi_status"     },
+    { require_mod = "desktop_modules/module_suwayomi_pinned"     },
+    { require_mod = "desktop_modules/module_suwayomi_auto_download" },
 }
 
 local _loaded        = nil
@@ -95,13 +97,13 @@ local Registry = {}
 -- that exist in "*_instances" lists but were never added to a page, or were
 -- removed from a page through a path that didn't call destroyInstance).
 --
--- Reads "simpleui_layout" (pages[*].modules) when present, falling back to
--- the flat "simpleui_hs_module_order" otherwise — mirroring the same
+-- Reads "maxoutui_layout" (pages[*].modules) when present, falling back to
+-- the flat "maxoutui_hs_module_order" otherwise — mirroring the same
 -- sources sui_homescreen.lua uses to render the layout.
 -- ---------------------------------------------------------------------------
 local function _placedInstanceIds()
     local placed = {}
-    local layout = SUISettings:readSetting("simpleui_layout")
+    local layout = SUISettings:readSetting("maxoutui_layout")
     if type(layout) == "table" and type(layout.pages) == "table" then
         for _, page in ipairs(layout.pages) do
             if type(page.modules) == "table" then
@@ -111,7 +113,7 @@ local function _placedInstanceIds()
             end
         end
     else
-        local order = SUISettings:readSetting("simpleui_hs_module_order")
+        local order = SUISettings:readSetting("maxoutui_hs_module_order")
         if type(order) == "table" then
             for _, mod_id in ipairs(order) do
                 placed[mod_id] = true
@@ -126,7 +128,7 @@ end
 --
 -- For an instanciable module descriptor `mod`, removes any id from its
 -- persisted instances list (mod.instances_key, default
--- "simpleui_qa_row_instances") that is not placed in the current layout
+-- "maxoutui_qa_row_instances") that is not placed in the current layout
 -- (per _placedInstanceIds), and purges that instance's settings keys via
 -- Registry.purgeInstanceSettings.
 --
@@ -135,7 +137,7 @@ end
 -- re-instantiated.
 -- ---------------------------------------------------------------------------
 local function _pruneOrphanInstances(mod, placed)
-    local inst_key = mod.instances_key or "simpleui_qa_row_instances"
+    local inst_key = mod.instances_key or "maxoutui_qa_row_instances"
     local inst_ids = SUISettings:readSetting(inst_key) or {}
     if #inst_ids == 0 then return inst_ids end
 
@@ -154,8 +156,8 @@ local function _pruneOrphanInstances(mod, placed)
     SUISettings:set(inst_key, kept)
 
     for _, iid in ipairs(orphans) do
-        Registry.purgeInstanceSettings(iid, "simpleui_hs_")
-        logger.dbg("simpleui: moduleregistry: pruned orphaned instance '" .. iid .. "' (key=" .. inst_key .. ")")
+        Registry.purgeInstanceSettings(iid, "maxoutui_hs_")
+        logger.dbg("maxoutui: moduleregistry: pruned orphaned instance '" .. iid .. "' (key=" .. inst_key .. ")")
     end
 
     return kept
@@ -170,7 +172,7 @@ local function _load()
     for _, def in ipairs(MODULES) do
         local ok, mod = pcall(require, def.require_mod)
         if not ok or not mod then
-            logger.warn("simpleui: moduleregistry: failed to load '" .. def.require_mod .. "': " .. tostring(mod))
+            logger.warn("maxoutui: moduleregistry: failed to load '" .. def.require_mod .. "': " .. tostring(mod))
         elseif mod then
             if mod.instanciable then
                 -- Dynamic-instance module: prune orphaned instance ids, then
@@ -203,7 +205,7 @@ local function _load()
         if type(entry) == "string" then
             ok, mod = pcall(require, entry)
             if not ok or not mod then
-                logger.warn("simpleui: moduleregistry: failed to load external '" .. entry .. "': " .. tostring(mod))
+                logger.warn("maxoutui: moduleregistry: failed to load external '" .. entry .. "': " .. tostring(mod))
             end
         elseif type(entry) == "table" then
             ok, mod = true, entry
@@ -301,7 +303,7 @@ end
 -- Registry.createInstance(base_id) → instance_id | nil
 --
 -- Creates a new instance of an instanciable module, persists its id in
--- "simpleui_qa_row_instances", registers it in _loaded/_by_id, and returns
+-- "maxoutui_qa_row_instances", registers it in _loaded/_by_id, and returns
 -- the new instance id (e.g. "quick_actions_row_a1b2c3").
 -- Returns nil if the base module is not instanciable or not found.
 -- ---------------------------------------------------------------------------
@@ -319,7 +321,7 @@ function Registry.createInstance(base_id)
     _by_id[m.id]          = m
     _default_order        = nil  -- invalidate order cache
     -- Persist using the base module's instances_key.
-    local inst_key = base.instances_key or "simpleui_qa_row_instances"
+    local inst_key = base.instances_key or "maxoutui_qa_row_instances"
     local ids = SUISettings:readSetting(inst_key) or {}
     ids[#ids + 1] = inst_id
     SUISettings:set(inst_key, ids)
@@ -362,11 +364,11 @@ function Registry.destroyInstance(inst_id)
     -- Try each registered instanciable base's key; fall back to legacy key.
     local removed = false
     for _, base in pairs(_instanciable) do
-        local key = base.instances_key or "simpleui_qa_row_instances"
+        local key = base.instances_key or "maxoutui_qa_row_instances"
         if _remove_from_key(key) then removed = true; break end
     end
     if not removed then
-        _remove_from_key("simpleui_qa_row_instances")
+        _remove_from_key("maxoutui_qa_row_instances")
     end
 end
 
@@ -378,8 +380,8 @@ end
 -- Safe to call even if the instance no longer exists in the registry.
 -- ---------------------------------------------------------------------------
 function Registry.purgeInstanceSettings(inst_id, pfx)
-    pfx = pfx or "simpleui_hs_"
-    local qa_pfx = "simpleui_hs_qa_"
+    pfx = pfx or "maxoutui_hs_"
+    local qa_pfx = "maxoutui_hs_qa_"
     -- NOTA: "_scale" e "_item_label_scale" são os sufixos reais gravados por
     -- sui_config.lua (_modKey / _itemLabelKey) — as antigas entradas
     -- "_scale_pct" / "_item_label_scale_pct" nesta lista nunca correspondiam
@@ -398,7 +400,7 @@ function Registry.purgeInstanceSettings(inst_id, pfx)
     SUISettings:set(qa_pfx .. inst_id .. "_items",  nil)
     SUISettings:set(qa_pfx .. inst_id .. "_labels", nil)
     -- "Show section label" toggle — chave própria, sem pfx (sui_config.lua).
-    SUISettings:set("simpleui_hide_label_" .. inst_id, nil)
+    SUISettings:set("maxoutui_hide_label_" .. inst_id, nil)
 end
 
 -- ---------------------------------------------------------------------------
@@ -436,7 +438,7 @@ end
 -- ---------------------------------------------------------------------------
 function Registry.register(mod_or_path)
     if mod_or_path == nil then
-        logger.warn("simpleui: moduleregistry: register() called with nil")
+        logger.warn("maxoutui: moduleregistry: register() called with nil")
         return
     end
     -- Determine the id for dedup (only possible when a table is passed).

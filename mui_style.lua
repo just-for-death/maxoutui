@@ -12,7 +12,7 @@
 -- How it works
 -- ────────────
 -- Icons are stored as full SVG/PNG paths in SUISettings under the key
--- "simpleui_sysicon_<slot_id>".  nil means "use the default".
+-- "maxoutui_sysicon_<slot_id>".  nil means "use the default".
 --
 -- For tab-bar icons: we patch FileManagerMenu.onShowMenu and
 -- ReaderMenu.onShowMenu so that every time either menu is (re)opened the
@@ -73,7 +73,7 @@ local Screen      = Device.screen
 -- Slot catalogue
 -- ---------------------------------------------------------------------------
 -- Each slot describes one configurable icon position.
---   id          key suffix for SUISettings ("simpleui_sysicon_<id>")
+--   id          key suffix for SUISettings ("maxoutui_sysicon_<id>")
 --   label       display name shown in the picker menu
 --   group       "sui_titlebar" | "bm_icons"
 --   default_ko  KOReader built-in name (used only as documentation / preview)
@@ -277,7 +277,7 @@ M.SLOTS = {
         label      = function() return _("Tab: MaxOutUI Quick Settings") end,
         group      = "sui_tabbar_icons",
         tab_id     = "_sui_qs_panel",
-        default_ko = "simpleui_settings",
+        default_ko = "maxoutui_settings",
     },
 }
 
@@ -289,7 +289,7 @@ for _, s in ipairs(M.SLOTS) do _SLOT_BY_ID[s.id] = s end
 -- Settings helpers
 -- ---------------------------------------------------------------------------
 
-local function _key(id) return "simpleui_sysicon_" .. id end
+local function _key(id) return "maxoutui_sysicon_" .. id end
 
 --- Returns the stored icon path for `id`, or nil if using the default.
 function M.getIcon(id)
@@ -721,7 +721,7 @@ end
 -- resolves to icon-not-found.
 --
 -- The fix — and the same trick sui_quicksettings_bar.lua already uses to
--- make "simpleui_settings" resolve — is to REGISTER the custom icon under
+-- make "maxoutui_settings" resolve — is to REGISTER the custom icon under
 -- a stable bare name:
 --   1. Copy the file to DataStorage/icons/<name>.<ext> (disk-based lookup;
 --      ICONS_DIRS always searches the user icons dir first, so this alone
@@ -756,7 +756,7 @@ function M.registerTabIconName(slot_id, path)
         return nil
     end
 
-    local name = "simpleui_" .. slot_id
+    local name = "maxoutui_" .. slot_id
     local cached = _TAB_ICON_NAME_CACHE[slot_id]
     if cached and cached.src == path and cached.name == name then
         return name -- already registered for this exact source
@@ -786,7 +786,7 @@ function M.registerTabIconName(slot_id, path)
     -- sui_quicksettings_bar.lua's icon-registration Layer 2).
     pcall(function()
         local iw = require("ui/widget/iconwidget")
-        local iw_init = iw._simpleui_orig_init_for_scan or rawget(iw, "init")
+        local iw_init = iw._maxoutui_orig_init_for_scan or rawget(iw, "init")
         if type(iw_init) ~= "function" then return end
         for i = 1, 64 do
             local uname, uval = debug.getupvalue(iw_init, i)
@@ -881,11 +881,11 @@ function M.installTabIconPatch(plugin)
         FMMenu = ok and m or nil
     end
     if not FMMenu then return end
-    if FMMenu._simpleui_sysicon_patched then return end
+    if FMMenu._maxoutui_sysicon_patched then return end
 
     local orig = FMMenu.onShowMenu
-    FMMenu._simpleui_sysicon_orig    = orig
-    FMMenu._simpleui_sysicon_patched = true
+    FMMenu._maxoutui_sysicon_orig    = orig
+    FMMenu._maxoutui_sysicon_patched = true
     if plugin then plugin._sysicon_fmmenu_patched = true end
 
     FMMenu.onShowMenu = function(fmm_self, ...)
@@ -905,10 +905,10 @@ end
 function M.removeTabIconPatch()
     if not _fm_patch_installed then return end
     local FMMenu = package.loaded["apps/filemanager/filemanagermenu"]
-    if FMMenu and FMMenu._simpleui_sysicon_patched then
-        FMMenu.onShowMenu                = FMMenu._simpleui_sysicon_orig
-        FMMenu._simpleui_sysicon_orig    = nil
-        FMMenu._simpleui_sysicon_patched = nil
+    if FMMenu and FMMenu._maxoutui_sysicon_patched then
+        FMMenu.onShowMenu                = FMMenu._maxoutui_sysicon_orig
+        FMMenu._maxoutui_sysicon_orig    = nil
+        FMMenu._maxoutui_sysicon_patched = nil
     end
     _fm_patch_installed = false
     logger.dbg("simpleui/style: FM tab icon patch removed")
@@ -918,11 +918,11 @@ function M.installReaderTabIconPatch(plugin)
     if _reader_patch_installed then return end
     local ok, RMenu = pcall(require, "apps/reader/modules/readermenu")
     if not ok or not RMenu then return end
-    if RMenu._simpleui_sysicon_patched then return end
+    if RMenu._maxoutui_sysicon_patched then return end
 
     local orig = RMenu.onShowMenu
-    RMenu._simpleui_sysicon_orig    = orig
-    RMenu._simpleui_sysicon_patched = true
+    RMenu._maxoutui_sysicon_orig    = orig
+    RMenu._maxoutui_sysicon_patched = true
     if plugin then plugin._sysicon_rdmenu_patched = true end
 
     RMenu.onShowMenu = function(rm_self, ...)
@@ -942,10 +942,10 @@ end
 function M.removeReaderTabIconPatch()
     if not _reader_patch_installed then return end
     local RMenu = package.loaded["apps/reader/modules/readermenu"]
-    if RMenu and RMenu._simpleui_sysicon_patched then
-        RMenu.onShowMenu                = RMenu._simpleui_sysicon_orig
-        RMenu._simpleui_sysicon_orig    = nil
-        RMenu._simpleui_sysicon_patched = nil
+    if RMenu and RMenu._maxoutui_sysicon_patched then
+        RMenu.onShowMenu                = RMenu._maxoutui_sysicon_orig
+        RMenu._maxoutui_sysicon_orig    = nil
+        RMenu._maxoutui_sysicon_patched = nil
     end
     _reader_patch_installed = false
     logger.dbg("simpleui/style: Reader tab icon patch removed")
@@ -1542,8 +1542,8 @@ end
 -- installed on the system.
 --
 -- Settings keys (all via SUISettings):
---   simpleui_ui_font_name     string   — selected font family name
---   simpleui_ui_font_enabled  bool     — true = custom font active
+--   maxoutui_ui_font_name     string   — selected font family name
+--   maxoutui_ui_font_enabled  bool     — true = custom font active
 --
 -- The font path is resolved at apply-time via cre.getFontFaceFilenameAndFaceIndex
 -- so the setting stores the human-readable family name, not a raw file path.
@@ -1554,8 +1554,8 @@ end
 -- ---------------------------------------------------------------------------
 
 -- Settings keys
-local _FONT_KEY_NAME    = "simpleui_ui_font_name"
-local _FONT_KEY_ENABLED = "simpleui_ui_font_enabled"
+local _FONT_KEY_NAME    = "maxoutui_ui_font_name"
+local _FONT_KEY_ENABLED = "maxoutui_ui_font_enabled"
 local _FONT_DEFAULT     = "Noto Sans"
 
 -- Module-level lazy caches — populated once by _initFonts().
@@ -1831,7 +1831,7 @@ end
 -- Theme Colors
 -- ===========================================================================
 -- Granular per-role colour overrides for every SimpleUI surface.
--- All keys use the "simpleui_style_" prefix so that homescreen presets
+-- All keys use the "maxoutui_style_" prefix so that homescreen presets
 -- capture them automatically (HS_PREFIXES in sui_presets.lua covers it).
 --
 -- Color storage
@@ -1867,19 +1867,19 @@ end
 -- separator      → nil
 -- accent         → nil
 
--- Settings keys — all under simpleui_style_ so presets pick them up.
+-- Settings keys — all under maxoutui_style_ so presets pick them up.
 local _ROLE_KEYS = {
-    bg              = "simpleui_style_theme_bg",
-    fg              = "simpleui_style_theme_fg",
-    bottombar_bg    = "simpleui_style_theme_bottombar_bg",
-    bottombar_fg    = "simpleui_style_theme_bottombar_fg",
-    statusbar_bg    = "simpleui_style_theme_statusbar_bg",
-    statusbar_fg    = "simpleui_style_theme_statusbar_fg",
-    text_secondary  = "simpleui_style_theme_text_secondary",
-    separator       = "simpleui_style_theme_separator",
-    accent          = "simpleui_style_theme_accent",
-    progress_bg     = "simpleui_style_theme_progress_bg",
-    progress_fg     = "simpleui_style_theme_progress_fg",
+    bg              = "maxoutui_style_theme_bg",
+    fg              = "maxoutui_style_theme_fg",
+    bottombar_bg    = "maxoutui_style_theme_bottombar_bg",
+    bottombar_fg    = "maxoutui_style_theme_bottombar_fg",
+    statusbar_bg    = "maxoutui_style_theme_statusbar_bg",
+    statusbar_fg    = "maxoutui_style_theme_statusbar_fg",
+    text_secondary  = "maxoutui_style_theme_text_secondary",
+    separator       = "maxoutui_style_theme_separator",
+    accent          = "maxoutui_style_theme_accent",
+    progress_bg     = "maxoutui_style_theme_progress_bg",
+    progress_fg     = "maxoutui_style_theme_progress_fg",
 }
 
 -- Fallback chain: if role has no value, try these roles in order.
@@ -2226,12 +2226,12 @@ local _ICON_ID_ALIAS = { library = "home", settings = "sui_settings" }
 local function _filenameToKey(fname)
     local stem = fname:match("^(.+)%.[^%.]+$") or fname
     for _, s in ipairs(M.SLOTS) do
-        if s.id == stem then return "simpleui_sysicon_" .. stem, "sysicon" end
+        if s.id == stem then return "maxoutui_sysicon_" .. stem, "sysicon" end
     end
     local action_id = stem:match("^sui_action_(.+)$")
     if action_id and _ACTION_SET[action_id] then
         local internal_id = _ICON_ID_ALIAS[action_id] or action_id
-        return "simpleui_action_" .. internal_id .. "_icon", "action"
+        return "maxoutui_action_" .. internal_id .. "_icon", "action"
     end
     return nil, nil
 end
@@ -2240,7 +2240,7 @@ function M.getPacksDir()
     local ok, DS = pcall(require, "datastorage")
     if not ok or not DS then return nil end
     local lfs = require("libs/libkoreader-lfs")
-    local dir = DS:getSettingsDir() .. "/simpleui/sui_icons/packs"
+    local dir = DS:getSettingsDir() .. "/maxoutui/mui_icons/packs"
     if lfs.attributes(dir, "mode") ~= "directory" then
         lfs.mkdir(dir)
     end

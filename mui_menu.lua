@@ -69,7 +69,7 @@ do
             -- When that patch is active, rawget(iw,"init") returns its wrapper closure
             -- which has no ICONS_PATH/ICONS_DIRS upvalues, making the scan below fail
             -- and causing Strategy 3 to fire unnecessarily on every normal build.
-            local iw_init = iw._simpleui_orig_init_for_scan or rawget(iw, "init")
+            local iw_init = iw._maxoutui_orig_init_for_scan or rawget(iw, "init")
 
             local injected_path = false
             local injected_dir  = false
@@ -88,8 +88,8 @@ do
                     if icons_path and icons_dirs then break end
                 end
                 if icons_path then
-                    if icon_exists and not icons_path["simpleui_settings"] then
-                        icons_path["simpleui_settings"] = icon_file
+                    if icon_exists and not icons_path["maxoutui_settings"] then
+                        icons_path["maxoutui_settings"] = icon_file
                     end
                     injected_path = true
                 end
@@ -107,11 +107,11 @@ do
             end
 
             -- Strategy 3: if upvalue injection was unavailable (hardened builds),
-            -- patch IconWidget.init so icon="simpleui_settings" resolves directly.
+            -- patch IconWidget.init so icon="maxoutui_settings" resolves directly.
             if not injected_path and not injected_dir and icon_exists then
                 local orig_init = iw.init
                 iw.init = function(self_iw, ...)
-                    if self_iw.icon == "simpleui_settings" and not self_iw.file and not self_iw.image then
+                    if self_iw.icon == "maxoutui_settings" and not self_iw.file and not self_iw.image then
                         self_iw.file = icon_file
                         -- Fall through to orig_init so dimensions and the
                         -- internal ImageWidget are properly initialised.
@@ -120,7 +120,7 @@ do
                     end
                     if type(orig_init) == "function" then orig_init(self_iw, ...) end
                 end
-                logger.info("simpleui: icon registered via IconWidget.init patch (fallback)")
+                logger.info("maxoutui: icon registered via IconWidget.init patch (fallback)")
             end
         end
     end
@@ -396,9 +396,9 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
         --   Navpager    : navpager=true             (pagination_visible ignored)
         --   Oculto      : pagination_visible=false, navpager=false
         local function getGeral()
-            if SUISettings:isTrue("simpleui_bar_navpager_enabled") then
+            if SUISettings:isTrue("maxoutui_bar_navpager_enabled") then
                 return "navpager"
-            elseif SUISettings:nilOrTrue("simpleui_bar_pagination_visible") then
+            elseif SUISettings:nilOrTrue("maxoutui_bar_pagination_visible") then
                 return "predefinido"
             else
                 return "oculto"
@@ -407,11 +407,11 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
 
         local function setGeral(mode)
             if mode == "navpager" then
-                SUISettings:saveSetting("simpleui_bar_navpager_enabled", true)
-                SUISettings:saveSetting("simpleui_bar_pagination_visible", false)
+                SUISettings:saveSetting("maxoutui_bar_navpager_enabled", true)
+                SUISettings:saveSetting("maxoutui_bar_pagination_visible", false)
                 -- Navpager requires dot pager on homescreen (koreader style not allowed).
-                if not SUISettings:nilOrTrue("simpleui_bar_dotpager_always") then
-                    SUISettings:saveSetting("simpleui_bar_dotpager_always", true)
+                if not SUISettings:nilOrTrue("maxoutui_bar_dotpager_always") then
+                    SUISettings:saveSetting("maxoutui_bar_dotpager_always", true)
                 end
                 -- Trim tabs to navpager limit if needed.
                 local tabs = Config.loadTabConfig()
@@ -422,11 +422,11 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                     Config.saveTabConfig(tabs)
                 end
             elseif mode == "predefinido" then
-                SUISettings:saveSetting("simpleui_bar_navpager_enabled", false)
-                SUISettings:saveSetting("simpleui_bar_pagination_visible", true)
+                SUISettings:saveSetting("maxoutui_bar_navpager_enabled", false)
+                SUISettings:saveSetting("maxoutui_bar_pagination_visible", true)
             else -- "oculto"
-                SUISettings:saveSetting("simpleui_bar_navpager_enabled", false)
-                SUISettings:saveSetting("simpleui_bar_pagination_visible", false)
+                SUISettings:saveSetting("maxoutui_bar_navpager_enabled", false)
+                SUISettings:saveSetting("maxoutui_bar_pagination_visible", false)
             end
         end
 
@@ -489,15 +489,15 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                         radio        = true,
                         checked_func = function()
                             -- Dot Pager is always forced when Navpager is active.
-                            return not SUISettings:isTrue("simpleui_hs_pagination_hidden")
-                                and (SUISettings:nilOrTrue("simpleui_bar_dotpager_always")
+                            return not SUISettings:isTrue("maxoutui_hs_pagination_hidden")
+                                and (SUISettings:nilOrTrue("maxoutui_bar_dotpager_always")
                                     or getGeral() == "navpager")
                         end,
                         help_text    = _("Shows a row of dots at the bottom of the homescreen.\nThe active page dot is filled; the others are dimmed.\nAlways active when Navpager is selected."),
                         callback     = function()
-                            SUISettings:saveSetting("simpleui_hs_pagination_hidden", false)
-                            if not SUISettings:nilOrTrue("simpleui_bar_dotpager_always") then
-                                SUISettings:saveSetting("simpleui_bar_dotpager_always", true)
+                            SUISettings:saveSetting("maxoutui_hs_pagination_hidden", false)
+                            if not SUISettings:nilOrTrue("maxoutui_bar_dotpager_always") then
+                                SUISettings:saveSetting("maxoutui_bar_dotpager_always", true)
                             end
                             plugin:_scheduleRebuild()
                             local ok_hs, HS = pcall(require, "mui_homescreen")
@@ -511,15 +511,15 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                         -- Not selectable when Navpager is active.
                         enabled_func = function() return getGeral() ~= "navpager" end,
                         checked_func = function()
-                            return not SUISettings:isTrue("simpleui_hs_pagination_hidden")
-                                and not SUISettings:nilOrTrue("simpleui_bar_dotpager_always")
+                            return not SUISettings:isTrue("maxoutui_hs_pagination_hidden")
+                                and not SUISettings:nilOrTrue("maxoutui_bar_dotpager_always")
                                 and getGeral() ~= "navpager"
                         end,
                         help_text    = _("Uses the standard KOReader pagination bar on the homescreen.\nNot available when Navpager is active."),
                         callback     = function()
-                            SUISettings:saveSetting("simpleui_hs_pagination_hidden", false)
-                            if SUISettings:nilOrTrue("simpleui_bar_dotpager_always") then
-                                SUISettings:saveSetting("simpleui_bar_dotpager_always", false)
+                            SUISettings:saveSetting("maxoutui_hs_pagination_hidden", false)
+                            if SUISettings:nilOrTrue("maxoutui_bar_dotpager_always") then
+                                SUISettings:saveSetting("maxoutui_bar_dotpager_always", false)
                             end
                             plugin:_scheduleRebuild()
                             local ok_hs, HS = pcall(require, "mui_homescreen")
@@ -533,13 +533,13 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                         -- Not selectable when Navpager is active (navpager needs dot pager).
                         enabled_func = function() return getGeral() ~= "navpager" end,
                         checked_func = function()
-                            return SUISettings:isTrue("simpleui_hs_pagination_hidden")
+                            return SUISettings:isTrue("maxoutui_hs_pagination_hidden")
                                 and getGeral() ~= "navpager"
                         end,
                         help_text    = _("Hides the pagination bar on the homescreen.\nNot available when Navpager is active."),
                         callback     = function()
-                            if SUISettings:isTrue("simpleui_hs_pagination_hidden") then return end
-                            SUISettings:saveSetting("simpleui_hs_pagination_hidden", true)
+                            if SUISettings:isTrue("maxoutui_hs_pagination_hidden") then return end
+                            SUISettings:saveSetting("maxoutui_hs_pagination_hidden", true)
                             local ok_hs, HS = pcall(require, "mui_homescreen")
                             if ok_hs and HS then HS.refresh(true) end
                         end,
@@ -557,10 +557,10 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                         radio          = true,
                         enabled_func   = function() return getGeral() ~= "oculto" end,
                         checked_func   = function()
-                            return (SUISettings:readSetting("simpleui_bar_pagination_size") or "s") == "xs"
+                            return (SUISettings:readSetting("maxoutui_bar_pagination_size") or "s") == "xs"
                         end,
                         callback       = function()
-                            SUISettings:saveSetting("simpleui_bar_pagination_size", "xs")
+                            SUISettings:saveSetting("maxoutui_bar_pagination_size", "xs")
                             restartPrompt(_("Pagination bar size will change after restart.\n\nRestart now?"))
                         end,
                     },
@@ -569,10 +569,10 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                         radio          = true,
                         enabled_func   = function() return getGeral() ~= "oculto" end,
                         checked_func   = function()
-                            return (SUISettings:readSetting("simpleui_bar_pagination_size") or "s") == "s"
+                            return (SUISettings:readSetting("maxoutui_bar_pagination_size") or "s") == "s"
                         end,
                         callback       = function()
-                            SUISettings:saveSetting("simpleui_bar_pagination_size", "s")
+                            SUISettings:saveSetting("maxoutui_bar_pagination_size", "s")
                             restartPrompt(_("Pagination bar size will change after restart.\n\nRestart now?"))
                         end,
                     },
@@ -581,10 +581,10 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                         radio          = true,
                         enabled_func   = function() return getGeral() ~= "oculto" end,
                         checked_func   = function()
-                            return (SUISettings:readSetting("simpleui_bar_pagination_size") or "s") == "m"
+                            return (SUISettings:readSetting("maxoutui_bar_pagination_size") or "s") == "m"
                         end,
                         callback       = function()
-                            SUISettings:saveSetting("simpleui_bar_pagination_size", "m")
+                            SUISettings:saveSetting("maxoutui_bar_pagination_size", "m")
                             restartPrompt(_("Pagination bar size will change after restart.\n\nRestart now?"))
                         end,
                     },
@@ -595,12 +595,12 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                 text         = _("Show Page Count in Title Bar"),
                 separator    = true,
                 checked_func = function()
-                    return SUISettings:isTrue("simpleui_bar_pagination_show_subtitle")
+                    return SUISettings:isTrue("maxoutui_bar_pagination_show_subtitle")
                 end,
                 help_text    = _("Shows \"Page X of Y\" in the title bar subtitle when browsing the library, history or collections.\nNavpager enables this automatically.\nNot available when Navpager is active."),
                 callback     = function()
-                    local on = SUISettings:isTrue("simpleui_bar_pagination_show_subtitle")
-                    SUISettings:saveSetting("simpleui_bar_pagination_show_subtitle", not on)
+                    local on = SUISettings:isTrue("maxoutui_bar_pagination_show_subtitle")
+                    SUISettings:saveSetting("maxoutui_bar_pagination_show_subtitle", not on)
                     plugin:_scheduleRebuild()
                 end,
                 keep_menu_open = true,
@@ -833,11 +833,11 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                 text_func    = function()
                     return _("Enable Status Bar")
                 end,
-                checked_func = function() return SUISettings:nilOrTrue("simpleui_topbar_enabled") end,
+                checked_func = function() return SUISettings:nilOrTrue("maxoutui_topbar_enabled") end,
                 keep_menu_open = true,
                 callback     = function()
-                    local on = SUISettings:nilOrTrue("simpleui_topbar_enabled")
-                    SUISettings:saveSetting("simpleui_topbar_enabled", not on)
+                    local on = SUISettings:nilOrTrue("maxoutui_topbar_enabled")
+                    SUISettings:saveSetting("maxoutui_topbar_enabled", not on)
                     UIManager:show(ConfirmBox():new{
                         text = string.format(_("Status Bar will be %s after restart.\n\nRestart now?"), on and _("disabled") or _("enabled")),
                         ok_text = _("Restart"), cancel_text = _("Later"),
@@ -1058,10 +1058,10 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
             {
                 text           = _("Swipe Indicator"),
                 keep_menu_open = true,
-                checked_func   = function() return SUISettings:nilOrTrue("simpleui_topbar_swipe_indicator") end,
+                checked_func   = function() return SUISettings:nilOrTrue("maxoutui_topbar_swipe_indicator") end,
                 callback = function()
-                    SUISettings:saveSetting("simpleui_topbar_swipe_indicator",
-                        not SUISettings:nilOrTrue("simpleui_topbar_swipe_indicator"))
+                    SUISettings:saveSetting("maxoutui_topbar_swipe_indicator",
+                        not SUISettings:nilOrTrue("maxoutui_topbar_swipe_indicator"))
                     plugin:_scheduleRebuild()
                 end,
             },
@@ -1078,12 +1078,12 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                 text         = _("Settings on Long Tap"),
                 help_text    = _("When enabled, long-pressing the top bar opens its settings menu.\nDisable this to prevent the settings menu from appearing on long tap."),
                 checked_func = function()
-                    return SUISettings:nilOrTrue("simpleui_topbar_settings_on_hold")
+                    return SUISettings:nilOrTrue("maxoutui_topbar_settings_on_hold")
                 end,
                 keep_menu_open = true,
                 callback = function()
-                    local on = SUISettings:nilOrTrue("simpleui_topbar_settings_on_hold")
-                    SUISettings:saveSetting("simpleui_topbar_settings_on_hold", not on)
+                    local on = SUISettings:nilOrTrue("maxoutui_topbar_settings_on_hold")
+                    SUISettings:saveSetting("maxoutui_topbar_settings_on_hold", not on)
                 end,
             },
         }
@@ -1099,11 +1099,11 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                 text_func    = function()
                     return _("Enable Navigation Bar")
                 end,
-                checked_func = function() return SUISettings:nilOrTrue("simpleui_bar_enabled") end,
+                checked_func = function() return SUISettings:nilOrTrue("maxoutui_bar_enabled") end,
                 keep_menu_open = true,
                 callback     = function()
-                    local on = SUISettings:nilOrTrue("simpleui_bar_enabled")
-                    SUISettings:saveSetting("simpleui_bar_enabled", not on)
+                    local on = SUISettings:nilOrTrue("maxoutui_bar_enabled")
+                    SUISettings:saveSetting("maxoutui_bar_enabled", not on)
                     UIManager:show(ConfirmBox():new{
                         text = string.format(_("Navigation Bar will be %s after restart.\n\nRestart now?"), on and _("disabled") or _("enabled")),
                         ok_text = _("Restart"), cancel_text = _("Later"),
@@ -1262,7 +1262,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                         checked_func   = function() return require("mui_bottombar").getBarStyle() == "default" end,
                         keep_menu_open = true,
                         callback       = function()
-                            SUISettings:saveSetting("simpleui_bar_style", "default")
+                            SUISettings:saveSetting("maxoutui_bar_style", "default")
                             UI.invalidateDimCache()
                             plugin:_scheduleRebuild()
                             if ctx_menu and ctx_menu.refresh then ctx_menu.refresh() end
@@ -1274,7 +1274,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                         checked_func   = function() return require("mui_bottombar").getBarStyle() == "framed" end,
                         keep_menu_open = true,
                         callback       = function()
-                            SUISettings:saveSetting("simpleui_bar_style", "framed")
+                            SUISettings:saveSetting("maxoutui_bar_style", "framed")
                             UI.invalidateDimCache()
                             plugin:_scheduleRebuild()
                             if ctx_menu and ctx_menu.refresh then ctx_menu.refresh() end
@@ -1286,7 +1286,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                         checked_func   = function() return require("mui_bottombar").getBarStyle() == "bare" end,
                         keep_menu_open = true,
                         callback       = function()
-                            SUISettings:saveSetting("simpleui_bar_style", "bare")
+                            SUISettings:saveSetting("maxoutui_bar_style", "bare")
                             UI.invalidateDimCache()
                             plugin:_scheduleRebuild()
                             if ctx_menu and ctx_menu.refresh then ctx_menu.refresh() end
@@ -1370,12 +1370,12 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                 text         = _("Settings on Long Tap"),
                 help_text    = _("When enabled, long-pressing the bottom bar opens its settings menu.\nDisable this to prevent the settings menu from appearing on long tap."),
                 checked_func = function()
-                    return SUISettings:nilOrTrue("simpleui_bar_settings_on_hold")
+                    return SUISettings:nilOrTrue("maxoutui_bar_settings_on_hold")
                 end,
                 keep_menu_open = true,
                 callback = function()
-                    local on = SUISettings:nilOrTrue("simpleui_bar_settings_on_hold")
-                    SUISettings:saveSetting("simpleui_bar_settings_on_hold", not on)
+                    local on = SUISettings:nilOrTrue("maxoutui_bar_settings_on_hold")
+                    SUISettings:saveSetting("maxoutui_bar_settings_on_hold", not on)
                 end,
             },
         }
@@ -1865,16 +1865,16 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
     -- -----------------------------------------------------------------------
     -- Shared parametric helpers
     -- All menu-building functions below accept a `ctx` table:
-    --   ctx.pfx       — settings key prefix, e.g. "simpleui_hs_"
-    --   ctx.pfx_qa    — QA settings prefix, e.g. "simpleui_hs_qa_"
+    --   ctx.pfx       — settings key prefix, e.g. "maxoutui_hs_"
+    --   ctx.pfx_qa    — QA settings prefix, e.g. "maxoutui_hs_qa_"
     --   ctx.refresh   — zero-arg function to refresh the page after a change
     -- -----------------------------------------------------------------------
 
     local MAX_QA_ITEMS = 6  -- max actions per QA slot (used by makeQAMenu)
 
     local HOMESCREEN_CTX = {
-        pfx     = "simpleui_hs_",
-        pfx_qa  = "simpleui_hs_qa_",
+        pfx     = "maxoutui_hs_",
+        pfx_qa  = "maxoutui_hs_qa_",
         refresh = refreshHomescreen,
     }
 
@@ -2218,10 +2218,10 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
         return {
             {
                 text           = _("Enable Wallpaper"),
-                checked_func = function() return SUISettings:isTrue("simpleui_style_wallpaper_enabled") end,
+                checked_func = function() return SUISettings:isTrue("maxoutui_style_wallpaper_enabled") end,
                 callback     = function()
                     local HS = require("mui_homescreen")
-                    HS.styleSetWallpaperEnabled(not SUISettings:isTrue("simpleui_style_wallpaper_enabled"))
+                    HS.styleSetWallpaperEnabled(not SUISettings:isTrue("maxoutui_style_wallpaper_enabled"))
                     _applyFullLayoutRefresh()
                 end,
                 separator    = true,
@@ -2229,7 +2229,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
             },
             {
                 text = _("Select Wallpaper"),
-                enabled_func = function() return SUISettings:isTrue("simpleui_style_wallpaper_enabled") end,
+                enabled_func = function() return SUISettings:isTrue("maxoutui_style_wallpaper_enabled") end,
                 sub_item_table_func = function()
                     local HS = require("mui_homescreen")
                     local items = {}
@@ -2263,7 +2263,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                     return HS.styleStatusbarTransparent()
                 end,
                 enabled_func = function()
-                    return SUISettings:isTrue("simpleui_style_wallpaper_enabled")
+                    return SUISettings:isTrue("maxoutui_style_wallpaper_enabled")
                         and require("mui_homescreen").styleGetWallpaper() ~= nil
                 end,
                 callback = function()
@@ -2282,7 +2282,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                     return HS.styleNavbarTransparent()
                 end,
                 enabled_func = function()
-                    return SUISettings:isTrue("simpleui_style_wallpaper_enabled")
+                    return SUISettings:isTrue("maxoutui_style_wallpaper_enabled")
                         and require("mui_homescreen").styleGetWallpaper() ~= nil
                         and Bottombar.getBarStyle() ~= "bare"
                 end,
@@ -2301,7 +2301,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                     return HS.styleGetWallpaperShowInFM()
                 end,
                 enabled_func = function()
-                    return SUISettings:isTrue("simpleui_style_wallpaper_enabled")
+                    return SUISettings:isTrue("maxoutui_style_wallpaper_enabled")
                         and require("mui_homescreen").styleGetWallpaper() ~= nil
                 end,
                 callback = function()
@@ -2314,7 +2314,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
             },
             {
                 text = _("Stretch to fill screen"),
-                enabled_func = function() return SUISettings:isTrue("simpleui_style_wallpaper_enabled") end,
+                enabled_func = function() return SUISettings:isTrue("maxoutui_style_wallpaper_enabled") end,
                 checked_func = function() return require("mui_homescreen").styleGetWallpaperStretch() end,
                 keep_menu_open = true,
                 callback = function()
@@ -2325,7 +2325,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
             },
             {
                 text = _("Auto-rotate"),
-                enabled_func = function() return SUISettings:isTrue("simpleui_style_wallpaper_enabled") end,
+                enabled_func = function() return SUISettings:isTrue("maxoutui_style_wallpaper_enabled") end,
                 checked_func = function() return require("mui_homescreen").styleGetWallpaperAutoRotate() end,
                 keep_menu_open = true,
                 callback = function()
@@ -2336,7 +2336,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
             },
             {
                 text = _("Invert in Night Mode"),
-                enabled_func = function() return SUISettings:isTrue("simpleui_style_wallpaper_enabled") end,
+                enabled_func = function() return SUISettings:isTrue("maxoutui_style_wallpaper_enabled") end,
                 checked_func = function() return require("mui_homescreen").styleGetWallpaperInvertNight() end,
                 keep_menu_open = true,
                 callback = function()
@@ -2354,7 +2354,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                     local op = HS.styleGetWallpaperOpacity()
                     return op .. "%"
                 end,
-                enabled_func = function() return SUISettings:isTrue("simpleui_style_wallpaper_enabled") end,
+                enabled_func = function() return SUISettings:isTrue("maxoutui_style_wallpaper_enabled") end,
                 keep_menu_open = true,
                 callback = function()
                     local HS = require("mui_homescreen")
@@ -2399,12 +2399,12 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                 text           = _("Return to Home Screen on Wakeup"),
                 help_text      = _("When waking the device from sleep/suspend, always return to the Home Screen — even if a book was open when it went to sleep."),
                 checked_func   = function()
-                    return SUISettings:isTrue("simpleui_hs_return_on_wakeup")
+                    return SUISettings:isTrue("maxoutui_hs_return_on_wakeup")
                 end,
                 keep_menu_open = true,
                 callback       = function()
-                    local on = SUISettings:isTrue("simpleui_hs_return_on_wakeup")
-                    SUISettings:saveSetting("simpleui_hs_return_on_wakeup", not on)
+                    local on = SUISettings:isTrue("maxoutui_hs_return_on_wakeup")
+                    SUISettings:saveSetting("maxoutui_hs_return_on_wakeup", not on)
                 end,
             },
             {
@@ -2513,12 +2513,12 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                 text           = _("Return to Book Folder"),
                 help_text      = _("When closing a book from the Home Screen, go back to the folder where the book is located instead of the Library home folder."),
                 checked_func   = function()
-                    return SUISettings:isTrue("simpleui_hs_return_to_book_folder")
+                    return SUISettings:isTrue("maxoutui_hs_return_to_book_folder")
                 end,
                 keep_menu_open = true,
                 callback       = function()
-                    local on = SUISettings:isTrue("simpleui_hs_return_to_book_folder")
-                    SUISettings:saveSetting("simpleui_hs_return_to_book_folder", not on)
+                    local on = SUISettings:isTrue("maxoutui_hs_return_to_book_folder")
+                    SUISettings:saveSetting("maxoutui_hs_return_to_book_folder", not on)
                 end,
             },
             {
@@ -2530,12 +2530,12 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                         radio = true,
                         keep_menu_open = true,
                         checked_func = function()
-                            local mode = SUISettings:readSetting("simpleui_hs_closing_notice_mode")
-                            if not mode then return SUISettings:nilOrTrue("simpleui_hs_closing_notice") end
+                            local mode = SUISettings:readSetting("maxoutui_hs_closing_notice_mode")
+                            if not mode then return SUISettings:nilOrTrue("maxoutui_hs_closing_notice") end
                             return mode == "always"
                         end,
                         callback = function()
-                            SUISettings:saveSetting("simpleui_hs_closing_notice_mode", "always")
+                            SUISettings:saveSetting("maxoutui_hs_closing_notice_mode", "always")
                         end,
                     },
                     {
@@ -2543,10 +2543,10 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                         radio = true,
                         keep_menu_open = true,
                         checked_func = function()
-                            return SUISettings:readSetting("simpleui_hs_closing_notice_mode") == "gesture_only"
+                            return SUISettings:readSetting("maxoutui_hs_closing_notice_mode") == "gesture_only"
                         end,
                         callback = function()
-                            SUISettings:saveSetting("simpleui_hs_closing_notice_mode", "gesture_only")
+                            SUISettings:saveSetting("maxoutui_hs_closing_notice_mode", "gesture_only")
                         end,
                     },
                     {
@@ -2554,12 +2554,12 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                         radio = true,
                         keep_menu_open = true,
                         checked_func = function()
-                            local mode = SUISettings:readSetting("simpleui_hs_closing_notice_mode")
-                            if not mode then return not SUISettings:nilOrTrue("simpleui_hs_closing_notice") end
+                            local mode = SUISettings:readSetting("maxoutui_hs_closing_notice_mode")
+                            if not mode then return not SUISettings:nilOrTrue("maxoutui_hs_closing_notice") end
                             return mode == "never"
                         end,
                         callback = function()
-                            SUISettings:saveSetting("simpleui_hs_closing_notice_mode", "never")
+                            SUISettings:saveSetting("maxoutui_hs_closing_notice_mode", "never")
                         end,
                     },
                 },
@@ -2571,48 +2571,48 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                     {
                         text           = _("Show on Open"),
                         checked_func   = function()
-                            return SUISettings:isTrue("simpleui_reader_cover_open")
+                            return SUISettings:isTrue("maxoutui_reader_cover_open")
                         end,
                         keep_menu_open = true,
                         callback       = function()
-                            local on = SUISettings:isTrue("simpleui_reader_cover_open")
-                            SUISettings:saveSetting("simpleui_reader_cover_open", not on)
+                            local on = SUISettings:isTrue("maxoutui_reader_cover_open")
+                            SUISettings:saveSetting("maxoutui_reader_cover_open", not on)
                         end,
                     },
                     {
                         text           = _("Show on Close"),
                         help_text      = _("Replaces the \"Closing book…\" notice above with the cover for that close, when a cover is available."),
                         checked_func   = function()
-                            return SUISettings:isTrue("simpleui_reader_cover_close")
+                            return SUISettings:isTrue("maxoutui_reader_cover_close")
                         end,
                         keep_menu_open = true,
                         callback       = function()
-                            local on = SUISettings:isTrue("simpleui_reader_cover_close")
-                            SUISettings:saveSetting("simpleui_reader_cover_close", not on)
+                            local on = SUISettings:isTrue("maxoutui_reader_cover_close")
+                            SUISettings:saveSetting("maxoutui_reader_cover_close", not on)
                         end,
                     },
                     {
                         text           = _("High-Quality Cover"),
                         help_text      = _("The cover shown right as a book opens normally comes from the library's cached thumbnail, which can look soft on higher-resolution screens. When on, MaxOutUI instead reads the cover straight from the book file for that moment (also covers books never opened before, which otherwise show no cover at all) — at the cost of a brief extra pause while opening, since the file has to be read twice. Cover on close is unaffected either way: it already reads the full-quality cover from the open book."),
                         checked_func   = function()
-                            return SUISettings:isTrue("simpleui_reader_cover_bestquality")
+                            return SUISettings:isTrue("maxoutui_reader_cover_bestquality")
                         end,
                         keep_menu_open = true,
                         callback       = function()
-                            local on = SUISettings:isTrue("simpleui_reader_cover_bestquality")
-                            SUISettings:saveSetting("simpleui_reader_cover_bestquality", not on)
+                            local on = SUISettings:isTrue("maxoutui_reader_cover_bestquality")
+                            SUISettings:saveSetting("maxoutui_reader_cover_bestquality", not on)
                         end,
                     },
                     {
                         text           = _("Preserve Cover Proportions"),
                         help_text      = _("By default the cover is stretched to fill the whole screen, which can distort it if its proportions don't match your screen's. When on, the cover keeps its original proportions instead, centered over a black background."),
                         checked_func   = function()
-                            return SUISettings:isTrue("simpleui_reader_cover_fit")
+                            return SUISettings:isTrue("maxoutui_reader_cover_fit")
                         end,
                         keep_menu_open = true,
                         callback       = function()
-                            local on = SUISettings:isTrue("simpleui_reader_cover_fit")
-                            SUISettings:saveSetting("simpleui_reader_cover_fit", not on)
+                            local on = SUISettings:isTrue("maxoutui_reader_cover_fit")
+                            SUISettings:saveSetting("maxoutui_reader_cover_fit", not on)
                         end,
                     },
                 },
@@ -2621,36 +2621,36 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                 text           = _("Statistics Loading Notice"),
                 help_text      = _("Show a brief \"Loading statistics\xe2\x80\xa6\" notice when opening a statistics window, preventing accidental double-taps while e-ink refreshes."),
                 checked_func   = function()
-                    return SUISettings:nilOrTrue("simpleui_stats_loading_notice")
+                    return SUISettings:nilOrTrue("maxoutui_stats_loading_notice")
                 end,
                 keep_menu_open = true,
                 callback       = function()
-                    local on = SUISettings:nilOrTrue("simpleui_stats_loading_notice")
-                    SUISettings:saveSetting("simpleui_stats_loading_notice", not on)
+                    local on = SUISettings:nilOrTrue("maxoutui_stats_loading_notice")
+                    SUISettings:saveSetting("maxoutui_stats_loading_notice", not on)
                 end,
             },
             {
                 text           = _("Overflow Warning"),
                 help_text      = _("Warn when modules on a page exceed the available screen height."),
                 checked_func   = function()
-                    return SUISettings:nilOrTrue("simpleui_hs_overflow_warn")
+                    return SUISettings:nilOrTrue("maxoutui_hs_overflow_warn")
                 end,
                 keep_menu_open = true,
                 callback       = function()
-                    local on = SUISettings:nilOrTrue("simpleui_hs_overflow_warn")
-                    SUISettings:saveSetting("simpleui_hs_overflow_warn", not on)
+                    local on = SUISettings:nilOrTrue("maxoutui_hs_overflow_warn")
+                    SUISettings:saveSetting("maxoutui_hs_overflow_warn", not on)
                 end,
             },
             {
                 text           = _("Settings on Long Tap"),
                 help_text      = _("When enabled, long-pressing a module on the home screen opens its settings menu.\nDisable this to prevent settings from appearing on long tap."),
                 checked_func   = function()
-                    return SUISettings:nilOrTrue("simpleui_hs_settings_on_hold")
+                    return SUISettings:nilOrTrue("maxoutui_hs_settings_on_hold")
                 end,
                 keep_menu_open = true,
                 callback       = function()
-                    local on = SUISettings:nilOrTrue("simpleui_hs_settings_on_hold")
-                    SUISettings:saveSetting("simpleui_hs_settings_on_hold", not on)
+                    local on = SUISettings:nilOrTrue("maxoutui_hs_settings_on_hold")
+                    SUISettings:saveSetting("maxoutui_hs_settings_on_hold", not on)
                     refreshHomescreen()
                 end,
             },
@@ -2658,12 +2658,12 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                 text           = _("Preserve Deleted Books in Statistics"),
                 help_text      = _("When a finished book is deleted from the device, keep it counted in the Books Read statistics on the Home Screen.\n\nBooks changed back to Reading or Abandoned are automatically removed from this list."),
                 checked_func   = function()
-                    return SUISettings:nilOrTrue("simpleui_preserve_deleted_books_in_stats")
+                    return SUISettings:nilOrTrue("maxoutui_preserve_deleted_books_in_stats")
                 end,
                 keep_menu_open = true,
                 callback       = function()
-                    local on = SUISettings:nilOrTrue("simpleui_preserve_deleted_books_in_stats")
-                    SUISettings:saveSetting("simpleui_preserve_deleted_books_in_stats", not on)
+                    local on = SUISettings:nilOrTrue("maxoutui_preserve_deleted_books_in_stats")
+                    SUISettings:saveSetting("maxoutui_preserve_deleted_books_in_stats", not on)
                     local SP = package.loaded["desktop_modules/module_stats_provider"]
                     if SP and SP.invalidate then pcall(SP.invalidate) end
                     refreshHomescreen()
@@ -2681,12 +2681,12 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                 text           = _("PocketBook Home Button Opens Home Screen"),
                 help_text      = _("Makes the device's physical Home button always open the MaxOutUI Home Screen — while reading and while browsing files — instead of KOReader's native Home behaviour."),
                 checked_func   = function()
-                    return SUISettings:isTrue("simpleui_pb_home_opens_hs")
+                    return SUISettings:isTrue("maxoutui_pb_home_opens_hs")
                 end,
                 keep_menu_open = true,
                 callback       = function()
-                    local on = SUISettings:isTrue("simpleui_pb_home_opens_hs")
-                    SUISettings:saveSetting("simpleui_pb_home_opens_hs", not on)
+                    local on = SUISettings:isTrue("maxoutui_pb_home_opens_hs")
+                    SUISettings:saveSetting("maxoutui_pb_home_opens_hs", not on)
                 end,
             })
         end
@@ -3956,12 +3956,12 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                                     text_func = function() return _name end,
                                     radio = true,
                                     checked_func = function()
-                                        return SUISettings:get("simpleui_icon_active_preset") == _name
+                                        return SUISettings:get("maxoutui_icon_active_preset") == _name
                                     end,
                                     callback = function()
                                         if not IP then return end
                                         if IP.apply(_name, QA2) then
-                                            SUISettings:set("simpleui_icon_active_preset", _name)
+                                            SUISettings:set("maxoutui_icon_active_preset", _name)
                                             _reapplyAll()
                                         else
                                             UIManager:show(InfoMessage():new{
@@ -4012,7 +4012,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                                                     end
                                                     local function _doSave()
                                                         IP.save(name)
-                                                        SUISettings:set("simpleui_icon_active_preset", name)
+                                                        SUISettings:set("maxoutui_icon_active_preset", name)
                                                         UIManager:close(dialog)
                                                         UIManager:show(InfoMessage():new{
                                                             text    = string.format(_("Preset \"%s\" saved."), name),
@@ -4060,7 +4060,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                                                             ok_callback = function()
                                                                 if IP then
                                                                     IP.save(_name)
-                                                                    SUISettings:set("simpleui_icon_active_preset", _name)
+                                                                    SUISettings:set("maxoutui_icon_active_preset", _name)
                                                                     UIManager:show(InfoMessage():new{ text = string.format(_("Preset \"%s\" updated."), _name), timeout = 2 })
                                                                     UIManager:nextTick(function() if ctx_menu and ctx_menu.refresh then ctx_menu.refresh() end end)
                                                                 end
@@ -4084,8 +4084,8 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                                                                     end
                                                                     if IP then
                                                                         IP.rename(_name, new_name)
-                                                                        local active = SUISettings:get("simpleui_icon_active_preset")
-                                                                        if active == _name then SUISettings:set("simpleui_icon_active_preset", new_name) end
+                                                                        local active = SUISettings:get("maxoutui_icon_active_preset")
+                                                                        if active == _name then SUISettings:set("maxoutui_icon_active_preset", new_name) end
                                                                     end
                                                                     UIManager:close(dialog2)
                                                                     UIManager:nextTick(function() if ctx_menu and ctx_menu.refresh then ctx_menu.refresh() end end)
@@ -4103,8 +4103,8 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                                                             ok_callback = function()
                                                                 if IP then
                                                                     IP.delete(_name)
-                                                                    local active = SUISettings:get("simpleui_icon_active_preset")
-                                                                    if active == _name then SUISettings:del("simpleui_icon_active_preset") end
+                                                                    local active = SUISettings:get("maxoutui_icon_active_preset")
+                                                                    if active == _name then SUISettings:del("maxoutui_icon_active_preset") end
                                                                 end
                                                                 UIManager:nextTick(function() if ctx_menu and ctx_menu.refresh then ctx_menu.refresh() end end)
                                                             end,
@@ -4144,8 +4144,8 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                                                                                     ok_callback = function()
                                                                                         if IP then
                                                                                             IP.delete(_name)
-                                                                                            local active = SUISettings:get("simpleui_icon_active_preset")
-                                                                                            if active == _name then SUISettings:del("simpleui_icon_active_preset") end
+                                                                                            local active = SUISettings:get("maxoutui_icon_active_preset")
+                                                                                            if active == _name then SUISettings:del("maxoutui_icon_active_preset") end
                                                                                         end
                                                                                         ctx2.repaint()
                                                                                         UIManager:nextTick(function() if ctx_menu and ctx_menu.refresh then ctx_menu.refresh() end end)
@@ -4169,8 +4169,8 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                                                                                             end
                                                                                             if IP then
                                                                                                 IP.rename(_name, new_name)
-                                                                                                local active = SUISettings:get("simpleui_icon_active_preset")
-                                                                                                if active == _name then SUISettings:set("simpleui_icon_active_preset", new_name) end
+                                                                                                local active = SUISettings:get("maxoutui_icon_active_preset")
+                                                                                                if active == _name then SUISettings:set("maxoutui_icon_active_preset", new_name) end
                                                                                             end
                                                                                             UIManager:close(dialog2)
                                                                                             ctx2.repaint()
@@ -4189,7 +4189,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                                                                                     ok_callback = function()
                                                                                         if IP then
                                                                                             IP.save(_name)
-                                                                                            SUISettings:set("simpleui_icon_active_preset", _name)
+                                                                                            SUISettings:set("maxoutui_icon_active_preset", _name)
                                                                                             UIManager:show(InfoMessage():new{ text = string.format(_("Preset \"%s\" updated."), _name), timeout = 2 })
                                                                                             ctx2.repaint()
                                                                                             UIManager:nextTick(function() if ctx_menu and ctx_menu.refresh then ctx_menu.refresh() end end)
@@ -4301,8 +4301,8 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                 text_func = function()
                     local ok_ss, SUIStyle = pcall(require, "mui_style")
                     if not ok_ss or not SUIStyle then return _("UI Font") end
-                    local enabled = SUISettings:isTrue("simpleui_ui_font_enabled")
-                    local name    = SUISettings:get("simpleui_ui_font_name") or "Noto Sans"
+                    local enabled = SUISettings:isTrue("maxoutui_ui_font_enabled")
+                    local name    = SUISettings:get("maxoutui_ui_font_name") or "Noto Sans"
                     if not enabled then
                         return _("UI Font  (default)")
                     end
@@ -4365,10 +4365,10 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                     {
                         text           = _("Flat"),
                         radio          = true,
-                        checked_func   = function() return (SUISettings:get("simpleui_style_progress_bar_type") or "flat") == "flat" end,
+                        checked_func   = function() return (SUISettings:get("maxoutui_style_progress_bar_type") or "flat") == "flat" end,
                         keep_menu_open = true,
                         callback       = function()
-                            SUISettings:set("simpleui_style_progress_bar_type", "flat")
+                            SUISettings:set("maxoutui_style_progress_bar_type", "flat")
                             refreshHomescreen()
                             if ctx_menu and ctx_menu.refresh then ctx_menu.refresh() end
                         end,
@@ -4376,10 +4376,10 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                     {
                         text           = _("Framed"),
                         radio          = true,
-                        checked_func   = function() return (SUISettings:get("simpleui_style_progress_bar_type") or "flat") == "framed" end,
+                        checked_func   = function() return (SUISettings:get("maxoutui_style_progress_bar_type") or "flat") == "framed" end,
                         keep_menu_open = true,
                         callback       = function()
-                            SUISettings:set("simpleui_style_progress_bar_type", "framed")
+                            SUISettings:set("maxoutui_style_progress_bar_type", "framed")
                             refreshHomescreen()
                             if ctx_menu and ctx_menu.refresh then ctx_menu.refresh() end
                         end,
@@ -4392,15 +4392,15 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
             {
                 text_func = function()
                     -- Show the edit pencil if any theme color role is set.
-                    local has = SUISettings:get("simpleui_style_theme_bg")
-                             or SUISettings:get("simpleui_style_theme_fg")
-                             or SUISettings:get("simpleui_style_theme_bottombar_bg")
-                             or SUISettings:get("simpleui_style_theme_bottombar_fg")
-                             or SUISettings:get("simpleui_style_theme_statusbar_bg")
-                             or SUISettings:get("simpleui_style_theme_statusbar_fg")
-                             or SUISettings:get("simpleui_style_theme_text_secondary")
-                             or SUISettings:get("simpleui_style_theme_separator")
-                             or SUISettings:get("simpleui_style_theme_accent")
+                    local has = SUISettings:get("maxoutui_style_theme_bg")
+                             or SUISettings:get("maxoutui_style_theme_fg")
+                             or SUISettings:get("maxoutui_style_theme_bottombar_bg")
+                             or SUISettings:get("maxoutui_style_theme_bottombar_fg")
+                             or SUISettings:get("maxoutui_style_theme_statusbar_bg")
+                             or SUISettings:get("maxoutui_style_theme_statusbar_fg")
+                             or SUISettings:get("maxoutui_style_theme_text_secondary")
+                             or SUISettings:get("maxoutui_style_theme_separator")
+                             or SUISettings:get("maxoutui_style_theme_accent")
                     return _("Theme Colors") .. (has and "  \u{270E}" or "")
                 end,
                 sub_item_table_func = function()
@@ -4418,7 +4418,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
     local function makeAboutMenuItems(ctx_menu)
         local _plugin_dir = (debug.getinfo(1, "S").source or ""):match("^@?(.+)/[^/]+$")
         local ok, Meta = pcall(dofile, _plugin_dir .. "/_meta.lua")
-        if not ok or type(Meta) ~= "table" or Meta.name ~= "simpleui" then
+        if not ok or type(Meta) ~= "table" or Meta.name ~= "maxoutui" then
             local rok, rmeta = pcall(require, "_meta")
             Meta = (rok and type(rmeta) == "table" and rmeta.name == "simpleui" and rmeta) or {}
         end
@@ -4436,12 +4436,12 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
             {
                 text           = _("Automatic Update Check"),
                 checked_func   = function()
-                    return SUISettings:isTrue("simpleui_updater_auto_check")
+                    return SUISettings:isTrue("maxoutui_updater_auto_check")
                 end,
                 keep_menu_open = true,
                 callback       = function()
-                    SUISettings:set("simpleui_updater_auto_check",
-                        not SUISettings:isTrue("simpleui_updater_auto_check"))
+                    SUISettings:set("maxoutui_updater_auto_check",
+                        not SUISettings:isTrue("maxoutui_updater_auto_check"))
                 end,
             },
             {
@@ -4498,7 +4498,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
 
     -- sorting_hint = "tools" places this entry in the Tools section of the
     -- KOReader main menu (where Statistics, Terminal, etc. live).
-    -- Using a dedicated key "simpleui" avoids colliding with the section table.
+    -- Using a dedicated key "maxoutui" avoids colliding with the section table.
     --
     -- OPT-H: All sub-menus are now built lazily via sub_item_table_func.
     -- Previously makeNavbarMenu(), makePaginationBarMenu() and makeTopbarMenu()
@@ -4533,12 +4533,12 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
             -- ── Enable / Disable toggle ───────────────────────────────────────
             {
                 text_func    = function()
-                    return _("MaxOutUI") .. " — " .. (SUISettings:nilOrTrue("simpleui_enabled") and _("On") or _("Off"))
+                    return _("MaxOutUI") .. " — " .. (SUISettings:nilOrTrue("maxoutui_enabled") and _("On") or _("Off"))
                 end,
-                checked_func = function() return SUISettings:nilOrTrue("simpleui_enabled") end,
+                checked_func = function() return SUISettings:nilOrTrue("maxoutui_enabled") end,
                 callback     = function()
-                    local on = SUISettings:nilOrTrue("simpleui_enabled")
-                    SUISettings:saveSetting("simpleui_enabled", not on)
+                    local on = SUISettings:nilOrTrue("maxoutui_enabled")
+                    SUISettings:saveSetting("maxoutui_enabled", not on)
                     -- When disabling SimpleUI, reset "Start with Homescreen" if active,
                     -- because "homescreen_simpleui" is not a value the base KOReader
                     -- understands — leaving it set would cause a blank screen on next boot.

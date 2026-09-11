@@ -97,7 +97,7 @@ local MaxOutUIPlugin = WidgetContainer:new{
 
 function MaxOutUIPlugin:init()
     local ok, err = pcall(function()
-        -- Ensure the simpleui settings directory tree exists before any
+        -- Ensure the maxoutui settings directory tree exists before any
         -- SUISettings call.  SUISettings is lazy — its LuaSettings store is
         -- opened on first use — but LuaSettings:open() cannot create the
         -- parent directory.  If the directory is missing (fresh install, or
@@ -114,10 +114,10 @@ function MaxOutUIPlugin:init()
             local ok_ds,  DataStorage = pcall(require, "datastorage")
             local ok_lfs, lfs_early  = pcall(require, "libs/libkoreader-lfs")
             if ok_ds and ok_lfs then
-                local base = DataStorage:getSettingsDir() .. "/simpleui"
+                local base = DataStorage:getSettingsDir() .. "/maxoutui"
                 for _, sub in ipairs({
-                    "", "/sui_icons", "/sui_icons/packs", "/sui_quotes",
-                    "/sui_wallpapers", "/sui_presets", "/sui_presets/sui_presets_export", "/sui_presets/sui_presets_import"
+                    "", "/mui_icons", "/mui_icons/packs", "/mui_quotes",
+                    "/mui_wallpapers", "/mui_presets", "/mui_presets/mui_presets_export", "/mui_presets/mui_presets_import"
                 }) do
                     local path = base .. sub
                     if lfs_early.attributes(path, "mode") ~= "directory" then
@@ -126,6 +126,29 @@ function MaxOutUIPlugin:init()
                 end
             end
         end
+
+        -- Lift legacy simpleui_* flags in G_reader_settings before any
+        -- migration guard reads them (mui_store already rebrands its own file).
+        pcall(function()
+            local raw = G_reader_settings.data
+            if type(raw) ~= "table" then return end
+            local to_rename = {}
+            for k, v in pairs(raw) do
+                if type(k) == "string" and k:sub(1, 9) == "simpleui_" then
+                    to_rename[#to_rename + 1] = {
+                        old = k,
+                        new = "maxoutui_" .. k:sub(10),
+                        v = v,
+                    }
+                end
+            end
+            for _, entry in ipairs(to_rename) do
+                if G_reader_settings:readSetting(entry.new) == nil then
+                    G_reader_settings:saveSetting(entry.new, entry.v)
+                end
+                G_reader_settings:delSetting(entry.old)
+            end
+        end)
 
         -- Detect hot update: compare the version now on disk with what was
         -- running last session. If they differ, warn the user to restart so
@@ -147,11 +170,11 @@ function MaxOutUIPlugin:init()
         end
         -- Read version from SUISettings; fall back to G_reader_settings for the
         -- first boot after the Phase-4 migration (before v2 migration has run).
-        local prev_version = SUISettings:get("simpleui_loaded_version")
-            or G_reader_settings:readSetting("simpleui_loaded_version")
+        local prev_version = SUISettings:get("maxoutui_loaded_version")
+            or G_reader_settings:readSetting("maxoutui_loaded_version")
         if current_version then
             if prev_version and prev_version ~= current_version then
-                logger.info("simpleui: updated from", prev_version, "to", current_version,
+                logger.info("maxoutui: updated from", prev_version, "to", current_version,
                     "— restart recommended")
                 UIManager:scheduleIn(1, function()
                     local InfoMessage = require("ui/widget/infomessage")
@@ -165,7 +188,7 @@ function MaxOutUIPlugin:init()
                     })
                 end)
             end
-            SUISettings:set("simpleui_loaded_version", current_version)
+            SUISettings:set("maxoutui_loaded_version", current_version)
         end
 
         -- -------------------------------------------------------------------
@@ -173,16 +196,16 @@ function MaxOutUIPlugin:init()
         --
         -- v1: move user files out of the plugin folder into DataStorage so
         --     they survive plugin updates, and normalise all settings keys to
-        --     the simpleui_ / navbar_ namespace.
+        --     the maxoutui_ / navbar_ namespace.
         -- -------------------------------------------------------------------
-        if not G_reader_settings:isTrue("simpleui_userdata_migrated_v1") then
+        if not G_reader_settings:isTrue("maxoutui_userdata_migrated_v1") then
             pcall(function()
                 local ok_ds, DataStorage = pcall(require, "datastorage")
                 local ok_lfs, lfs        = pcall(require, "libs/libkoreader-lfs")
                 local ok_ffi, ffiutil    = pcall(require, "ffi/util")
                 if not (ok_ds and ok_lfs and ok_ffi) then return end
 
-                local data_dir = DataStorage:getSettingsDir() .. "/simpleui"
+                local data_dir = DataStorage:getSettingsDir() .. "/maxoutui"
 
                 -- ── 1. Migrate user files (copy, never overwrite) ─────────
                 -- Directory structure is guaranteed by the startup block above.
@@ -227,37 +250,37 @@ function MaxOutUIPlugin:init()
                         lfs.rmdir(dir)  -- only succeeds when empty
                     end
 
-                    -- icons/custom → DataStorage/simpleui/sui_icons/
+                    -- icons/custom → DataStorage/maxoutui/mui_icons/
                     -- then remove the now-redundant in-plugin directory.
                     copyDirContents(plugin_root .. "/icons/custom",
-                                    data_dir    .. "/sui_icons")
+                                    data_dir    .. "/mui_icons")
                     removeDirIfEmpty(plugin_root .. "/icons/custom")
 
-                    -- desktop_modules/custom_quotes → DataStorage/simpleui/sui_quotes/
+                    -- desktop_modules/custom_quotes → DataStorage/maxoutui/mui_quotes/
                     -- then remove the now-redundant in-plugin directory.
                     copyDirContents(plugin_root .. "/desktop_modules/custom_quotes",
-                                    data_dir    .. "/sui_quotes")
+                                    data_dir    .. "/mui_quotes")
                     removeDirIfEmpty(plugin_root .. "/desktop_modules/custom_quotes")
                 end
 
                 -- ── 2. Migrate renamed settings keys ──────────────────────
                 -- Each entry: { old_key, new_key }
                 local key_renames = {
-                    { "sui_tbr_list",             "simpleui_tbr_list"                    },
-                    { "quote_deck_order",          "simpleui_quote_deck_order"            },
-                    { "quote_deck_pos",            "simpleui_quote_deck_pos"              },
-                    { "quote_deck_count",          "simpleui_quote_deck_count"            },
-                    { "quote_hl_deck_order",       "simpleui_quote_hl_deck_order"         },
-                    { "quote_hl_deck_pos",         "simpleui_quote_hl_deck_pos"           },
-                    { "quote_hl_deck_count",       "simpleui_quote_hl_deck_count"         },
-                    { "quote_custom_deck_order",   "simpleui_quote_custom_deck_order"     },
-                    { "quote_custom_deck_pos",     "simpleui_quote_custom_deck_pos"       },
-                    { "quote_custom_deck_count",   "simpleui_quote_custom_deck_count"     },
-                    { "quote_custom_deck_file",    "simpleui_quote_custom_deck_file"      },
+                    { "sui_tbr_list",             "maxoutui_tbr_list"                    },
+                    { "quote_deck_order",          "maxoutui_quote_deck_order"            },
+                    { "quote_deck_pos",            "maxoutui_quote_deck_pos"              },
+                    { "quote_deck_count",          "maxoutui_quote_deck_count"            },
+                    { "quote_hl_deck_order",       "maxoutui_quote_hl_deck_order"         },
+                    { "quote_hl_deck_pos",         "maxoutui_quote_hl_deck_pos"           },
+                    { "quote_hl_deck_count",       "maxoutui_quote_hl_deck_count"         },
+                    { "quote_custom_deck_order",   "maxoutui_quote_custom_deck_order"     },
+                    { "quote_custom_deck_pos",     "maxoutui_quote_custom_deck_pos"       },
+                    { "quote_custom_deck_count",   "maxoutui_quote_custom_deck_count"     },
+                    { "quote_custom_deck_file",    "maxoutui_quote_custom_deck_file"      },
                     -- quote_source and quote_custom_file are per-instance (prefixed
                     -- with navbar_homescreen_ at runtime); migrate all known slots.
-                    { "navbar_homescreen_quote_source",      "navbar_homescreen_simpleui_quote_source"      },
-                    { "navbar_homescreen_quote_custom_file", "navbar_homescreen_simpleui_quote_custom_file" },
+                    { "navbar_homescreen_quote_source",      "navbar_homescreen_maxoutui_quote_source"      },
+                    { "navbar_homescreen_quote_custom_file", "navbar_homescreen_maxoutui_quote_custom_file" },
                 }
                 for _, pair in ipairs(key_renames) do
                     local old_key, new_key = pair[1], pair[2]
@@ -268,12 +291,12 @@ function MaxOutUIPlugin:init()
                     G_reader_settings:delSetting(old_key)
                 end
 
-                logger.info("simpleui: userdata migration v1 complete")
+                logger.info("maxoutui: userdata migration v1 complete")
             end)
-            G_reader_settings:saveSetting("simpleui_userdata_migrated_v1", true)
+            G_reader_settings:saveSetting("maxoutui_userdata_migrated_v1", true)
         end
         -- -------------------------------------------------------------------
-        -- Settings migration v2: move all navbar_* and simpleui_* keys from
+        -- Settings migration v2: move all navbar_* and maxoutui_* keys from
         -- G_reader_settings into SUISettings (the dedicated per-plugin store).
         --
         -- This runs once on first boot after the Phase-3 refactor.  It is safe
@@ -281,7 +304,7 @@ function MaxOutUIPlugin:init()
         -- not overwritten; keys successfully copied are removed from
         -- G_reader_settings.
         -- -------------------------------------------------------------------
-        if not SUISettings:isTrue("simpleui_settings_migrated_v2") then
+        if not SUISettings:isTrue("maxoutui_settings_migrated_v2") then
             pcall(function()
                 -- Enumerate every key currently stored in G_reader_settings
                 -- and migrate the ones owned by SimpleUI.
@@ -294,10 +317,10 @@ function MaxOutUIPlugin:init()
                 local to_migrate = {}
                 for k, v in pairs(raw) do
                     local owned = (type(k) == "string")
-                        and (k:sub(1, 7) == "navbar_" or k:sub(1, 9) == "simpleui_")
+                        and (k:sub(1, 7) == "navbar_" or k:sub(1, 9) == "maxoutui_")
                         -- Keep the v1 and v2 migration flags in G_reader_settings
-                        -- so they survive a factory reset of sui_settings.lua.
-                        and k ~= "simpleui_userdata_migrated_v1"
+                        -- so they survive a factory reset of mui_settings.lua.
+                        and k ~= "maxoutui_userdata_migrated_v1"
                     if owned then
                         to_migrate[#to_migrate + 1] = { k = k, v = v }
                     end
@@ -316,14 +339,14 @@ function MaxOutUIPlugin:init()
                 end
 
                 SUISettings:flush()
-                logger.info("simpleui: settings migration v2 complete —", migrated, "keys moved to SUISettings")
+                logger.info("maxoutui: settings migration v2 complete —", migrated, "keys moved to SUISettings")
             end)
-            SUISettings:set("simpleui_settings_migrated_v2", true)
+            SUISettings:set("maxoutui_settings_migrated_v2", true)
             SUISettings:flush()
         end
         -- -------------------------------------------------------------------
         -- Settings migration v3: rename all navbar_* keys inside SUISettings
-        -- to the canonical simpleui_* namespace.
+        -- to the canonical maxoutui_* namespace.
         --
         -- Two passes:
         --   1. Fixed renames  — explicit old → new map (fast, readable).
@@ -335,64 +358,64 @@ function MaxOutUIPlugin:init()
         --   • Old key is always deleted, even when the copy is skipped.
         --   • The whole block runs inside pcall — a crash must never prevent
         --     the plugin from loading on a resource-constrained e-reader.
-        --   • Guarded by simpleui_settings_migrated_v3 so it runs at most once.
+        --   • Guarded by maxoutui_settings_migrated_v3 so it runs at most once.
         -- -------------------------------------------------------------------
-        if not SUISettings:isTrue("simpleui_settings_migrated_v3") then
+        if not SUISettings:isTrue("maxoutui_settings_migrated_v3") then
             pcall(function()
                 -- ── 1. Fixed renames ─────────────────────────────────────────
                 local fixed_renames = {
                     -- Bottom bar — general
-                    { "navbar_enabled",                      "simpleui_bar_enabled"                   },
-                    { "navbar_mode",                         "simpleui_bar_mode"                      },
-                    { "navbar_bar_size",                     "simpleui_bar_size"                      },
-                    { "navbar_bar_size_pct",                 "simpleui_bar_size_pct"                  },
-                    { "navbar_hide_separator",               "simpleui_bar_hide_separator"            },
-                    { "navbar_bottom_margin_pct",            "simpleui_bar_bottom_margin_pct"         },
-                    { "navbar_icon_scale_pct",               "simpleui_bar_icon_scale_pct"            },
-                    { "navbar_label_scale_pct",              "simpleui_bar_label_scale_pct"           },
-                    { "navbar_rs_text_scale_pct",            "simpleui_bar_rs_text_scale_pct"         },
+                    { "navbar_enabled",                      "maxoutui_bar_enabled"                   },
+                    { "navbar_mode",                         "maxoutui_bar_mode"                      },
+                    { "navbar_bar_size",                     "maxoutui_bar_size"                      },
+                    { "navbar_bar_size_pct",                 "maxoutui_bar_size_pct"                  },
+                    { "navbar_hide_separator",               "maxoutui_bar_hide_separator"            },
+                    { "navbar_bottom_margin_pct",            "maxoutui_bar_bottom_margin_pct"         },
+                    { "navbar_icon_scale_pct",               "maxoutui_bar_icon_scale_pct"            },
+                    { "navbar_label_scale_pct",              "maxoutui_bar_label_scale_pct"           },
+                    { "navbar_rs_text_scale_pct",            "maxoutui_bar_rs_text_scale_pct"         },
                     -- Bottom bar — pagination / pager
-                    { "navbar_pagination_visible",           "simpleui_bar_pagination_visible"        },
-                    { "navbar_pagination_size",              "simpleui_bar_pagination_size"           },
-                    { "navbar_pagination_show_subtitle",     "simpleui_bar_pagination_show_subtitle"  },
-                    { "navbar_navpager_enabled",             "simpleui_bar_navpager_enabled"          },
-                    { "navbar_dotpager_always",              "simpleui_bar_dotpager_always"           },
+                    { "navbar_pagination_visible",           "maxoutui_bar_pagination_visible"        },
+                    { "navbar_pagination_size",              "maxoutui_bar_pagination_size"           },
+                    { "navbar_pagination_show_subtitle",     "maxoutui_bar_pagination_show_subtitle"  },
+                    { "navbar_navpager_enabled",             "maxoutui_bar_navpager_enabled"          },
+                    { "navbar_dotpager_always",              "maxoutui_bar_dotpager_always"           },
                     -- Bottom bar — tabs & settings
-                    { "navbar_tabs",                         "simpleui_bar_tabs"                      },
-                    { "navbar_bottombar_settings_on_hold",   "simpleui_bar_settings_on_hold"          },
+                    { "navbar_tabs",                         "maxoutui_bar_tabs"                      },
+                    { "navbar_bottombar_settings_on_hold",   "maxoutui_bar_settings_on_hold"          },
                     -- Top bar
-                    { "navbar_topbar_enabled",               "simpleui_topbar_enabled"                },
-                    { "navbar_topbar_config",                "simpleui_topbar_config"                 },
-                    { "navbar_topbar_custom_text",           "simpleui_topbar_custom_text"            },
-                    { "navbar_topbar_settings_on_hold",      "simpleui_topbar_settings_on_hold"       },
-                    { "navbar_topbar_swipe_indicator",       "simpleui_topbar_swipe_indicator"        },
-                    { "navbar_topbar_wifi_hide_when_off",    "simpleui_topbar_wifi_hide_when_off"     },
-                    { "navbar_topbar_size_pct",              "simpleui_topbar_size_pct"               },
+                    { "navbar_topbar_enabled",               "maxoutui_topbar_enabled"                },
+                    { "navbar_topbar_config",                "maxoutui_topbar_config"                 },
+                    { "navbar_topbar_custom_text",           "maxoutui_topbar_custom_text"            },
+                    { "navbar_topbar_settings_on_hold",      "maxoutui_topbar_settings_on_hold"       },
+                    { "navbar_topbar_swipe_indicator",       "maxoutui_topbar_swipe_indicator"        },
+                    { "navbar_topbar_wifi_hide_when_off",    "maxoutui_topbar_wifi_hide_when_off"     },
+                    { "navbar_topbar_size_pct",              "maxoutui_topbar_size_pct"               },
                     -- Homescreen bar — fixed keys
-                    { "navbar_homescreen_pagination_hidden", "simpleui_hs_pagination_hidden"          },
-                    { "navbar_homescreen_settings_on_hold",  "simpleui_hs_settings_on_hold"           },
-                    { "navbar_homescreen_overflow_warn",     "simpleui_hs_overflow_warn"              },
-                    { "navbar_hs_return_to_book_folder",     "simpleui_hs_return_to_book_folder"      },
-                    { "navbar_homescreen_module_scale",      "simpleui_hs_module_scale"               },
-                    { "navbar_homescreen_label_scale",       "simpleui_hs_label_scale"                },
-                    { "navbar_homescreen_scale_linked",      "simpleui_hs_scale_linked"               },
+                    { "navbar_homescreen_pagination_hidden", "maxoutui_hs_pagination_hidden"          },
+                    { "navbar_homescreen_settings_on_hold",  "maxoutui_hs_settings_on_hold"           },
+                    { "navbar_homescreen_overflow_warn",     "maxoutui_hs_overflow_warn"              },
+                    { "navbar_hs_return_to_book_folder",     "maxoutui_hs_return_to_book_folder"      },
+                    { "navbar_homescreen_module_scale",      "maxoutui_hs_module_scale"               },
+                    { "navbar_homescreen_label_scale",       "maxoutui_hs_label_scale"                },
+                    { "navbar_homescreen_scale_linked",      "maxoutui_hs_scale_linked"               },
                     -- Reading goal
-                    { "navbar_reading_goal",                 "simpleui_reading_goal"                  },
-                    { "navbar_reading_goal_physical",        "simpleui_reading_goal_physical"         },
-                    { "navbar_daily_reading_goal_secs",      "simpleui_daily_reading_goal_secs"       },
+                    { "navbar_reading_goal",                 "maxoutui_reading_goal"                  },
+                    { "navbar_reading_goal_physical",        "maxoutui_reading_goal_physical"         },
+                    { "navbar_daily_reading_goal_secs",      "maxoutui_daily_reading_goal_secs"       },
                     -- Reading goals module display
-                    { "navbar_reading_goals_show_annual",    "simpleui_reading_goals_show_annual"     },
-                    { "navbar_reading_goals_show_daily",     "simpleui_reading_goals_show_daily"      },
-                    { "navbar_reading_goals_layout",         "simpleui_reading_goals_layout"          },
+                    { "navbar_reading_goals_show_annual",    "maxoutui_reading_goals_show_annual"     },
+                    { "navbar_reading_goals_show_daily",     "maxoutui_reading_goals_show_daily"      },
+                    { "navbar_reading_goals_layout",         "maxoutui_reading_goals_layout"          },
                     -- Collections module
-                    { "navbar_collections_list",             "simpleui_collections_list"              },
-                    { "navbar_collections_covers",           "simpleui_collections_covers"            },
-                    { "navbar_collections_badge_position",   "simpleui_collections_badge_position"    },
-                    { "navbar_collections_badge_color",      "simpleui_collections_badge_color"       },
-                    { "navbar_collections_badge_hidden",     "simpleui_collections_badge_hidden"      },
+                    { "navbar_collections_list",             "maxoutui_collections_list"              },
+                    { "navbar_collections_covers",           "maxoutui_collections_covers"            },
+                    { "navbar_collections_badge_position",   "maxoutui_collections_badge_position"    },
+                    { "navbar_collections_badge_color",      "maxoutui_collections_badge_color"       },
+                    { "navbar_collections_badge_hidden",     "maxoutui_collections_badge_hidden"      },
                     -- Custom quick actions — list & migration flag
-                    { "navbar_custom_qa_list",               "simpleui_cqa_list"                      },
-                    { "navbar_custom_qa_migrated_v1",        "simpleui_cqa_migrated_v1"               },
+                    { "navbar_custom_qa_list",               "maxoutui_cqa_list"                      },
+                    { "navbar_custom_qa_migrated_v1",        "maxoutui_cqa_migrated_v1"               },
                 }
 
                 local migrated = 0
@@ -411,18 +434,18 @@ function MaxOutUIPlugin:init()
 
                 -- ── 2. Dynamic-prefix renames ─────────────────────────────────
                 -- Keys built at runtime via string concatenation:
-                --   simpleui_hs_*        (was navbar_homescreen_*)
-                --   navbar_cqa_*         →  simpleui_cqa_*
-                --   navbar_action_*      →  simpleui_action_*
-                --   navbar_custom_*      →  simpleui_custom_*
+                --   maxoutui_hs_*        (was navbar_homescreen_*)
+                --   navbar_cqa_*         →  maxoutui_cqa_*
+                --   navbar_action_*      →  maxoutui_action_*
+                --   navbar_custom_*      →  maxoutui_custom_*
                 --
                 -- We collect all renames first, then apply — modifying a table
                 -- while iterating it is undefined behaviour in Lua 5.1/5.2.
                 local dynamic_prefixes = {
-                    { old = "navbar_homescreen_",  new = "simpleui_hs_"     },
-                    { old = "navbar_cqa_",         new = "simpleui_cqa_"    },
-                    { old = "navbar_action_",      new = "simpleui_action_" },
-                    { old = "navbar_custom_",      new = "simpleui_custom_" },
+                    { old = "navbar_homescreen_",  new = "maxoutui_hs_"     },
+                    { old = "navbar_cqa_",         new = "maxoutui_cqa_"    },
+                    { old = "navbar_action_",      new = "maxoutui_action_" },
+                    { old = "navbar_custom_",      new = "maxoutui_custom_" },
                 }
 
                 local pending = {}
@@ -446,26 +469,26 @@ function MaxOutUIPlugin:init()
                 end
 
                 SUISettings:flush()
-                logger.info("simpleui: settings migration v3 complete —", migrated, "navbar_* keys renamed to simpleui_*")
+                logger.info("maxoutui: settings migration v3 complete —", migrated, "navbar_* keys renamed to maxoutui_*")
             end)
-            SUISettings:set("simpleui_settings_migrated_v3", true)
+            SUISettings:set("maxoutui_settings_migrated_v3", true)
             SUISettings:flush()
         end
         -- -------------------------------------------------------------------
         -- Settings migration v4: rename icon pack keys to integrated sui_ scheme.
         -- -------------------------------------------------------------------
-        if not SUISettings:isTrue("simpleui_settings_migrated_v4") then
+        if not SUISettings:isTrue("maxoutui_settings_migrated_v4") then
             pcall(function()
                 local icon_renames = {
-                    { "simpleui_sysicon_bm_normal",     "simpleui_sysicon_sui_browse_normal" },
-                    { "simpleui_sysicon_bm_author",     "simpleui_sysicon_sui_browse_author" },
-                    { "simpleui_sysicon_bm_series",     "simpleui_sysicon_sui_browse_series" },
-                    { "simpleui_sysicon_bm_tags",       "simpleui_sysicon_sui_browse_tags" },
-                    { "simpleui_sysicon_pg_chev_left",  "simpleui_sysicon_sui_pager_prev" },
-                    { "simpleui_sysicon_pg_chev_right", "simpleui_sysicon_sui_pager_next" },
-                    { "simpleui_sysicon_pg_chev_first", "simpleui_sysicon_sui_pager_first" },
-                    { "simpleui_sysicon_pg_chev_last",  "simpleui_sysicon_sui_pager_last" },
-                    { "simpleui_sysicon_coll_back",     "simpleui_sysicon_sui_coll_back" },
+                    { "maxoutui_sysicon_bm_normal",     "maxoutui_sysicon_sui_browse_normal" },
+                    { "maxoutui_sysicon_bm_author",     "maxoutui_sysicon_sui_browse_author" },
+                    { "maxoutui_sysicon_bm_series",     "maxoutui_sysicon_sui_browse_series" },
+                    { "maxoutui_sysicon_bm_tags",       "maxoutui_sysicon_sui_browse_tags" },
+                    { "maxoutui_sysicon_pg_chev_left",  "maxoutui_sysicon_sui_pager_prev" },
+                    { "maxoutui_sysicon_pg_chev_right", "maxoutui_sysicon_sui_pager_next" },
+                    { "maxoutui_sysicon_pg_chev_first", "maxoutui_sysicon_sui_pager_first" },
+                    { "maxoutui_sysicon_pg_chev_last",  "maxoutui_sysicon_sui_pager_last" },
+                    { "maxoutui_sysicon_coll_back",     "maxoutui_sysicon_sui_coll_back" },
                 }
                 local migrated = 0
                 for _, pair in ipairs(icon_renames) do
@@ -479,7 +502,7 @@ function MaxOutUIPlugin:init()
                         migrated = migrated + 1
                     end
                 end
-                local icon_presets = SUISettings:get("simpleui_icon_presets")
+                local icon_presets = SUISettings:get("maxoutui_icon_presets")
                 if type(icon_presets) == "table" then
                     local changed = false
                     for _, preset in pairs(icon_presets) do
@@ -496,30 +519,30 @@ function MaxOutUIPlugin:init()
                             end
                         end
                     end
-                    if changed then SUISettings:set("simpleui_icon_presets", icon_presets) end
+                    if changed then SUISettings:set("maxoutui_icon_presets", icon_presets) end
                 end
                 SUISettings:flush()
-                logger.info("simpleui: settings migration v4 complete —", migrated, "icon keys renamed")
+                logger.info("maxoutui: settings migration v4 complete —", migrated, "icon keys renamed")
             end)
-            SUISettings:set("simpleui_settings_migrated_v4", true)
+            SUISettings:set("maxoutui_settings_migrated_v4", true)
             SUISettings:flush()
         end
         -- -------------------------------------------------------------------
         -- Settings migration v5: standardize titlebar button nomenclature
         -- -------------------------------------------------------------------
-        if not SUISettings:isTrue("simpleui_settings_migrated_v5") then
+        if not SUISettings:isTrue("maxoutui_settings_migrated_v5") then
             pcall(function()
                 local renames = {
-                    { "simpleui_tb_item_menu_button",     "simpleui_tb_item_fm_menu" },
-                    { "simpleui_tb_item_up_button",       "simpleui_tb_item_fm_back" },
-                    { "simpleui_tb_item_search_button",   "simpleui_tb_item_fm_search" },
-                    { "simpleui_tb_item_browse_button",   "simpleui_tb_item_fm_browse" },
-                    { "simpleui_tb_item_title",           "simpleui_tb_item_fm_title" },
-                    { "simpleui_tb_item_inj_back",        "simpleui_tb_item_sub_menu" },
-                    { "simpleui_tb_item_inj_right",       "simpleui_tb_item_sub_close" },
-                    { "simpleui_tb_item_inj_menubutton",  "simpleui_tb_item_sub_menu" },
-                    { "simpleui_tb_item_inj_closebutton", "simpleui_tb_item_sub_close" },
-                    { "simpleui_tb_inj_cfg",              "simpleui_tb_sub_cfg" },
+                    { "maxoutui_tb_item_menu_button",     "maxoutui_tb_item_fm_menu" },
+                    { "maxoutui_tb_item_up_button",       "maxoutui_tb_item_fm_back" },
+                    { "maxoutui_tb_item_search_button",   "maxoutui_tb_item_fm_search" },
+                    { "maxoutui_tb_item_browse_button",   "maxoutui_tb_item_fm_browse" },
+                    { "maxoutui_tb_item_title",           "maxoutui_tb_item_fm_title" },
+                    { "maxoutui_tb_item_inj_back",        "maxoutui_tb_item_sub_menu" },
+                    { "maxoutui_tb_item_inj_right",       "maxoutui_tb_item_sub_close" },
+                    { "maxoutui_tb_item_inj_menubutton",  "maxoutui_tb_item_sub_menu" },
+                    { "maxoutui_tb_item_inj_closebutton", "maxoutui_tb_item_sub_close" },
+                    { "maxoutui_tb_inj_cfg",              "maxoutui_tb_sub_cfg" },
                 }
                 local migrated = 0
                 for _, pair in ipairs(renames) do
@@ -574,12 +597,12 @@ function MaxOutUIPlugin:init()
                     inj_menubutton   = "sub_menu",
                     inj_closebutton  = "sub_close"
                 }
-                map_cfg("simpleui_tb_fm_cfg", fm_map)
-                map_cfg("simpleui_tb_sub_cfg", sub_map)
+                map_cfg("maxoutui_tb_fm_cfg", fm_map)
+                map_cfg("maxoutui_tb_sub_cfg", sub_map)
 
-                logger.info("simpleui: settings migration v5 complete —", migrated, "titlebar keys renamed")
+                logger.info("maxoutui: settings migration v5 complete —", migrated, "titlebar keys renamed")
             end)
-            SUISettings:set("simpleui_settings_migrated_v5", true)
+            SUISettings:set("maxoutui_settings_migrated_v5", true)
             SUISettings:flush()
         end
         -- -------------------------------------------------------------------
@@ -592,33 +615,33 @@ function MaxOutUIPlugin:init()
         --      convention already used by clock, reading_stats, action_list, etc.
         --
         --   2. module_coverdeck "flow_" prefix → "coverdeck_" prefix — the old
-        --      keys had no "simpleui_" namespace and risked collisions in the
+        --      keys had no "maxoutui_" namespace and risked collisions in the
         --      shared G_reader_settings / SUISettings store.
         --
-        --   3. simpleui_cqa_* → simpleui_qa_* — "cqa" was undocumented jargon;
+        --   3. maxoutui_cqa_* → maxoutui_qa_* — "cqa" was undocumented jargon;
         --      "qa" matches the term used throughout the UI.  Also covers the
-        --      per-slot dynamic keys simpleui_cqa_{id} → simpleui_qa_{id}.
+        --      per-slot dynamic keys maxoutui_cqa_{id} → maxoutui_qa_{id}.
         --
-        --   4. simpleui_collections_* → simpleui_coll_* — shorter, consistent
+        --   4. maxoutui_collections_* → maxoutui_coll_* — shorter, consistent
         --      with the "fc_" brevity used by foldercovers.
         --
-        --   5. simpleui_titlebar_custom → simpleui_tb_custom — aligns with the
+        --   5. maxoutui_titlebar_custom → maxoutui_tb_custom — aligns with the
         --      tb_ alias used by all other titlebar keys.
         --
-        --   6. simpleui_tb_size → simpleui_tb_size_pct — consistent with the
+        --   6. maxoutui_tb_size → maxoutui_tb_size_pct — consistent with the
         --      other size percentage keys (_bar_size_pct, _topbar_size_pct).
         --
-        --   7. simpleui_bar_size (legacy enum "default"|"large") removed — this
+        --   7. maxoutui_bar_size (legacy enum "default"|"large") removed — this
         --      key was only written by first-run defaults v1 and was never read
-        --      by any code path; the canonical value is simpleui_bar_size_pct.
+        --      by any code path; the canonical value is maxoutui_bar_size_pct.
         --
         -- Rules (identical to all previous migrations):
         --   • Copy only when destination key is absent (never overwrite).
         --   • Always delete the source key, even when copy is skipped.
         --   • Whole block in pcall — a crash must not prevent plugin load.
-        --   • Guarded by simpleui_settings_migrated_v6.
+        --   • Guarded by maxoutui_settings_migrated_v6.
         -- -------------------------------------------------------------------
-        if not SUISettings:isTrue("simpleui_settings_migrated_v6") then
+        if not SUISettings:isTrue("maxoutui_settings_migrated_v6") then
             pcall(function()
                 local migrated = 0
 
@@ -637,14 +660,14 @@ function MaxOutUIPlugin:init()
                 -- ── 1. Module enabled_key: add _enabled suffix ────────────
                 -- For each preset prefix that exists in SUISettings, rename
                 -- the bare module-id keys to module-id_enabled.
-                -- The only guaranteed preset prefix is "simpleui_hs_" but
+                -- The only guaranteed preset prefix is "maxoutui_hs_" but
                 -- user presets can have arbitrary prefixes — we scan all keys.
                 local bare_mods = {
                     "currently", "recent", "coverdeck",
                     "tbr", "new_books", "collections", "reading_goals",
                 }
                 -- Collect all unique prefixes that have at least one of the
-                -- bare keys so we don't have to hardcode "simpleui_hs_".
+                -- bare keys so we don't have to hardcode "maxoutui_hs_".
                 local prefixes_seen = {}
                 for k, _ in SUISettings:iterateKeys() do
                     if type(k) == "string" then
@@ -669,7 +692,7 @@ function MaxOutUIPlugin:init()
 
                 -- ── 2. module_coverdeck: flow_ → coverdeck_ ───────────────
                 -- These keys are prefixed with a homescreen preset prefix
-                -- (e.g. "simpleui_hs_") at runtime, so we scan all keys.
+                -- (e.g. "maxoutui_hs_") at runtime, so we scan all keys.
                 local flow_suffixes = {
                     "flow_recent_source",
                     "flow_stats_order",
@@ -712,17 +735,17 @@ function MaxOutUIPlugin:init()
                     migrated = migrated + 1
                 end
 
-                -- ── 3. simpleui_cqa_* → simpleui_qa_* ────────────────────
-                -- Covers: simpleui_cqa_list, simpleui_cqa_migrated_v1,
-                --         simpleui_cqa_custom_qa_{n}, simpleui_cqa_{id}
-                -- The migration-v3 target was "simpleui_cqa_*"; we now move
-                -- those to "simpleui_qa_*".
+                -- ── 3. maxoutui_cqa_* → maxoutui_qa_* ────────────────────
+                -- Covers: maxoutui_cqa_list, maxoutui_cqa_migrated_v1,
+                --         maxoutui_cqa_custom_qa_{n}, maxoutui_cqa_{id}
+                -- The migration-v3 target was "maxoutui_cqa_*"; we now move
+                -- those to "maxoutui_qa_*".
                 local cqa_pending = {}
                 for k, v in SUISettings:iterateKeys() do
-                    if type(k) == "string" and k:sub(1, 13) == "simpleui_cqa_" then
+                    if type(k) == "string" and k:sub(1, 13) == "maxoutui_cqa_" then
                         cqa_pending[#cqa_pending + 1] = {
                             old_k = k,
-                            new_k = "simpleui_qa_" .. k:sub(14),
+                            new_k = "maxoutui_qa_" .. k:sub(14),
                             val   = v,
                         }
                     end
@@ -735,35 +758,35 @@ function MaxOutUIPlugin:init()
                     migrated = migrated + 1
                 end
                 -- Also fix the migration guard written by migrateOldCustomSlots.
-                _rename("simpleui_cqa_migrated_v1", "simpleui_qa_migrated_v1")
+                _rename("maxoutui_cqa_migrated_v1", "maxoutui_qa_migrated_v1")
 
-                -- ── 4. simpleui_collections_* → simpleui_coll_* ──────────
+                -- ── 4. maxoutui_collections_* → maxoutui_coll_* ──────────
                 local coll_renames = {
-                    { "simpleui_collections_list",           "simpleui_coll_list"           },
-                    { "simpleui_collections_covers",         "simpleui_coll_covers"         },
-                    { "simpleui_collections_badge_position", "simpleui_coll_badge_position" },
-                    { "simpleui_collections_badge_color",    "simpleui_coll_badge_color"    },
-                    { "simpleui_collections_badge_hidden",   "simpleui_coll_badge_hidden"   },
+                    { "maxoutui_collections_list",           "maxoutui_coll_list"           },
+                    { "maxoutui_collections_covers",         "maxoutui_coll_covers"         },
+                    { "maxoutui_collections_badge_position", "maxoutui_coll_badge_position" },
+                    { "maxoutui_collections_badge_color",    "maxoutui_coll_badge_color"    },
+                    { "maxoutui_collections_badge_hidden",   "maxoutui_coll_badge_hidden"   },
                 }
                 for _, pair in ipairs(coll_renames) do
                     _rename(pair[1], pair[2])
                 end
 
-                -- ── 5. simpleui_titlebar_custom → simpleui_tb_custom ──────
-                _rename("simpleui_titlebar_custom", "simpleui_tb_custom")
+                -- ── 5. maxoutui_titlebar_custom → maxoutui_tb_custom ──────
+                _rename("maxoutui_titlebar_custom", "maxoutui_tb_custom")
 
-                -- ── 6. simpleui_tb_size → simpleui_tb_size_pct ───────────
-                _rename("simpleui_tb_size", "simpleui_tb_size_pct")
+                -- ── 6. maxoutui_tb_size → maxoutui_tb_size_pct ───────────
+                _rename("maxoutui_tb_size", "maxoutui_tb_size_pct")
 
-                -- ── 7. Remove legacy simpleui_bar_size enum ───────────────
+                -- ── 7. Remove legacy maxoutui_bar_size enum ───────────────
                 -- Never read by any code; only written by first-run defaults v1.
-                -- The canonical value is simpleui_bar_size_pct.
-                SUISettings:del("simpleui_bar_size")
+                -- The canonical value is maxoutui_bar_size_pct.
+                SUISettings:del("maxoutui_bar_size")
 
                 SUISettings:flush()
-                logger.info("simpleui: settings migration v6 complete —", migrated, "keys renamed/removed")
+                logger.info("maxoutui: settings migration v6 complete —", migrated, "keys renamed/removed")
             end)
-            SUISettings:set("simpleui_settings_migrated_v6", true)
+            SUISettings:set("maxoutui_settings_migrated_v6", true)
             SUISettings:flush()
         end
         -- -------------------------------------------------------------------
@@ -778,9 +801,9 @@ function MaxOutUIPlugin:init()
         --    Recent Books / Cover Deck empty because all their books are at 100%.
         -- 3. Enable the automatic update check when it has never been set,
         --    making auto-check opt-out instead of opt-in.
-        if not SUISettings:isTrue("simpleui_settings_migrated_v7") then
+        if not SUISettings:isTrue("maxoutui_settings_migrated_v7") then
             pcall(function()
-                local PFX       = "simpleui_hs_"
+                local PFX       = "maxoutui_hs_"
                 -- 1. coverdeck_show_title
                 local title     = SUISettings:get(PFX .. "coverdeck_show_title")
                 local author    = SUISettings:get(PFX .. "coverdeck_show_author")
@@ -791,20 +814,20 @@ function MaxOutUIPlugin:init()
                         and progress == true and percent == true
                         and book_days == true then
                     SUISettings:set(PFX .. "coverdeck_show_title", true)
-                    logger.info("simpleui: migration v7 — restored coverdeck_show_title to true")
+                    logger.info("maxoutui: migration v7 — restored coverdeck_show_title to true")
                 end
                 -- 2. recent_show_finished
                 if SUISettings:get(PFX .. "recent_show_finished") == nil then
                     SUISettings:set(PFX .. "recent_show_finished", true)
-                    logger.info("simpleui: migration v7 — enabled recent_show_finished")
+                    logger.info("maxoutui: migration v7 — enabled recent_show_finished")
                 end
                 -- 3. auto update check
-                if SUISettings:get("simpleui_updater_auto_check") == nil then
-                    SUISettings:set("simpleui_updater_auto_check", true)
-                    logger.info("simpleui: migration v7 — enabled simpleui_updater_auto_check")
+                if SUISettings:get("maxoutui_updater_auto_check") == nil then
+                    SUISettings:set("maxoutui_updater_auto_check", true)
+                    logger.info("maxoutui: migration v7 — enabled maxoutui_updater_auto_check")
                 end
             end)
-            SUISettings:set("simpleui_settings_migrated_v7", true)
+            SUISettings:set("maxoutui_settings_migrated_v7", true)
             SUISettings:flush()
         end
         -- -------------------------------------------------------------------
@@ -820,23 +843,53 @@ function MaxOutUIPlugin:init()
         --      so existing layouts render identically the first time they're
         --      opened under the new arrange list, instead of silently
         --      reverting to the "below" default.
-        if not SUISettings:isTrue("simpleui_settings_migrated_v8") then
+        if not SUISettings:isTrue("maxoutui_settings_migrated_v8") then
             pcall(function()
-                local PFX       = "simpleui_hs_"
+                local PFX       = "maxoutui_hs_"
                 local title_pos = SUISettings:get(PFX .. "coverdeck_title_pos")
                 if title_pos == "hidden" and SUISettings:get(PFX .. "coverdeck_show_title") == nil then
                     SUISettings:set(PFX .. "coverdeck_show_title", false)
-                    logger.info("simpleui: migration v8 — folded coverdeck_title_pos=hidden into coverdeck_show_title=false")
+                    logger.info("maxoutui: migration v8 — folded coverdeck_title_pos=hidden into coverdeck_show_title=false")
                 end
                 if SUISettings:get(PFX .. "coverdeck_main_order") == nil then
                     local order = (title_pos == "above")
                         and { "title", "author", "covers", "progress", "stats" }
                         or  { "covers", "title", "author", "progress", "stats" }
                     SUISettings:set(PFX .. "coverdeck_main_order", order)
-                    logger.info("simpleui: migration v8 — seeded coverdeck_main_order from legacy title_pos")
+                    logger.info("maxoutui: migration v8 — seeded coverdeck_main_order from legacy title_pos")
                 end
             end)
-            SUISettings:set("simpleui_settings_migrated_v8", true)
+            SUISettings:set("maxoutui_settings_migrated_v8", true)
+            SUISettings:flush()
+        end
+        -- -------------------------------------------------------------------
+        -- Settings migration v9: mark complete. Filesystem + key rebrand from
+        -- simpleui_* → maxoutui_* is handled in mui_store on first open.
+        -- Also lift legacy G_reader_settings migration flags.
+        -- -------------------------------------------------------------------
+        if not SUISettings:isTrue("maxoutui_settings_migrated_v9") then
+            pcall(function()
+                local raw = G_reader_settings.data
+                if type(raw) == "table" then
+                    local to_rename = {}
+                    for k, v in pairs(raw) do
+                        if type(k) == "string" and k:sub(1, 9) == "simpleui_" then
+                            to_rename[#to_rename + 1] = {
+                                old = k,
+                                new = "maxoutui_" .. k:sub(10),
+                                v = v,
+                            }
+                        end
+                    end
+                    for _, entry in ipairs(to_rename) do
+                        if G_reader_settings:readSetting(entry.new) == nil then
+                            G_reader_settings:saveSetting(entry.new, entry.v)
+                        end
+                        G_reader_settings:delSetting(entry.old)
+                    end
+                end
+            end)
+            SUISettings:set("maxoutui_settings_migrated_v9", true)
             SUISettings:flush()
         end
         -- -------------------------------------------------------------------
@@ -863,31 +916,31 @@ function MaxOutUIPlugin:init()
         -- After this, KOReader's gesture/keyboard settings will list these
         -- actions so the user can bind any gesture to them.
         Dispatcher:init()
-        Dispatcher:registerAction("simpleui_go_homescreen", {
+        Dispatcher:registerAction("maxoutui_go_homescreen", {
             category = "none",
             event    = "MaxOutUIGoHomescreen",
             title    = _("MaxOutUI: Go to Homescreen"),
             general  = true,
         })
-        Dispatcher:registerAction("simpleui_go_library", {
+        Dispatcher:registerAction("maxoutui_go_library", {
             category = "none",
             event    = "MaxOutUIGoLibrary",
             title    = _("MaxOutUI: Go to Library"),
             general  = true,
         })
-        Dispatcher:registerAction("simpleui_toggle_home_library", {
+        Dispatcher:registerAction("maxoutui_toggle_home_library", {
             category = "none",
             event    = "MaxOutUIToggleHomeLibrary",
             title    = _("MaxOutUI: Toggle Homescreen / Library"),
             general  = true,
         })
-    Dispatcher:registerAction("simpleui_settings_window", {
+    Dispatcher:registerAction("maxoutui_settings_window", {
         category = "none",
         event    = "MaxOutUISettingsWindow",
         title    = _("MaxOutUI: Settings"),
         general  = true,
     })
-    Dispatcher:registerAction("simpleui_recent_window", {
+    Dispatcher:registerAction("maxoutui_recent_window", {
         category = "none",
         event    = "MaxOutUIRecentWindow",
         title    = _("MaxOutUI: Recent"),
@@ -898,7 +951,7 @@ function MaxOutUIPlugin:init()
         -- -------------------------------------------------------------------
         -- First-run bootstrap: ensure "Start with Homescreen" is active.
         --
-        -- On a fresh install simpleui_onboarding_done is nil and start_with
+        -- On a fresh install maxoutui_onboarding_done is nil and start_with
         -- has never been set to "homescreen_simpleui", so isStartWithHS()
         -- would return false and the FM would open directly, bypassing the
         -- homescreen entirely — meaning the onboarding window (which is
@@ -911,12 +964,12 @@ function MaxOutUIPlugin:init()
         -- onShow → Homescreen.show() → Onboarding.show() chain handles
         -- everything — no additional scheduling needed here.
         -- -------------------------------------------------------------------
-        local _sui_first_run = not SUISettings:get("simpleui_onboarding_done")
+        local _sui_first_run = not SUISettings:get("maxoutui_onboarding_done")
         if _sui_first_run then
             G_reader_settings:saveSetting("start_with", "homescreen_simpleui")
         end
 
-        if SUISettings:nilOrTrue("simpleui_enabled") then
+        if SUISettings:nilOrTrue("maxoutui_enabled") then
             Patches.installAll(self)
             
             pcall(function() QSBar.install() end)
@@ -1160,7 +1213,7 @@ function MaxOutUIPlugin:init()
                 end
             end)
 
-            if SUISettings:nilOrTrue("simpleui_topbar_enabled") then
+            if SUISettings:nilOrTrue("maxoutui_topbar_enabled") then
                 Topbar.scheduleRefresh(self, 0)
             end
             -- Pre-load ALL desktop modules during boot idle time so the first
@@ -1247,7 +1300,7 @@ function MaxOutUIPlugin:init()
             end
         end
     end)
-    if not ok then logger.err("simpleui: init failed:", tostring(err)) end
+    if not ok then logger.err("maxoutui: init failed:", tostring(err)) end
 end
 
 -- ---------------------------------------------------------------------------
@@ -1282,6 +1335,8 @@ local _PLUGIN_MODULES = {
     "desktop_modules/module_suwayomi_updates",
     "desktop_modules/module_suwayomi_categories",
     "desktop_modules/module_suwayomi_status",
+    "desktop_modules/module_suwayomi_pinned",
+    "desktop_modules/module_suwayomi_auto_download",
     "desktop_modules/module_coll_row",
     "desktop_modules/quotes",
 }
@@ -1420,6 +1475,14 @@ function MaxOutUIPlugin:onTeardown()
     if mod_sw_status and type(mod_sw_status.reset) == "function" then
         pcall(mod_sw_status.reset)
     end
+    local mod_sw_pinned = package.loaded["desktop_modules/module_suwayomi_pinned"]
+    if mod_sw_pinned and type(mod_sw_pinned.reset) == "function" then
+        pcall(mod_sw_pinned.reset)
+    end
+    local mod_sw_auto = package.loaded["desktop_modules/module_suwayomi_auto_download"]
+    if mod_sw_auto and type(mod_sw_auto.reset) == "function" then
+        pcall(mod_sw_auto.reset)
+    end
     -- Remove the TBR & Pinned Manga buttons from the Library browser dialog and search results.
     local FM = package.loaded["apps/filemanager/filemanager"]
     if FM and FM.instance and FM.instance.removeFileDialogButtons then
@@ -1533,10 +1596,10 @@ end
 -- ---------------------------------------------------------------------------
 
 function MaxOutUIPlugin:onScreenResize()
-    if self._simpleui_suspended then return end
+    if self._maxoutui_suspended then return end
     UI.invalidateDimCache()
     UIManager:scheduleIn(0.2, function()
-        if self._simpleui_suspended then return end
+        if self._maxoutui_suspended then return end
         local RUI = package.loaded["apps/reader/readerui"]
         if RUI and RUI.instance then return end
 
@@ -1566,7 +1629,7 @@ function MaxOutUIPlugin:onScreenResize()
     end)
 end
 function MaxOutUIPlugin:onNetworkConnected()
-    if self._simpleui_suspended then return end
+    if self._maxoutui_suspended then return end
     local RUI = package.loaded["apps/reader/readerui"]
     -- If this event was fired by doWifiToggle itself, wifi_optimistic is already
     -- set correctly and the bars are already rebuilt. Skip the reset so the
@@ -1584,7 +1647,7 @@ function MaxOutUIPlugin:onNetworkConnected()
 end
 
 function MaxOutUIPlugin:onNetworkDisconnected()
-    if self._simpleui_suspended then return end
+    if self._maxoutui_suspended then return end
     local RUI = package.loaded["apps/reader/readerui"]
     -- Same rationale as onNetworkConnected above.
     if not Config.wifi_broadcast_self then
@@ -1599,13 +1662,13 @@ function MaxOutUIPlugin:onNetworkDisconnected()
 end
 
 function MaxOutUIPlugin:onSuspend()
-    self._simpleui_suspended = true
+    self._maxoutui_suspended = true
     -- Snapshot whether the reader was open at the moment of suspend.
     -- We cannot rely on RUI.instance being intact by the time onResume fires
     -- (e.g. autosuspend can race with a reader teardown on some Kobo builds),
     -- so we capture the truth here, while the world is still settled.
     local RUI = package.loaded["apps/reader/readerui"]
-    self._simpleui_reader_was_active = (RUI and RUI.instance) and true or false
+    self._maxoutui_reader_was_active = (RUI and RUI.instance) and true or false
     if self._topbar_timer then
         UIManager:unschedule(self._topbar_timer)
         self._topbar_timer = nil
@@ -1621,8 +1684,8 @@ function MaxOutUIPlugin:onSuspend()
 end
 
 function MaxOutUIPlugin:onResume()
-    self._simpleui_suspended = false
-    if SUISettings:nilOrTrue("simpleui_topbar_enabled") then
+    self._maxoutui_suspended = false
+    if SUISettings:nilOrTrue("maxoutui_topbar_enabled") then
         -- Small delay to let the wakeup transition finish before refreshing
         -- the topbar. Avoids a race with HomescreenWidget:onResume() and
         -- prevents the timer firing while the device is still mid-wakeup.
@@ -1632,16 +1695,16 @@ function MaxOutUIPlugin:onResume()
     -- live. On some Kobo builds the autosuspend timer fires close to a reader
     -- teardown, leaving RUI.instance nil even though the user was reading —
     -- causing the homescreen to open on wakeup instead of returning to the reader.
-    local reader_active = self._simpleui_reader_was_active
-    self._simpleui_reader_was_active = nil  -- consume; next suspend will repopulate
+    local reader_active = self._maxoutui_reader_was_active
+    self._maxoutui_reader_was_active = nil  -- consume; next suspend will repopulate
 
     -- "Return to Home Screen on Wakeup": unlike "Start with Homescreen" (which
     -- only ever fires when the reader was already closed), this setting must
     -- also override a reader that WAS open at suspend time. Handle it first,
     -- via the live RUI check (not the snapshot) so we don't try to close a
     -- reader that already tore itself down during the races described above.
-    if SUISettings:nilOrTrue("simpleui_enabled")
-            and SUISettings:isTrue("simpleui_hs_return_on_wakeup") then
+    if SUISettings:nilOrTrue("maxoutui_enabled")
+            and SUISettings:isTrue("maxoutui_hs_return_on_wakeup") then
         local RUI_live = package.loaded["apps/reader/readerui"]
         if RUI_live and RUI_live.instance then
             Patches.showHSAfterResume(self, true)
@@ -1677,7 +1740,7 @@ function MaxOutUIPlugin:onResume()
             HS.refresh(false)
         end
         -- Re-open the Homescreen on wakeup when \"Start with Homescreen\" is set.
-        if SUISettings:nilOrTrue("simpleui_enabled") then
+        if SUISettings:nilOrTrue("maxoutui_enabled") then
             Patches.showHSAfterResume(self)
         end
     end
@@ -1734,7 +1797,7 @@ function MaxOutUIPlugin:onCloseDocument()
     local is_reload = self._suppress_closing_notice
     self._suppress_closing_notice = nil
 
-    if self._simpleui_suspended then return end
+    if self._maxoutui_suspended then return end
     local HS = package.loaded["mui_homescreen"]
     if not HS then return end
 
@@ -1758,7 +1821,7 @@ function MaxOutUIPlugin:onCloseDocument()
     if not is_reload then
         local Patches = package.loaded["mui_patches"]
         if Patches and Patches.CoverTransition and Patches.CoverTransition.isCloseEnabled() then
-            local orig_show = UIManager._simpleui_show_orig or UIManager.show
+            local orig_show = UIManager._maxoutui_show_orig or UIManager.show
             local live_doc  = self.ui and self.ui.document
             local ok_ct, shown = pcall(Patches.CoverTransition.show, closed_fp, orig_show, live_doc)
             cover_shown = ok_ct and shown
@@ -1790,12 +1853,12 @@ function MaxOutUIPlugin:onCloseDocument()
     -- already run, so the notice would appear over the FM/HS far too late.
     -- timeout=0.0 schedules the InfoMessage to close itself on the next tick.
     --
-    -- Migration: if simpleui_hs_closing_notice_mode is absent, fall back to the
-    -- old boolean simpleui_hs_closing_notice (nil/true → "always", false → "never").
+    -- Migration: if maxoutui_hs_closing_notice_mode is absent, fall back to the
+    -- old boolean maxoutui_hs_closing_notice (nil/true → "always", false → "never").
     do
-        local notice_mode = SUISettings:readSetting("simpleui_hs_closing_notice_mode")
+        local notice_mode = SUISettings:readSetting("maxoutui_hs_closing_notice_mode")
         if not notice_mode then
-            notice_mode = SUISettings:nilOrTrue("simpleui_hs_closing_notice") and "always" or "never"
+            notice_mode = SUISettings:nilOrTrue("maxoutui_hs_closing_notice") and "always" or "never"
         end
 
         local suppress = is_reload or cover_shown
@@ -1825,7 +1888,7 @@ function MaxOutUIPlugin:onCloseDocument()
     -- there is nothing further to do — the next Homescreen.show() will rebuild
     -- from scratch. Avoids loading the Registry and all module pcalls.
     if not HS._instance and HS._stats_need_refresh then
-        if SUISettings:nilOrTrue("simpleui_topbar_enabled") then
+        if SUISettings:nilOrTrue("maxoutui_topbar_enabled") then
             Topbar.scheduleRefresh(self, 0)
         end
         return
@@ -1841,7 +1904,7 @@ function MaxOutUIPlugin:onCloseDocument()
         Registry = reg
     end
 
-    local PFX = "simpleui_hs_"
+    local PFX = "maxoutui_hs_"
     local needs_refresh    = false
     local currently_active = false
 
@@ -2185,7 +2248,7 @@ function MaxOutUIPlugin:onCloseDocument()
     -- charge) — wifi state changes that happened during reading would not be
     -- reflected for up to 60 s. scheduleRefresh guards against suspend internally
     -- via shouldRunTimer, so this is safe to call unconditionally here.
-    if SUISettings:nilOrTrue("simpleui_topbar_enabled") then
+    if SUISettings:nilOrTrue("maxoutui_topbar_enabled") then
         Topbar.scheduleRefresh(self, 0)
     end
 end
@@ -2211,7 +2274,7 @@ end
 -- homescreen refresh so the corrected metadata appears immediately.
 -- ---------------------------------------------------------------------------
 function MaxOutUIPlugin:onBookMetadataChanged(_prop_updated)
-    if self._simpleui_suspended then return end
+    if self._maxoutui_suspended then return end
 
     local HS = package.loaded["mui_homescreen"]
     if not HS then return end
@@ -2237,20 +2300,20 @@ function MaxOutUIPlugin:onBookMetadataChanged(_prop_updated)
 end
 
 function MaxOutUIPlugin:onFrontlightStateChanged()
-    if self._simpleui_suspended then return end
-    if not SUISettings:nilOrTrue("simpleui_topbar_enabled") then return end
+    if self._maxoutui_suspended then return end
+    if not SUISettings:nilOrTrue("maxoutui_topbar_enabled") then return end
     Topbar.scheduleRefresh(self, 0)
 end
 
 function MaxOutUIPlugin:onCharging()
-    if self._simpleui_suspended then return end
-    if not SUISettings:nilOrTrue("simpleui_topbar_enabled") then return end
+    if self._maxoutui_suspended then return end
+    if not SUISettings:nilOrTrue("maxoutui_topbar_enabled") then return end
     Topbar.scheduleRefresh(self, 0)
 end
 
 function MaxOutUIPlugin:onNotCharging()
-    if self._simpleui_suspended then return end
-    if not SUISettings:nilOrTrue("simpleui_topbar_enabled") then return end
+    if self._maxoutui_suspended then return end
+    if not SUISettings:nilOrTrue("maxoutui_topbar_enabled") then return end
     Topbar.scheduleRefresh(self, 0)
 end
 
@@ -2337,7 +2400,7 @@ function MaxOutUIPlugin:addToMainMenu(menu_items)
     if not _menu_installer then
         local ok, result = pcall(require, "mui_menu")
         if not ok then
-            logger.err("simpleui: sui_menu failed to load: " .. tostring(result))
+            logger.err("maxoutui: sui_menu failed to load: " .. tostring(result))
             menu_items.simpleui = { sorting_hint = "tools", text = _("MaxOutUI"), sub_item_table = {} }
             return
         end
@@ -2350,7 +2413,7 @@ function MaxOutUIPlugin:addToMainMenu(menu_items)
         if type(real_fn) == "function" and real_fn ~= bootstrap_fn then
             real_fn(self, menu_items)
         else
-            logger.err("simpleui: sui_menu installer did not replace addToMainMenu")
+            logger.err("maxoutui: sui_menu installer did not replace addToMainMenu")
             menu_items.simpleui = { sorting_hint = "tools", text = _("MaxOutUI"), sub_item_table = {} }
         end
         return

@@ -13,7 +13,7 @@
 -- destacar).
 --
 -- Expõe M.instanciable = true e M.makeInstance(id) para o registry.
--- Instâncias persistem em "simpleui_coll_row_instances" (M.instances_key).
+-- Instâncias persistem em "maxoutui_coll_row_instances" (M.instances_key).
 --
 -- NOTA IMPORTANTE (moduleregistry / sui_settings_window):
 -- o id base termina em "_row" de propósito — Registry.createInstance gera
@@ -353,7 +353,7 @@ local function makeInstance(inst_id)
         if widget then return widget end
         if getCollName(ctx.pfx) then return nil end -- coleção escolhida mas vazia: mantém o comportamento antigo
 
-        local hold_on = SUISettings:nilOrTrue("simpleui_hs_settings_on_hold")
+        local hold_on = SUISettings:nilOrTrue("maxoutui_hs_settings_on_hold")
         local ph_text = hold_on and _("No collection selected  —  long press to configure")
                                  or _("No collection selected")
         return CenterContainer:new{
@@ -377,7 +377,7 @@ local M = {}
 M.id            = "coll_row"
 M.name          = _("Collection Row")
 M.instanciable  = true
-M.instances_key = "simpleui_coll_row_instances"
+M.instances_key = "maxoutui_coll_row_instances"
 M.makeInstance  = makeInstance
 
 return M

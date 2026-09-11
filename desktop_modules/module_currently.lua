@@ -41,7 +41,7 @@ local function getSH()
     if not _SH then
         local ok, m = pcall(require, "desktop_modules/module_books_shared")
         if ok and m then _SH = m
-        else logger.warn("simpleui: module_currently: cannot load module_books_shared: " .. tostring(m)) end
+        else logger.warn("maxoutui: module_currently: cannot load module_books_shared: " .. tostring(m)) end
     end
     return _SH
 end
@@ -174,7 +174,7 @@ local function fetchBookStats(md5, shared_conn, ctx, force)
         -- ps_agg accumulates per-page totals; the outer SELECT aggregates them.
         -- sum(page_dur) replaces a correlated subquery that caused a second
         -- full scan of page_stat on every call.
-        -- Relies on idx_simpleui_book_md5 / idx_simpleui_pagestat_book indexes
+        -- Relies on idx_maxoutui_book_md5 / idx_maxoutui_pagestat_book indexes
         -- created by openStatsDB() for O(log n) lookup instead of full-table scan.
         local row = conn:exec(string.format([[
             WITH b AS (
@@ -209,7 +209,7 @@ local function fetchBookStats(md5, shared_conn, ctx, force)
         end
     end)
     if not ok then
-        logger.warn("simpleui: module_currently: fetchBookStats failed: " .. tostring(err))
+        logger.warn("maxoutui: module_currently: fetchBookStats failed: " .. tostring(err))
         -- Signal to the homescreen that the shared connection is unusable so it
         -- can be discarded and reopened on the next render.
         if shared_conn and ctx and Config.isFatalDbError(err) then
@@ -473,7 +473,7 @@ function M.build(w, ctx)
         local book_md5 = prefetched_entry and prefetched_entry.partial_md5_checksum
         -- Fix 2: log when md5 is absent so the cause is visible in crash.log.
         if not book_md5 then
-            logger.dbg("simpleui: module_currently: no md5 for "
+            logger.dbg("maxoutui: module_currently: no md5 for "
                        .. tostring(ctx.current_fp)
                        .. " — stats will not be fetched this render")
         end
@@ -557,7 +557,7 @@ function M.build(w, ctx)
                 if ok_tbx then
                     title_w = tbx
                 else
-                    logger.warn("simpleui: module_currently: makeAlphaTextBox failed, falling back to TextBoxWidget: " .. tostring(tbx))
+                    logger.warn("maxoutui: module_currently: makeAlphaTextBox failed, falling back to TextBoxWidget: " .. tostring(tbx))
                     title_w = TextBoxWidget:new(title_args)
                 end
             else

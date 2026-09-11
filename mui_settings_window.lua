@@ -71,12 +71,12 @@ local SettingsWindow = {}
 local LayoutService = {}
 
 function LayoutService.load()
-    local saved = SUISettings:readSetting("simpleui_layout")
+    local saved = SUISettings:readSetting("maxoutui_layout")
     if type(saved) == "table" and saved.pages then
         return saved
     end
 
-    local order          = Registry.loadOrder("simpleui_hs_")
+    local order          = Registry.loadOrder("maxoutui_hs_")
     local pages          = {}
     local cur_page       = { id = 1, modules = {} }
 
@@ -86,7 +86,7 @@ function LayoutService.load()
             cur_page = { id = #pages + 1, modules = {} }
         else
             local mod = Registry.get(mod_id)
-            if mod and Registry.isEnabled(mod, "simpleui_hs_") then
+            if mod and Registry.isEnabled(mod, "maxoutui_hs_") then
                 table.insert(cur_page.modules, mod_id)
             end
         end
@@ -98,7 +98,7 @@ function LayoutService.load()
 end
 
 function LayoutService.save(layout)
-    SUISettings:saveSetting("simpleui_layout", layout)
+    SUISettings:saveSetting("maxoutui_layout", layout)
 
     local flat_order = {}
     local active_set = {}
@@ -116,14 +116,14 @@ function LayoutService.save(layout)
         end
     end
 
-    SUISettings:saveSetting("simpleui_hs_module_order", flat_order)
+    SUISettings:saveSetting("maxoutui_hs_module_order", flat_order)
 
     for _, mod in ipairs(Registry.list()) do
         local is_active = (active_set[mod.id] == true)
         if type(mod.setEnabled) == "function" then
-            mod.setEnabled("simpleui_hs_", is_active)
+            mod.setEnabled("maxoutui_hs_", is_active)
         elseif mod.enabled_key then
-            SUISettings:saveSetting("simpleui_hs_" .. mod.enabled_key, is_active)
+            SUISettings:saveSetting("maxoutui_hs_" .. mod.enabled_key, is_active)
         end
     end
 
@@ -139,8 +139,8 @@ function LayoutService.getModuleName(mod_id)
     if type(mod_id) == "string" and mod_id:match("_row_") then
         -- Find position across all instanciable base keys.
         local inst_keys = {
-            "simpleui_qa_row_instances",
-            "simpleui_spacer_row_instances",
+            "maxoutui_qa_row_instances",
+            "maxoutui_spacer_row_instances",
         }
         for _, key in ipairs(inst_keys) do
             local inst_ids = SUISettings:readSetting(key) or {}
@@ -171,11 +171,11 @@ local function buildScreens(st)
     -- Helper: returns the SimpleUI plugin instance.
     -- Checks FileManager first (normal path), then falls back to ReaderUI for
     -- when the settings window is opened from inside the reader and FM is not
-    -- the active context (_simpleui_plugin is only set on FM.instance, but the
+    -- the active context (_maxoutui_plugin is only set on FM.instance, but the
     -- plugin is always registered on ReaderUI as reade(rui.maxoutui or rui.simpleui)).
     local function getPlugin()
         local FM = package.loaded["apps/filemanager/filemanager"]
-        local plugin = FM and FM.instance and (FM.instance.maxoutui or FM.instance._simpleui_plugin or FM.instance._maxoutui_plugin)
+        local plugin = FM and FM.instance and (FM.instance.maxoutui or FM.instance._maxoutui_plugin or FM.instance._maxoutui_plugin)
         if not plugin then
             local RUI = package.loaded["apps/reader/readerui"]
             plugin = RUI and RUI.instance and (RUI.instance.maxoutui or RUI.instance.simpleui)
@@ -191,8 +191,8 @@ local function buildScreens(st)
     -- All screens that delegate to a plugin.makeFooMenuItems share this shape.
     local function makeCtxMenu(ctx)
         return {
-            pfx          = "simpleui_hs_",
-            pfx_qa       = "simpleui_hs_qa_",
+            pfx          = "maxoutui_hs_",
+            pfx_qa       = "maxoutui_hs_qa_",
             is_sui       = true,           -- signals that we are inside a SUIWindow
             refresh      = function() ctx.repaint() end,
             show_arrange      = function(params) ctx.push("arrange", params) end,
@@ -415,11 +415,11 @@ local function buildScreens(st)
         -- reindexes (destroyInstance already removes from the persisted list,
         -- so the next repaint reflects the new numbers automatically).
         local row_counters = {}
-        local qa_inst_ids = SUISettings:readSetting("simpleui_qa_row_instances") or {}
+        local qa_inst_ids = SUISettings:readSetting("maxoutui_qa_row_instances") or {}
         for idx, mid in ipairs(qa_inst_ids) do
             row_counters[mid] = { idx = idx, kind = "qa" }
         end
-        local spacer_inst_ids = SUISettings:readSetting("simpleui_spacer_row_instances") or {}
+        local spacer_inst_ids = SUISettings:readSetting("maxoutui_spacer_row_instances") or {}
         for idx, mid in ipairs(spacer_inst_ids) do
             row_counters[mid] = { idx = idx, kind = "spacer" }
         end
@@ -433,11 +433,11 @@ local function buildScreens(st)
                 if entry.kind == "spacer" then
                     local ok_cfg, Config2 = pcall(require, "mui_config")
                     if ok_cfg and Config2 then
-                        local pct = Config2.getModuleScalePct(mod_id, "simpleui_hs_")
+                        local pct = Config2.getModuleScalePct(mod_id, "maxoutui_hs_")
                         mod_subtitle = pct .. "%"
                     end
                 else
-                    local items_key = "simpleui_hs_qa_" .. mod_id .. "_items"
+                    local items_key = "maxoutui_hs_qa_" .. mod_id .. "_items"
                     local qa_ids = SUISettings:readSetting(items_key) or {}
                     if #qa_ids > 0 then
                         local ok_qa, QA = pcall(require, "mui_quickactions")
@@ -458,7 +458,7 @@ local function buildScreens(st)
             -- subtítulo (ex: "teste"), para distinguir instâncias na lista
             -- de módulos da página sem ter de entrar em cada uma.
             if type(mod_id) == "string" and mod_id:match("^coll_row_") then
-                local coll_name = SUISettings:readSetting("simpleui_hs_" .. mod_id .. "_coll_name")
+                local coll_name = SUISettings:readSetting("maxoutui_hs_" .. mod_id .. "_coll_name")
                 if coll_name and coll_name ~= "" then
                     mod_subtitle = coll_name
                 else
@@ -488,7 +488,7 @@ local function buildScreens(st)
                             end
                             -- If this is a dynamic instance, destroy it and purge its settings.
                             if mod_id:match("_row_") then
-                                Registry.purgeInstanceSettings(mod_id, "simpleui_hs_")
+                                Registry.purgeInstanceSettings(mod_id, "maxoutui_hs_")
                                 Registry.destroyInstance(mod_id)
                             end
                             saveAndRepaint(ctx)
@@ -568,16 +568,16 @@ local function buildScreens(st)
         end
 
         local all_mods = Registry.list()
-        logger.dbg("simpleui: buildModulePicker: Registry.list() count =", #all_mods)
+        logger.dbg("maxoutui: buildModulePicker: Registry.list() count =", #all_mods)
         local active_count = 0
         for k, _ in pairs(active_set) do active_count = active_count + 1 end
-        logger.dbg("simpleui: buildModulePicker: active_set count =", active_count)
+        logger.dbg("maxoutui: buildModulePicker: active_set count =", active_count)
         for k, _ in pairs(active_set) do logger.dbg("  active:", k) end
         for _, mod in ipairs(all_mods) do
             local is_inst = mod.id:match("_row_") ~= nil
             logger.dbg("  mod:", mod.id, "is_instance:", is_inst, "in_active:", active_set[mod.id] ~= nil)
         end
-        logger.dbg("simpleui: isInstanciable(quick_actions_row) =", Registry.isInstanciable("quick_actions_row"))
+        logger.dbg("maxoutui: isInstanciable(quick_actions_row) =", Registry.isInstanciable("quick_actions_row"))
 
         -- Singleton modules: show only those not yet in the layout,
         -- and skip instances of instanciable modules (they have "_row_" in their id).

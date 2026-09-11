@@ -41,38 +41,38 @@ local TopContainer    = require("ui/widget/container/topcontainer")
 -- ---------------------------------------------------------------------------
 
 local SK = {
-    enabled           = "simpleui_fc_enabled",
-    show_name         = "simpleui_fc_show_name",
-    hide_underline    = "simpleui_fc_hide_underline",
-    label_style       = "simpleui_fc_label_style",
-    label_position    = "simpleui_fc_label_position",
-    label_color       = "simpleui_fc_label_color",
-    badge_position    = "simpleui_fc_badge_position",
-    badge_hidden      = "simpleui_fc_badge_hidden",
-    cover_mode        = "simpleui_fc_cover_mode",
-    label_mode        = "simpleui_fc_label_mode",
-    overlay_pages     = "simpleui_fc_overlay_pages",
-    overlay_series    = "simpleui_fc_overlay_series",
-    overlay_progress  = "simpleui_fc_overlay_progress",
-    progress_mode     = "simpleui_fc_progress_mode",
-    overlay_new       = "simpleui_fc_overlay_new",
-    series_grouping   = "simpleui_fc_series_grouping",
-    subfolder_cover   = "simpleui_fc_subfolder_cover",
-    recursive_cover   = "simpleui_fc_recursive_cover",
-    label_scale       = "simpleui_fc_label_scale",
-    folder_style      = "simpleui_fc_folder_style",
-    hide_spine        = "simpleui_fc_hide_spine",
-    show_title_strip  = "simpleui_fc_show_title_strip",
-    show_author_strip = "simpleui_fc_show_author_strip",
-    badge_color_pages    = "simpleui_fc_badge_color_pages",
-    badge_color_series   = "simpleui_fc_badge_color_series",
-    badge_color_progress = "simpleui_fc_badge_color_progress",
-    badge_color_new      = "simpleui_fc_badge_color_new",
-    new_mode             = "simpleui_fc_new_mode",
-    badge_color_folder   = "simpleui_fc_badge_color_folder",
-    badge_scale          = "simpleui_fc_badge_scale",
-    fade_finished        = "simpleui_fc_fade_finished",
-    fade_amount          = "simpleui_fc_fade_amount",
+    enabled           = "maxoutui_fc_enabled",
+    show_name         = "maxoutui_fc_show_name",
+    hide_underline    = "maxoutui_fc_hide_underline",
+    label_style       = "maxoutui_fc_label_style",
+    label_position    = "maxoutui_fc_label_position",
+    label_color       = "maxoutui_fc_label_color",
+    badge_position    = "maxoutui_fc_badge_position",
+    badge_hidden      = "maxoutui_fc_badge_hidden",
+    cover_mode        = "maxoutui_fc_cover_mode",
+    label_mode        = "maxoutui_fc_label_mode",
+    overlay_pages     = "maxoutui_fc_overlay_pages",
+    overlay_series    = "maxoutui_fc_overlay_series",
+    overlay_progress  = "maxoutui_fc_overlay_progress",
+    progress_mode     = "maxoutui_fc_progress_mode",
+    overlay_new       = "maxoutui_fc_overlay_new",
+    series_grouping   = "maxoutui_fc_series_grouping",
+    subfolder_cover   = "maxoutui_fc_subfolder_cover",
+    recursive_cover   = "maxoutui_fc_recursive_cover",
+    label_scale       = "maxoutui_fc_label_scale",
+    folder_style      = "maxoutui_fc_folder_style",
+    hide_spine        = "maxoutui_fc_hide_spine",
+    show_title_strip  = "maxoutui_fc_show_title_strip",
+    show_author_strip = "maxoutui_fc_show_author_strip",
+    badge_color_pages    = "maxoutui_fc_badge_color_pages",
+    badge_color_series   = "maxoutui_fc_badge_color_series",
+    badge_color_progress = "maxoutui_fc_badge_color_progress",
+    badge_color_new      = "maxoutui_fc_badge_color_new",
+    new_mode             = "maxoutui_fc_new_mode",
+    badge_color_folder   = "maxoutui_fc_badge_color_folder",
+    badge_scale          = "maxoutui_fc_badge_scale",
+    fade_finished        = "maxoutui_fc_fade_finished",
+    fade_amount          = "maxoutui_fc_fade_amount",
 }
 
 -- ---------------------------------------------------------------------------
@@ -470,8 +470,8 @@ local function _itc_key(path, fc)
 end
 
 local function _installItemCache()
-    if FileChooser._simpleui_fc_cache_patched then return end
-    FileChooser._simpleui_fc_cache_patched = true
+    if FileChooser._maxoutui_fc_cache_patched then return end
+    FileChooser._maxoutui_fc_cache_patched = true
 
     -- Invalidate when a book's status/props change so sort position stays correct.
     local ok_bl, BookList = pcall(require, "ui/widget/booklist")
@@ -509,10 +509,10 @@ local function _installItemCache()
 end
 
 local function _uninstallItemCache()
-    if not FileChooser._simpleui_fc_cache_patched then return end
+    if not FileChooser._maxoutui_fc_cache_patched then return end
     FileChooser.genItemTableFromPath       = _orig_genItemTableFromPath
     _orig_genItemTableFromPath             = nil
-    FileChooser._simpleui_fc_cache_patched = nil
+    FileChooser._maxoutui_fc_cache_patched = nil
     if _orig_setBookInfoCacheProperty then
         local ok_bl, BookList = pcall(require, "ui/widget/booklist")
         if ok_bl and BookList then
@@ -653,7 +653,7 @@ end
 
 -- Cover-override table: { [dir_path] = book_path }.
 -- Lazy-loaded once and mutated in place; never goes stale during a session.
-local _FC_COVERS_KEY  = "simpleui_fc_covers"
+local _FC_COVERS_KEY  = "maxoutui_fc_covers"
 local _overrides_cache = nil
 
 local function _getCoverOverrides()
@@ -932,7 +932,7 @@ local function _installFileDialogButton(BookInfoManager)
     if not ok_fm or not FileManager then return end
 
     -- "Set folder cover" — hidden in quad mode (auto-selected) and for files.
-    FileManager:addFileDialogButtons("simpleui_fc_cover",
+    FileManager:addFileDialogButtons("maxoutui_fc_cover",
         function(file, is_file, _book_props)
             if is_file then return nil end
             if not M.isEnabled() then return nil end
@@ -975,7 +975,7 @@ local function _installFileDialogButton(BookInfoManager)
     )
 
     -- "Create collection" — series-group folders only; visible in all view modes.
-    FileManager:addFileDialogButtons("simpleui_fc_series_collection",
+    FileManager:addFileDialogButtons("maxoutui_fc_series_collection",
         function(file, is_file, _book_props)
             if is_file then return nil end
             if not M.isEnabled() then return nil end
@@ -1009,8 +1009,8 @@ end
 local function _uninstallFileDialogButton()
     local ok_fm, FileManager = pcall(require, "apps/filemanager/filemanager")
     if not ok_fm or not FileManager then return end
-    FileManager:removeFileDialogButtons("simpleui_fc_cover")
-    FileManager:removeFileDialogButtons("simpleui_fc_series_collection")
+    FileManager:removeFileDialogButtons("maxoutui_fc_cover")
+    FileManager:removeFileDialogButtons("maxoutui_fc_series_collection")
 end
 
 -- ---------------------------------------------------------------------------
@@ -1215,8 +1215,8 @@ local _sg_orig_refreshPath     = nil
 local _sg_orig_updateItems     = nil
 
 local function _installSeriesGrouping()
-    if FileChooser._simpleui_sg_patched then return end
-    FileChooser._simpleui_sg_patched = true
+    if FileChooser._maxoutui_sg_patched then return end
+    FileChooser._maxoutui_sg_patched = true
 
     _sg_orig_switchItemTable = FileChooser.switchItemTable
     _sg_orig_onMenuSelect    = FileChooser.onMenuSelect
@@ -1406,7 +1406,7 @@ local function _installSeriesGrouping()
 end
 
 local function _uninstallSeriesGrouping()
-    if not FileChooser._simpleui_sg_patched then return end
+    if not FileChooser._maxoutui_sg_patched then return end
     if _sg_orig_switchItemTable then FileChooser.switchItemTable = _sg_orig_switchItemTable; _sg_orig_switchItemTable = nil end
     if _sg_orig_onMenuSelect    then FileChooser.onMenuSelect    = _sg_orig_onMenuSelect;    _sg_orig_onMenuSelect    = nil end
     if _sg_orig_onMenuHold      then FileChooser.onMenuHold      = _sg_orig_onMenuHold;      _sg_orig_onMenuHold      = nil end
@@ -1414,7 +1414,7 @@ local function _uninstallSeriesGrouping()
     if _sg_orig_changeToPath    then FileChooser.changeToPath    = _sg_orig_changeToPath;    _sg_orig_changeToPath    = nil end
     if _sg_orig_refreshPath     then FileChooser.refreshPath     = _sg_orig_refreshPath;     _sg_orig_refreshPath     = nil end
     if _sg_orig_updateItems     then FileChooser.updateItems     = _sg_orig_updateItems;     _sg_orig_updateItems     = nil end
-    FileChooser._simpleui_sg_patched = nil
+    FileChooser._maxoutui_sg_patched = nil
     _sg_current           = nil
     _sg_items_cache       = {}
     _sg_last_evicted_path = nil
@@ -2009,7 +2009,7 @@ local function _installStripPatch(MosaicMenuItem, BookInfoManager, _STRIP_H,
     local _strip_paintTo_patched  = false
 
     local function _stripPaintFn(w, tmp_bb, tx, ty)
-        tmp_bb:blitFrom(w._simpleui_strip_bb, tx, ty, 0, 0, w.width, _module_strip_h)
+        tmp_bb:blitFrom(w._maxoutui_strip_bb, tx, ty, 0, 0, w.width, _module_strip_h)
     end
 
     FileManager_strip.setupLayout = function(fm, ...)
@@ -2055,7 +2055,7 @@ local function _installStripPatch(MosaicMenuItem, BookInfoManager, _STRIP_H,
             if _STRIP_H <= 0 then return end
 
             -- Build/use the cached strip blitbuffer.
-            if not self._simpleui_strip_bb then
+            if not self._maxoutui_strip_bb then
 
                 -- Folders: render the folder name centred in the strip.
                 if self.is_directory then
@@ -2077,14 +2077,14 @@ local function _installStripPatch(MosaicMenuItem, BookInfoManager, _STRIP_H,
                         math.floor((self.width - tsz.w) / 2),
                         math.floor((_STRIP_H  - tsz.h) / 2))
                     tw:free()
-                    self._simpleui_strip_bb = strip_bb
+                    self._maxoutui_strip_bb = strip_bb
 
                 -- Books: render title and/or author.
                 else
                     -- Populate metadata on first paint after update().
-                    if self._simpleui_strip_data == nil then
+                    if self._maxoutui_strip_data == nil then
                         if not self.bookinfo_found then
-                            self._simpleui_strip_data = false
+                            self._maxoutui_strip_data = false
                         else
                             local info    = BookInfoManager:getBookInfo(self.filepath, false)
                             local title   = info and not info.ignore_meta and info.title   or nil
@@ -2111,22 +2111,22 @@ local function _installStripPatch(MosaicMenuItem, BookInfoManager, _STRIP_H,
                                 authors = authors:match("^([^\n]+)")
                             end
                             if title or authors then
-                                self._simpleui_strip_data = { title = title, authors = authors }
+                                self._maxoutui_strip_data = { title = title, authors = authors }
                             else
-                                self._simpleui_strip_data = false
+                                self._maxoutui_strip_data = false
                             end
                         end
                     end
-                    if not self._simpleui_strip_data then return end
+                    if not self._maxoutui_strip_data then return end
 
                     local strip_bb = Blitbuffer_s.new(self.width, _STRIP_H, bb:getType())
                     strip_bb:fill(Blitbuffer_s.COLOR_WHITE)
                     local text_w = self.width - 2 * PAD_H_S
                     local cur_y  = PAD_S
 
-                    if _show_title_strip and self._simpleui_strip_data.title then
+                    if _show_title_strip and self._maxoutui_strip_data.title then
                         local tw = TextWidget_s:new{
-                            text                   = BD_s.auto(self._simpleui_strip_data.title),
+                            text                   = BD_s.auto(self._maxoutui_strip_data.title),
                             face                   = Font_s:getFace(SUIStyle.FACE_REGULAR, TITLE_FONT_S),
                             bold                   = true,
                             padding                = 0,
@@ -2140,9 +2140,9 @@ local function _installStripPatch(MosaicMenuItem, BookInfoManager, _STRIP_H,
                         if _show_author_strip then cur_y = cur_y + TITLE_LINE_S + GAP_S end
                     end
 
-                    if _show_author_strip and self._simpleui_strip_data.authors then
+                    if _show_author_strip and self._maxoutui_strip_data.authors then
                         local aw = TextWidget_s:new{
-                            text                   = BD_s.auto(self._simpleui_strip_data.authors),
+                            text                   = BD_s.auto(self._maxoutui_strip_data.authors),
                             face                   = Font_s:getFace(SUIStyle.FACE_REGULAR, AUTHOR_FONT_S),
                             bold                   = false,
                             padding                = 0,
@@ -2155,32 +2155,32 @@ local function _installStripPatch(MosaicMenuItem, BookInfoManager, _STRIP_H,
                         aw:free()
                     end
 
-                    self._simpleui_strip_bb = strip_bb
+                    self._maxoutui_strip_bb = strip_bb
                 end
             end
 
             -- Blit the strip immediately below the cover area.
-            if self._simpleui_strip_bb then
+            if self._maxoutui_strip_bb then
                 local ok_hs, HS_s = pcall(require, "mui_homescreen")
                 local wp_active = ok_hs and HS_s
                     and HS_s.styleGetWallpaperShowInFM()
                     and HS_s.styleGetBgWidget() ~= nil
 
                 if wp_active then
-                    if not self._simpleui_strip_mask_bb
-                            or self._simpleui_strip_mask_bb:getWidth() ~= self.width then
-                        if self._simpleui_strip_mask_bb then
-                            self._simpleui_strip_mask_bb:free()
+                    if not self._maxoutui_strip_mask_bb
+                            or self._maxoutui_strip_mask_bb:getWidth() ~= self.width then
+                        if self._maxoutui_strip_mask_bb then
+                            self._maxoutui_strip_mask_bb:free()
                         end
-                        self._simpleui_strip_mask_bb =
+                        self._maxoutui_strip_mask_bb =
                             Blitbuffer_s.new(self.width, _STRIP_H, Blitbuffer_s.TYPE_BB8)
                     end
                     UI_core.paintWithAlphaMask(self, bb,
                         x, y + self.height - _STRIP_H, self.width, _STRIP_H,
                         Blitbuffer_s.COLOR_BLACK,
-                        _stripPaintFn, self._simpleui_strip_mask_bb)
+                        _stripPaintFn, self._maxoutui_strip_mask_bb)
                 else
-                    bb:blitFrom(self._simpleui_strip_bb,
+                    bb:blitFrom(self._maxoutui_strip_bb,
                         x, y + self.height - _STRIP_H,
                         0, 0, self.width, _STRIP_H)
                 end
@@ -2192,7 +2192,7 @@ end
 function M.install()
     local MosaicMenuItem, userpatch = _getMosaicMenuItemAndPatch()
     if not MosaicMenuItem then return end
-    if MosaicMenuItem._simpleui_fc_patched then return end
+    if MosaicMenuItem._maxoutui_fc_patched then return end
 
     local ok_bim, BookInfoManager = pcall(require, "bookinfomanager")
     if not ok_bim or not BookInfoManager then return end
@@ -2211,7 +2211,7 @@ function M.install()
 
     -- Replace the upvalue ImageWidget in MosaicMenuItem.update with a subclass
     -- that enforces 2:3 when cover_mode == "2_3".
-    if not MosaicMenuItem._simpleui_fc_iw_n then
+    if not MosaicMenuItem._maxoutui_fc_iw_n then
         local local_ImageWidget
         local n = 1
         while true do
@@ -2239,16 +2239,16 @@ function M.install()
                 end
             end
             debug.setupvalue(MosaicMenuItem.update, n, StretchingImageWidget)
-            MosaicMenuItem._simpleui_fc_iw_n         = n
-            MosaicMenuItem._simpleui_fc_orig_iw      = local_ImageWidget
-            MosaicMenuItem._simpleui_fc_stretched_iw = StretchingImageWidget
+            MosaicMenuItem._maxoutui_fc_iw_n         = n
+            MosaicMenuItem._maxoutui_fc_orig_iw      = local_ImageWidget
+            MosaicMenuItem._maxoutui_fc_stretched_iw = StretchingImageWidget
         end
     end
 
     local orig_init    = MosaicMenuItem.init
     local orig_paintTo = MosaicMenuItem.paintTo
-    MosaicMenuItem._simpleui_fc_orig_init    = orig_init
-    MosaicMenuItem._simpleui_fc_orig_paintTo = orig_paintTo
+    MosaicMenuItem._maxoutui_fc_orig_init    = orig_init
+    MosaicMenuItem._maxoutui_fc_orig_paintTo = orig_paintTo
 
     -- ── Title/Author strip height (fixed for this session; requires restart) ──
     local _show_title_strip  = M.getShowTitleStrip()
@@ -2275,7 +2275,7 @@ function M.install()
         _STRIP_H = _STRIP_H + _PAD
     end
     _module_strip_h                    = _STRIP_H
-    MosaicMenuItem._simpleui_strip_h   = _STRIP_H
+    MosaicMenuItem._maxoutui_strip_h   = _STRIP_H
 
     -- Guard flag: prevents the update() wrapper from double-shrinking self.height
     -- when init() calls orig_init (which calls update internally).
@@ -2301,16 +2301,16 @@ function M.install()
         end
     end
 
-    MosaicMenuItem._simpleui_fc_patched     = true
-    MosaicMenuItem._simpleui_fc_orig_update = MosaicMenuItem.update
+    MosaicMenuItem._maxoutui_fc_patched     = true
+    MosaicMenuItem._maxoutui_fc_orig_update = MosaicMenuItem.update
 
     local original_update = MosaicMenuItem.update
 
     function MosaicMenuItem:update(...)
         -- Invalidate the strip cache on every cover reload.
-        self._simpleui_strip_data = nil
-        if self._simpleui_strip_bb then
-            self._simpleui_strip_bb:free(); self._simpleui_strip_bb = nil
+        self._maxoutui_strip_data = nil
+        if self._maxoutui_strip_bb then
+            self._maxoutui_strip_bb:free(); self._maxoutui_strip_bb = nil
         end
         -- Shrink height before calling original_update so cover calculations
         -- stay within the reduced space. Skipped when called from within init()
@@ -2930,7 +2930,7 @@ function M.install()
     end
 
     -- onFocus: apply the pre-computed underline color (no settings read in the hot path).
-    MosaicMenuItem._simpleui_fc_orig_onFocus = MosaicMenuItem.onFocus
+    MosaicMenuItem._maxoutui_fc_orig_onFocus = MosaicMenuItem.onFocus
     function MosaicMenuItem:onFocus()
         self._underline_container.color = self._fc_underline_color
             or (M.getHideUnderline() and Blitbuffer.COLOR_WHITE or Blitbuffer.COLOR_BLACK)
@@ -3185,7 +3185,7 @@ function M.install()
     end -- MosaicMenuItem:paintTo
 
     local orig_free = MosaicMenuItem.free
-    MosaicMenuItem._simpleui_fc_orig_free = orig_free
+    MosaicMenuItem._maxoutui_fc_orig_free = orig_free
     function MosaicMenuItem:free()
         if self._fc_progress_bb and self._fc_progress_bb.text_widget then
             self._fc_progress_bb.text_widget:free()
@@ -3196,9 +3196,9 @@ function M.install()
         if self._fc_series_widget then self._fc_series_widget:free(); self._fc_series_widget = nil end
         if self._fc_new_widget    then self._fc_new_widget:free();    self._fc_new_widget    = nil end
         self._fc_overlay_new = nil
-        if self._simpleui_strip_bb      then self._simpleui_strip_bb:free();      self._simpleui_strip_bb      = nil end
-        if self._simpleui_strip_mask_bb then self._simpleui_strip_mask_bb:free(); self._simpleui_strip_mask_bb = nil end
-        self._simpleui_strip_data = nil
+        if self._maxoutui_strip_bb      then self._maxoutui_strip_bb:free();      self._maxoutui_strip_bb      = nil end
+        if self._maxoutui_strip_mask_bb then self._maxoutui_strip_mask_bb:free(); self._maxoutui_strip_mask_bb = nil end
+        self._maxoutui_strip_data = nil
         if orig_free then orig_free(self) end
     end
 
@@ -3214,9 +3214,9 @@ function M.install()
 
     -- ── ListMenuItem patch — folder covers in list_image_meta view ────────────
     local ListMenuItem = _getListMenuItem()
-    if ListMenuItem and not ListMenuItem._simpleui_lm_patched then
-        ListMenuItem._simpleui_lm_patched     = true
-        ListMenuItem._simpleui_lm_orig_update = ListMenuItem.update
+    if ListMenuItem and not ListMenuItem._maxoutui_lm_patched then
+        ListMenuItem._maxoutui_lm_patched     = true
+        ListMenuItem._maxoutui_lm_orig_update = ListMenuItem.update
 
         local orig_lm_update = ListMenuItem.update
         function ListMenuItem:update(...)
@@ -3470,39 +3470,39 @@ end -- M.install
 function M.uninstall()
     local MosaicMenuItem = _getMosaicMenuItemAndPatch()
     if not MosaicMenuItem then return end
-    if not MosaicMenuItem._simpleui_fc_patched then return end
+    if not MosaicMenuItem._maxoutui_fc_patched then return end
 
-    if MosaicMenuItem._simpleui_fc_orig_update    then
-        MosaicMenuItem.update    = MosaicMenuItem._simpleui_fc_orig_update
-        MosaicMenuItem._simpleui_fc_orig_update    = nil
+    if MosaicMenuItem._maxoutui_fc_orig_update    then
+        MosaicMenuItem.update    = MosaicMenuItem._maxoutui_fc_orig_update
+        MosaicMenuItem._maxoutui_fc_orig_update    = nil
     end
-    if MosaicMenuItem._simpleui_fc_orig_paintTo   then
-        MosaicMenuItem.paintTo   = MosaicMenuItem._simpleui_fc_orig_paintTo
-        MosaicMenuItem._simpleui_fc_orig_paintTo   = nil
+    if MosaicMenuItem._maxoutui_fc_orig_paintTo   then
+        MosaicMenuItem.paintTo   = MosaicMenuItem._maxoutui_fc_orig_paintTo
+        MosaicMenuItem._maxoutui_fc_orig_paintTo   = nil
     end
-    if MosaicMenuItem._simpleui_fc_orig_free      then
-        MosaicMenuItem.free      = MosaicMenuItem._simpleui_fc_orig_free
-        MosaicMenuItem._simpleui_fc_orig_free      = nil
+    if MosaicMenuItem._maxoutui_fc_orig_free      then
+        MosaicMenuItem.free      = MosaicMenuItem._maxoutui_fc_orig_free
+        MosaicMenuItem._maxoutui_fc_orig_free      = nil
     end
-    if MosaicMenuItem._simpleui_fc_orig_onFocus   then
-        MosaicMenuItem.onFocus   = MosaicMenuItem._simpleui_fc_orig_onFocus
-        MosaicMenuItem._simpleui_fc_orig_onFocus   = nil
+    if MosaicMenuItem._maxoutui_fc_orig_onFocus   then
+        MosaicMenuItem.onFocus   = MosaicMenuItem._maxoutui_fc_orig_onFocus
+        MosaicMenuItem._maxoutui_fc_orig_onFocus   = nil
     end
-    if MosaicMenuItem._simpleui_fc_orig_init ~= nil then
-        MosaicMenuItem.init      = MosaicMenuItem._simpleui_fc_orig_init
-        MosaicMenuItem._simpleui_fc_orig_init      = nil
+    if MosaicMenuItem._maxoutui_fc_orig_init ~= nil then
+        MosaicMenuItem.init      = MosaicMenuItem._maxoutui_fc_orig_init
+        MosaicMenuItem._maxoutui_fc_orig_init      = nil
     end
-    if MosaicMenuItem._simpleui_fc_iw_n and MosaicMenuItem._simpleui_fc_orig_iw then
-        debug.setupvalue(MosaicMenuItem.update, MosaicMenuItem._simpleui_fc_iw_n,
-            MosaicMenuItem._simpleui_fc_orig_iw)
-        MosaicMenuItem._simpleui_fc_iw_n         = nil
-        MosaicMenuItem._simpleui_fc_orig_iw      = nil
-        MosaicMenuItem._simpleui_fc_stretched_iw = nil
+    if MosaicMenuItem._maxoutui_fc_iw_n and MosaicMenuItem._maxoutui_fc_orig_iw then
+        debug.setupvalue(MosaicMenuItem.update, MosaicMenuItem._maxoutui_fc_iw_n,
+            MosaicMenuItem._maxoutui_fc_orig_iw)
+        MosaicMenuItem._maxoutui_fc_iw_n         = nil
+        MosaicMenuItem._maxoutui_fc_orig_iw      = nil
+        MosaicMenuItem._maxoutui_fc_stretched_iw = nil
     end
     MosaicMenuItem._setFolderCover      = nil
     MosaicMenuItem._getFolderNameWidget = nil
-    MosaicMenuItem._simpleui_fc_patched = nil
-    MosaicMenuItem._simpleui_strip_h    = nil
+    MosaicMenuItem._maxoutui_fc_patched = nil
+    MosaicMenuItem._maxoutui_strip_h    = nil
     _module_strip_h = 0
 
     _uninstallItemCache()
@@ -3521,13 +3521,13 @@ function M.uninstall()
     _overrides_cache = nil
 
     local ListMenuItem = _getListMenuItem()
-    if ListMenuItem and ListMenuItem._simpleui_lm_patched then
-        if ListMenuItem._simpleui_lm_orig_update then
-            ListMenuItem.update = ListMenuItem._simpleui_lm_orig_update
-            ListMenuItem._simpleui_lm_orig_update = nil
+    if ListMenuItem and ListMenuItem._maxoutui_lm_patched then
+        if ListMenuItem._maxoutui_lm_orig_update then
+            ListMenuItem.update = ListMenuItem._maxoutui_lm_orig_update
+            ListMenuItem._maxoutui_lm_orig_update = nil
         end
         ListMenuItem._setListFolderCover  = nil
-        ListMenuItem._simpleui_lm_patched = nil
+        ListMenuItem._maxoutui_lm_patched = nil
     end
 end
 

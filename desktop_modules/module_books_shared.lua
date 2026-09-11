@@ -679,7 +679,7 @@ end
 local _last_books_state       = nil
 local _disk_books_load_tried  = false  -- guards the single lazy disk read
 
-local _STALE_BOOKS_SETTING_KEY = "simpleui_stale_books_v1"
+local _STALE_BOOKS_SETTING_KEY = "maxoutui_stale_books_v1"
 
 -- Lazily resolve sui_store without a hard require at module load time, to
 -- avoid any chance of a circular dependency between module_books_shared and

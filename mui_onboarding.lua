@@ -33,7 +33,7 @@ local Onboarding = {}
 
 function Onboarding.show(on_finish)
     local st = {
-        selected_preset = SUISettings:get("simpleui_hs_active_preset") or "builtin_at_a_glance"
+        selected_preset = SUISettings:get("maxoutui_hs_active_preset") or "builtin_at_a_glance"
     }
 
     local win
@@ -92,7 +92,7 @@ function Onboarding.show(on_finish)
                 on_tap   = function()
                     st.selected_preset = bp.id
                     if SUIPresets.applyBuiltin then SUIPresets.applyBuiltin(st.selected_preset) end
-                    SUISettings:set("simpleui_hs_active_preset", st.selected_preset)
+                    SUISettings:set("maxoutui_hs_active_preset", st.selected_preset)
                     local ok, HS = pcall(require, "mui_homescreen")
                     if ok and HS and HS.rebuildLayout then HS.rebuildLayout() end
                     ctx.repaint()
@@ -170,7 +170,7 @@ function Onboarding.show(on_finish)
             },
             {
                 title = _("Custom wallpapers and icons"),
-                desc  = _("Place your files in koreader/settings/simpleui/sui_wallpapers or sui_icons."),
+                desc  = _("Place your files in koreader/settings/maxoutui/mui_wallpapers or sui_icons."),
             },
         }
 
@@ -243,7 +243,7 @@ function Onboarding.show(on_finish)
         },
         position = "bottom",
         on_close = function()
-            SUISettings:set("simpleui_onboarding_done", true)
+            SUISettings:set("maxoutui_onboarding_done", true)
             G_reader_settings:saveSetting("start_with", "homescreen_simpleui")
             if on_finish then on_finish() end
         end,
@@ -271,7 +271,7 @@ function Onboarding.show(on_finish)
                     text   = _("Start using MaxOutUI"),
                     on_tap = function()
                         if SUIPresets.applyBuiltin then SUIPresets.applyBuiltin(st.selected_preset) end
-                        SUISettings:set("simpleui_hs_active_preset", st.selected_preset)
+                        SUISettings:set("maxoutui_hs_active_preset", st.selected_preset)
                         G_reader_settings:saveSetting("start_with", "homescreen_simpleui")
                         if win.close then win:close() else UIManager:close(win) end
                     end,

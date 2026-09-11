@@ -64,10 +64,10 @@ end
 -- Settings keys and defaults
 -- ---------------------------------------------------------------------------
 
-local SETTING_KEY = "simpleui_tb_custom"
-local FM_CFG_KEY  = "simpleui_tb_fm_cfg"
-local SUB_CFG_KEY = "simpleui_tb_sub_cfg"
-local SIZE_KEY    = "simpleui_tb_size_pct"
+local SETTING_KEY = "maxoutui_tb_custom"
+local FM_CFG_KEY  = "maxoutui_tb_fm_cfg"
+local SUB_CFG_KEY = "maxoutui_tb_sub_cfg"
+local SIZE_KEY    = "maxoutui_tb_size_pct"
 
 local _SIZE_SCALE = { compact = 0.75, default = 1.0, large = 1.3 }
 
@@ -116,7 +116,7 @@ M.ITEMS = {
 function M.isEnabled()   return SUISettings:nilOrTrue(SETTING_KEY) end
 function M.setEnabled(v) SUISettings:saveSetting(SETTING_KEY, v)   end
 
-local function _visKey(id) return "simpleui_tb_item_" .. id end
+local function _visKey(id) return "maxoutui_tb_item_" .. id end
 
 function M.isItemVisible(id)
     local v = SUISettings:readSetting(_visKey(id))
@@ -270,7 +270,7 @@ local function _isSubFolder(path)
 end
 
 -- M.isAtRoot: exported so sui_patches can use the same criterion without
--- duplicating the logic or depending on the _simpleui_has_go_up flag.
+-- duplicating the logic or depending on the _maxoutui_has_go_up flag.
 local function _isAtRoot(fc)
     if not fc then return true end
     -- Series view always has a parent even if the path is the home root.
@@ -633,7 +633,7 @@ function M.apply(fm_self)
                 up_btn.overlap_offset = { _buttonX(s.side, s.slot, iw, pad, gap, sw), 0 }
                 table.insert(tb, up_btn)
                 fm_self._titlebar_up_btn = up_btn
-                fm_self._simpleui_up_x   = _buttonX(s.side, s.slot, iw, pad, gap, sw)
+                fm_self._maxoutui_up_x   = _buttonX(s.side, s.slot, iw, pad, gap, sw)
 
                 -- Hide immediately if already at root on first apply.
                 if _isAtRoot(fm_self.file_chooser) then
@@ -737,10 +737,10 @@ function M.apply(fm_self)
                         end
                     end
 
-                    fm_self._simpleui_force_refresh_layout = _applyBackButtonState
+                    fm_self._maxoutui_force_refresh_layout = _applyBackButtonState
 
                     fm_self._titlebar_orig_fc_genItemTable = fc.genItemTable
-                    fc._simpleui_gen_listeners = {}
+                    fc._maxoutui_gen_listeners = {}
 
                     local orig_genItemTable = fc.genItemTable
                     fc.genItemTable = function(fc_self, dirs, files, path)
@@ -770,7 +770,7 @@ function M.apply(fm_self)
 
                         -- Notify all other registered listeners (e.g. browse icon refresh).
                         for _, listener in ipairs(
-                            fc_self._simpleui_gen_listeners or {}
+                            fc_self._maxoutui_gen_listeners or {}
                         ) do
                             pcall(listener, fc_self)
                         end
@@ -864,15 +864,15 @@ function M.apply(fm_self)
                     if orig_onGotoPage then
                         fm_self._titlebar_orig_fc_onGotoPage = orig_onGotoPage
                         fc.onGotoPage = function(fc_self, page, ...)
-                            if fc_self._simpleui_in_goto then
+                            if fc_self._maxoutui_in_goto then
                                 return orig_onGotoPage(fc_self, page, ...)
                             end
-                            fc_self._simpleui_in_goto = true
+                            fc_self._maxoutui_in_goto = true
                             local ok, result =
                                 pcall(orig_onGotoPage, fc_self, page, ...)
                             -- Clear re-entrancy guard BEFORE any error() so a failure
                             -- inside orig_onGotoPage never leaves the flag stuck at true.
-                            fc_self._simpleui_in_goto = nil
+                            fc_self._maxoutui_in_goto = nil
                             local is_sub = _resolveIsSub(fc_self)
                             _applyBackButtonState(fc_self, is_sub, page)
                             if not ok then error(result) end
@@ -915,14 +915,14 @@ function M.apply(fm_self)
                 search_btn.overlap_offset = { _buttonX(s.side, s.slot, iw, pad, gap, sw), 0 }
                 table.insert(tb, search_btn)
                 fm_self._titlebar_search_btn = search_btn
-                fm_self._simpleui_search_x   = _buttonX(s.side, s.slot, iw, pad, gap, sw)
+                fm_self._maxoutui_search_x   = _buttonX(s.side, s.slot, iw, pad, gap, sw)
 
 
                 if s.side == "left" then
                     local up_slot2  = slot_map["fm_back"] and slot_map["fm_back"].slot or 0
                     local dslot     = s.slot > up_slot2 and s.slot - 1 or s.slot
                     local compact_x = _buttonX("left", dslot, iw, pad, gap, sw)
-                    fm_self._simpleui_search_x_compact = compact_x
+                    fm_self._maxoutui_search_x_compact = compact_x
                     -- Shift to the compact (flush left) position whenever the up/back
                     -- button is not actually occupying its slot: either it is disabled
                     -- entirely (not show_up), or it is enabled but hidden because we
@@ -1032,7 +1032,7 @@ function M.apply(fm_self)
                     local up_slot_b = slot_map["fm_back"] and slot_map["fm_back"].slot or 0
                     local dslot_b   = s.slot > up_slot_b and s.slot - 1 or s.slot
                     local compact_x_b = _buttonX("left", dslot_b, iw, pad, gap, sw)
-                    fm_self._simpleui_browse_x_compact = compact_x_b
+                    fm_self._maxoutui_browse_x_compact = compact_x_b
                     -- Shift to the compact (flush left) position whenever the up/back
                     -- button is not actually occupying its slot: either it is disabled
                     -- entirely (not show_up), or it is enabled but hidden because we
@@ -1045,8 +1045,8 @@ function M.apply(fm_self)
 
 
                 local fc_b = fm_self.file_chooser
-                if fc_b and fc_b._simpleui_gen_listeners then
-                    fc_b._simpleui_gen_listeners[#fc_b._simpleui_gen_listeners + 1] = function(fc_self)
+                if fc_b and fc_b._maxoutui_gen_listeners then
+                    fc_b._maxoutui_gen_listeners[#fc_b._maxoutui_gen_listeners + 1] = function(fc_self)
                         -- Improvement #4: use cached _BrowseMeta().
                         local BM2 = _BrowseMeta()
                         if BM2 and browse_btn then
@@ -1074,15 +1074,15 @@ function M.apply(fm_self)
 
     -- Title ------------------------------------------------------------------
 
-    if fm_self._simpleui_force_refresh_layout and fm_self.file_chooser then
+    if fm_self._maxoutui_force_refresh_layout and fm_self.file_chooser then
         local current_is_sub = _resolveIsSub(fm_self.file_chooser)
         local current_page   = fm_self.file_chooser.page or 1
         
         
-        fm_self._simpleui_force_refresh_layout(fm_self.file_chooser, current_is_sub, current_page)
+        fm_self._maxoutui_force_refresh_layout(fm_self.file_chooser, current_is_sub, current_page)
         
         
-        fm_self._simpleui_force_refresh_layout = nil 
+        fm_self._maxoutui_force_refresh_layout = nil 
     end
     if tb.setTitle then
         fm_self._titlebar_orig_title_set = true
@@ -1128,13 +1128,13 @@ function M.restore(fm_self)
             fm_self[key] = nil
         end
     end
-    fm_self._simpleui_browse_x_compact  = nil
+    fm_self._maxoutui_browse_x_compact  = nil
     fm_self._titlebar_browse_gen_hooked = nil
 
     -- Restore file-chooser patches.
     local fc = fm_self.file_chooser
     if fc then
-        fc._simpleui_gen_listeners = nil
+        fc._maxoutui_gen_listeners = nil
         if fm_self._titlebar_orig_fc_genItemTable then
             fc.genItemTable = fm_self._titlebar_orig_fc_genItemTable
         end
@@ -1445,7 +1445,7 @@ function M.restoreSub(widget)
             end
         end
         widget._titlebar_sub_back_btn = nil
-        widget._simpleui_force_refresh_sub_back = nil
+        widget._maxoutui_force_refresh_sub_back = nil
     end
 
     if widget._titlebar_sub_orig_updatePageInfo ~= nil then
@@ -1486,7 +1486,7 @@ function M.reapplyAll(fm_self, window_stack)
     if fm_self then
         local ok, err = pcall(M.reapply, fm_self)
         if not ok then
-            logger.warn("simpleui: titlebar.reapplyAll FM failed:", tostring(err))
+            logger.warn("maxoutui: titlebar.reapplyAll FM failed:", tostring(err))
         end
     end
     if type(window_stack) == "table" then
@@ -1498,7 +1498,7 @@ function M.reapplyAll(fm_self, window_stack)
                     M.applyToSub(w)
                 end)
                 if not ok then
-                    logger.warn("simpleui: titlebar.reapplyAll widget failed:", tostring(err))
+                    logger.warn("maxoutui: titlebar.reapplyAll widget failed:", tostring(err))
                 end
             end
         end

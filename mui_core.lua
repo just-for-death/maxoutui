@@ -226,12 +226,12 @@ end
 -- ---------------------------------------------------------------------------
 
 function M.getContentHeight()
-    local topbar_on = SUISettings:nilOrTrue("simpleui_topbar_enabled")
+    local topbar_on = SUISettings:nilOrTrue("maxoutui_topbar_enabled")
     return Screen:getHeight() - _BB().TOTAL_H() - (topbar_on and _TB().TOTAL_TOP_H() or 0)
 end
 
 function M.getContentTop()
-    local topbar_on = SUISettings:nilOrTrue("simpleui_topbar_enabled")
+    local topbar_on = SUISettings:nilOrTrue("maxoutui_topbar_enabled")
     return topbar_on and _TB().TOTAL_TOP_H() or 0
 end
 
@@ -259,7 +259,7 @@ function M.replaceTopbar(widget, new_topbar)
             return
         end
     end
-    logger.warn("simpleui: replaceTopbar could not find topbar in container — skipping")
+    logger.warn("maxoutui: replaceTopbar could not find topbar in container — skipping")
 end
 
 -- ---------------------------------------------------------------------------
@@ -272,8 +272,8 @@ function M.wrapWithNavbar(inner_widget, active_action_id, tabs, force_no_arrows)
     local screen_w  = Screen:getWidth()
     local screen_h  = Screen:getHeight()
     -- Read both settings once — used multiple times below.
-    local topbar_on = SUISettings:nilOrTrue("simpleui_topbar_enabled")
-    local navbar_on = SUISettings:nilOrTrue("simpleui_bar_enabled")
+    local topbar_on = SUISettings:nilOrTrue("maxoutui_topbar_enabled")
+    local navbar_on = SUISettings:nilOrTrue("maxoutui_bar_enabled")
     local topbar_top = topbar_on and Topbar.TOTAL_TOP_H() or 0
     local navbar_h   = Bottombar.TOTAL_H()
     local content_h  = screen_h - topbar_top - navbar_h
@@ -316,8 +316,8 @@ function M.wrapWithNavbar(inner_widget, active_action_id, tabs, force_no_arrows)
 
     local topbar_idx       = topbar_on and #overlap_items or nil
     local navbar_container = OverlapGroup():new(overlap_items)
-    local is_bare_bar = SUISettings:readSetting("simpleui_bar_style") == "bare"
-    local wrapper_bg = (SUISettings:isTrue("simpleui_navbar_transparent") or SUISettings:isTrue("simpleui_statusbar_transparent") or is_bare_bar) and nil or Blitbuffer.COLOR_WHITE
+    local is_bare_bar = SUISettings:readSetting("maxoutui_bar_style") == "bare"
+    local wrapper_bg = (SUISettings:isTrue("maxoutui_navbar_transparent") or SUISettings:isTrue("maxoutui_statusbar_transparent") or is_bare_bar) and nil or Blitbuffer.COLOR_WHITE
 
     return navbar_container,
            FrameContainer():new{
@@ -371,11 +371,11 @@ end
 --- Call on any InputContainer that uses registerTouchZones for the navbar (FM
 --- class, Homescreen instance, or UIManager-injected fullscreen widgets).
 function M.applyGesturePriorityHandleEvent(target)
-    if not target or target._simpleui_gesture_priority_applied then return end
+    if not target or target._maxoutui_gesture_priority_applied then return end
     local InputContainer  = require("ui/widget/container/inputcontainer")
     local WidgetContainer = require("ui/widget/container/widgetcontainer")
     local inherit         = _resolveInheritedHandleEvent(target)
-    target._simpleui_gesture_priority_applied = true
+    target._maxoutui_gesture_priority_applied = true
     target.handleEvent = function(self, event)
         if event.handler == "onGesture" then
             local ges = event.args and event.args[1]
@@ -389,9 +389,9 @@ function M.applyGesturePriorityHandleEvent(target)
 end
 
 function M.unapplyGesturePriorityHandleEvent(target)
-    if not target or not target._simpleui_gesture_priority_applied then return end
+    if not target or not target._maxoutui_gesture_priority_applied then return end
     target.handleEvent = nil
-    target._simpleui_gesture_priority_applied = nil
+    target._maxoutui_gesture_priority_applied = nil
 end
 
 -- ---------------------------------------------------------------------------
@@ -401,7 +401,7 @@ end
 function M.getWindowStack()
     local UIManager = require("ui/uimanager")
     if type(UIManager._window_stack) ~= "table" then
-        logger.warn("simpleui: UIManager._window_stack not available — internal API changed?")
+        logger.warn("maxoutui: UIManager._window_stack not available — internal API changed?")
         return {}
     end
     return UIManager._window_stack
@@ -712,7 +712,7 @@ function M.progressBar(w, pct, bar_h, fg_color, bg_color)
     bar_h = bar_h or Screen:scaleBySize(4)
     
     local ok, SUIStyle = pcall(require, "mui_style")
-    local style = SUISettings:get("simpleui_style_progress_bar_type") or "flat"
+    local style = SUISettings:get("maxoutui_style_progress_bar_type") or "flat"
 
     local bg = bg_color or (ok and SUIStyle.getThemeColor("progress_bg")) or Blitbuffer.gray(0.15)
     local fg = fg_color or (ok and SUIStyle.getThemeColor("progress_fg")) or Blitbuffer.gray(0.75)

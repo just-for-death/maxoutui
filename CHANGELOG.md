@@ -1,6 +1,31 @@
 # Changelog
 
-All notable changes to SimpleUI will be documented in this file.
+All notable changes to MaxOutUI will be documented in this file.
+
+## [v1.1.3] - 2026-09-11
+
+### Fixed
+- Auto Download covers: decode SWTHUMB1 `.bb` via `ThumbnailCache.loadDecoded` and
+  prefetch missing thumbs (same path as Manga Library).
+- Pinned manga cover lookup prefers the shared `{ variant = "thumbnail" }` cache key.
+
+## [v1.1.2] - 2026-09-11
+
+### Added
+- Homescreen module **Auto Download (Suwayomi)** (`suwayomi_auto_download`): manage
+  manga with Missing / Latest modes; tap opens actions, hold changes mode or
+  removes; menu adds from library and syncs downloads.
+
+## [v1.1.1] - 2026-09-11
+
+### Added
+- Dedicated Suwayomi+ Quick Action icons (`manga_*.svg`): continue, library, recent,
+  sources, updates, downloads, pinned, and pin/unpin — no more reused generic icons.
+- Homescreen module **Pinned Manga (Suwayomi)** (`suwayomi_pinned`): cover row of
+  pins; tap opens the same Resume / Browse chooser as the Pinned Manga widget.
+
+### Changed
+- Suwayomi Quick Actions now point at the new manga-specific icons in `mui_config`.
 
 ## [v2.6.0] - 2026-08-14
 

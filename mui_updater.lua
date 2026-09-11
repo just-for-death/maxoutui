@@ -67,9 +67,9 @@ local function _currentVersion()
     -- _meta.lua, not a stale cached entry from another plugin (require caches
     -- by module name, so require("_meta") may return the wrong table).
     local ok, meta = pcall(dofile, _plugin_dir .. "/_meta.lua")
-    if ok and type(meta) == "table" and meta.name == "simpleui" and meta.version then return meta.version end
+    if ok and type(meta) == "table" and (meta.name == "maxoutui" or meta.name == "simpleui") and meta.version then return meta.version end
     local rok, rmeta = pcall(require, "_meta")
-    if rok and type(rmeta) == "table" and rmeta.name == "simpleui" and rmeta.version then return rmeta.version end
+    if rok and type(rmeta) == "table" and (rmeta.name == "maxoutui" or rmeta.name == "simpleui") and rmeta.version then return rmeta.version end
     return "0.0.0"
 end
 
@@ -340,10 +340,10 @@ local function _tmpZipPath()
     local ok, DS = pcall(require, "datastorage")
     if ok and DS then
         local dir = DS:getSettingsDir()
-        if dir then candidates[#candidates + 1] = dir .. "/simpleui_update.zip" end
+        if dir then candidates[#candidates + 1] = dir .. "/maxoutui_update.zip" end
     end
-    candidates[#candidates + 1] = "/tmp/simpleui_update.zip"
-    candidates[#candidates + 1] = _plugin_dir .. "/simpleui_update.zip"
+    candidates[#candidates + 1] = "/tmp/maxoutui_update.zip"
+    candidates[#candidates + 1] = _plugin_dir .. "/maxoutui_update.zip"
 
     for _, path in ipairs(candidates) do
         local fh = io.open(path, "wb")
@@ -353,7 +353,7 @@ local function _tmpZipPath()
     -- Last-resort fallback: return the plugin dir path even without a
     -- successful probe (the download will fail with a clear error if it
     -- really is not writable, rather than returning nil here).
-    return _plugin_dir .. "/simpleui_update.zip"
+    return _plugin_dir .. "/maxoutui_update.zip"
 end
 
 -- ---------------------------------------------------------------------------
@@ -554,10 +554,10 @@ end
 function M.scheduleAutoCheck()
     -- Opt-in only: skip silently if the user has not enabled auto-check.
     -- SUISettings:isTrue() returns false for missing keys → disabled by default.
-    local ok_s, SUISettings = pcall(require, "mui_settings")
+    local ok_s, SUISettings = pcall(require, "mui_store")
     if not ok_s or not SUISettings then return end
-    if not SUISettings:isTrue("simpleui_updater_auto_check") then
-        logger.dbg("simpleui updater: auto-check disabled — skipping")
+    if not SUISettings:isTrue("maxoutui_updater_auto_check") then
+        logger.dbg("maxoutui updater: auto-check disabled — skipping")
         return
     end
 

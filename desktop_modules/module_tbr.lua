@@ -4,7 +4,7 @@
 --
 -- Persistence: the TBR list is mirrored as a KOReader collection named
 -- TBR_COLL_NAME ("To Be Read").  ReadCollection is the source of truth;
--- G_reader_settings["simpleui_tbr_list"] is kept in sync as a legacy fallback
+-- G_reader_settings["maxoutui_tbr_list"] is kept in sync as a legacy fallback
 -- and for modules that read it directly.  On first run the old
 -- G_reader_settings list is migrated into the collection automatically.
 --
@@ -28,7 +28,7 @@ local logger = require("logger")
 local SUISettings = require("mui_store")
 
 local TBR_MAX       = 5
-local TBR_SETTING   = "simpleui_tbr_list"    -- G_reader_settings key (kept in sync)
+local TBR_SETTING   = "maxoutui_tbr_list"    -- G_reader_settings key (kept in sync)
 local TBR_COLL_NAME = "To Be Read"      -- KOReader collection name for the TBR list
 
 -- ---------------------------------------------------------------------------
@@ -69,7 +69,7 @@ local function _migrate()
     end
     if added > 0 then
         RC:write({ [TBR_COLL_NAME] = true })
-        logger.dbg("simpleui: module_tbr: migrated", added, "entries to ReadCollection")
+        logger.dbg("maxoutui: module_tbr: migrated", added, "entries to ReadCollection")
     end
 end
 

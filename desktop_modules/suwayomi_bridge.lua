@@ -137,7 +137,8 @@ end
 -- @param w number width in pixels
 -- @param h number height in pixels
 -- @param on_tap function()
-function M.makeTappable(child, w, h, on_tap)
+-- @param on_hold optional function()
+function M.makeTappable(child, w, h, on_tap, on_hold)
     local tappable = InputContainer:new{
         dimen = Geom:new{ w = w, h = h },
         [1] = child,
@@ -152,6 +153,20 @@ function M.makeTappable(child, w, h, on_tap)
             },
         },
     }
+    if on_hold then
+        tappable.ges_events.HoldSuwayomi = {
+            GestureRange:new{
+                ges = "hold",
+                range = function()
+                    return tappable.dimen
+                end,
+            },
+        }
+        function tappable:onHoldSuwayomi()
+            on_hold()
+            return true
+        end
+    end
     function tappable:onTapSuwayomi()
         if on_tap then
             on_tap()

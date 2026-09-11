@@ -2485,12 +2485,12 @@ local _ri_mode_key = "days"  -- "days" | "hours"
 --- screen immediately, so there is visible feedback before the (potentially
 --- slow) SQLite queries run.
 ---
---- Controlled by the "simpleui_stats_loading_notice" setting (default on).
+--- Controlled by the "maxoutui_stats_loading_notice" setting (default on).
 --- Callers must invoke this *before* any blocking work so the notice reaches
 --- the screen while the homescreen/library dialog is still the background.
 function StatsWindows.showLoadingNotice()
     local ok_ss, SUISettings = pcall(require, "mui_settings")
-    if ok_ss and SUISettings and not SUISettings:nilOrTrue("simpleui_stats_loading_notice") then
+    if ok_ss and SUISettings and not SUISettings:nilOrTrue("maxoutui_stats_loading_notice") then
         return nil
     end
     local ok_im, InfoMessage = pcall(require, "ui/widget/infomessage")

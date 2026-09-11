@@ -82,7 +82,7 @@ local _raiseHSFromStack  -- forward declaration; defined below near closeReaderT
 -- closures that need "the current plugin" must resolve it via _live_plugin
 -- (updated on every patchFileManagerClass call) instead of using their
 -- captured `plugin` upvalue directly. This mirrors the existing
--- UIManager._simpleui_close_plugin pattern used by patchUIManagerClose.
+-- UIManager._maxoutui_close_plugin pattern used by patchUIManagerClose.
 local _live_plugin = nil
 
 -- Ensure the goal-tap callback is initialised. Called before any HS.show()
@@ -208,12 +208,12 @@ function M.patchFileManagerClass(plugin)
     -- The guard flag lives on the FileManager class table so it survives FM instance
     -- recreation.  teardownAll clears it so a full disable→enable cycle reinstalls
     -- the wrapper cleanly.
-    local setup_already_patched = FileManager._simpleui_setup_patched
+    local setup_already_patched = FileManager._maxoutui_setup_patched
     -- orig_setupLayout is declared here (outer scope) so the setupLayout closure
     -- below can capture it even though both are inside the guard block.
     local orig_setupLayout
     if not setup_already_patched then
-        FileManager._simpleui_setup_patched = true
+        FileManager._maxoutui_setup_patched = true
         orig_setupLayout      = FileManager.setupLayout
         plugin._orig_fm_setup = orig_setupLayout
     end
@@ -229,7 +229,7 @@ function M.patchFileManagerClass(plugin)
     -- zones can catch them and open the top menu.
     local orig_initGesListener        = FileManager.initGesListener
     plugin._orig_initGesListener      = orig_initGesListener
-    FileManager._simpleui_ges_patched = false
+    FileManager._maxoutui_ges_patched = false
     FileManager.initGesListener = function(fm_self)
         orig_initGesListener(fm_self)
         fm_self:registerTouchZones({
@@ -263,11 +263,11 @@ function M.patchFileManagerClass(plugin)
     -- recreated often); resolves the live plugin via _live_plugin so the
     -- closure never operates on a stale instance.
     -- ---------------------------------------------------------------------
-    if not FileManager._simpleui_home_patched and Device:isPocketBook() then
-        FileManager._simpleui_home_patched = true
+    if not FileManager._maxoutui_home_patched and Device:isPocketBook() then
+        FileManager._maxoutui_home_patched = true
         local orig_onHome = FileManager.onHome
         FileManager.onHome = function(fm_self, ...)
-            if SUISettings:isTrue("simpleui_pb_home_opens_hs") then
+            if SUISettings:isTrue("maxoutui_pb_home_opens_hs") then
                 local plugin_now = _live_plugin or plugin
                 local tabs = Config.loadTabConfig()
                 plugin_now:_navigate("homescreen", fm_self, tabs, false)
@@ -290,7 +290,7 @@ function M.patchFileManagerClass(plugin)
         -- after tapping into the Library).
         local plugin = _live_plugin or plugin
         -- Calculate total navbar height (bottom bar + optional top bar).
-        local topbar_on = SUISettings:nilOrTrue("simpleui_topbar_enabled")
+        local topbar_on = SUISettings:nilOrTrue("maxoutui_topbar_enabled")
         fm_self._navbar_height = Bottombar.TOTAL_H()
             + (topbar_on and require("mui_topbar").TOTAL_TOP_H() or 0)
 
@@ -378,8 +378,8 @@ function M.patchFileManagerClass(plugin)
         --   4. Set _sui_show_folder_pending so that the calling TouchMenu closing
         --      afterwards does not trigger another _doShowHS.
         -- When the homescreen is NOT open the call is a transparent pass-through.
-        if not FileManager._simpleui_reinit_patched then
-            FileManager._simpleui_reinit_patched = true
+        if not FileManager._maxoutui_reinit_patched then
+            FileManager._maxoutui_reinit_patched = true
             local orig_reinit = FileManager.reinit
             FileManager.reinit = function(fm_self, path, focused_file)
                 -- Rotation calls reinit with path=nil; pass those through
@@ -457,7 +457,7 @@ function M.patchFileManagerClass(plugin)
                 end
 
                 -- 4. Rebuild the navbar with the Library ("home") tab active.
-                local sui = fm_self._maxoutui_plugin or fm_self._simpleui_plugin
+                local sui = fm_self._maxoutui_plugin or fm_self._maxoutui_plugin
                 if sui then sui.active_action = "home" end
                 local tabs = Config.loadTabConfig()
                 if fm_self._navbar_container then
@@ -665,7 +665,7 @@ function M.patchFileManagerClass(plugin)
         UI.applyNavbarState(fm_self, navbar_container, bar, topbar, bar_idx, topbar_on2, topbar_idx, tabs)
         fm_self[1] = wrapped
         fm_self._maxoutui_plugin = plugin
-        fm_self._simpleui_plugin = plugin  -- legacy alias
+        fm_self._maxoutui_plugin = plugin  -- legacy alias
         fm_self.maxoutui = plugin
 
 
@@ -787,7 +787,7 @@ function M.patchFileManagerClass(plugin)
                 local pending_folder = this._sui_return_to_book_folder_pending
                 this._sui_return_to_book_folder_pending = nil
                 local return_to_folder = pending_folder
-                    or SUISettings:isTrue("simpleui_hs_return_to_book_folder")
+                    or SUISettings:isTrue("maxoutui_hs_return_to_book_folder")
                 if not return_to_folder then
                     plugin.active_action = "home"
                     local home = G_reader_settings:readSetting("home_dir")
@@ -872,7 +872,7 @@ function M.patchFileManagerClass(plugin)
         -- while the user navigates tabs, then pops itself on Press or Back.
         local function _enterNavbarKbFocus(return_fn)
             if not Device:hasDPad() then return end
-            if not SUISettings:nilOrTrue("simpleui_bar_enabled") then return end
+            if not SUISettings:nilOrTrue("maxoutui_bar_enabled") then return end
             if _navbar_kb_capture then return end  -- already active
 
             _navbar_kb_return_fn = return_fn or false
@@ -1041,12 +1041,12 @@ function M.patchStartWithMenu()
         FileManagerMenu = ok and m or nil
     end
     if not FileManagerMenu then return end
-    if FileManagerMenu._simpleui_startwith_patched then return end
+    if FileManagerMenu._maxoutui_startwith_patched then return end
     local orig_fn = FileManagerMenu.getStartWithMenuTable
     if not orig_fn then return end
 
-    FileManagerMenu._simpleui_startwith_patched = true
-    FileManagerMenu._simpleui_startwith_orig    = orig_fn
+    FileManagerMenu._maxoutui_startwith_patched = true
+    FileManagerMenu._maxoutui_startwith_orig    = orig_fn
 
     FileManagerMenu.getStartWithMenuTable = function(fmm_self)
         local result = orig_fn(fmm_self)
@@ -1230,7 +1230,7 @@ function M.patchCollections(plugin)
                 if TBR and coll_name == TBR.TBR_COLL_NAME then
                     rc_self:addCollection(TBR.TBR_COLL_NAME)
                     rc_self:write({ [TBR.TBR_COLL_NAME] = true })
-                    SUISettings:saveSetting("simpleui_tbr_list", {})
+                    SUISettings:saveSetting("maxoutui_tbr_list", {})
                 else
                     _removeFromPool(coll_name)
                     Config.purgeQACollection(coll_name)
@@ -1238,7 +1238,7 @@ function M.patchCollections(plugin)
                 end
                 plugin:_scheduleRebuild()
             end)
-            if not ok2 then logger.warn("simpleui: removeCollection hook:", tostring(err)) end
+            if not ok2 then logger.warn("maxoutui: removeCollection hook:", tostring(err)) end
             return result
         end
     end
@@ -1259,7 +1259,7 @@ function M.patchCollections(plugin)
                 Config.renameQACollection(old_name, new_name)
                 plugin:_scheduleRebuild()
             end)
-            if not ok2 then logger.warn("simpleui: renameCollection hook:", tostring(err)) end
+            if not ok2 then logger.warn("maxoutui: renameCollection hook:", tostring(err)) end
             return result
         end
     end
@@ -1275,7 +1275,7 @@ function M.patchCollections(plugin)
     -- Helper: re-read the TBR list from RC and persist into G_reader_settings.
     local function _syncTBRSettings(TBR)
         local list = TBR.getTBRList()
-        SUISettings:saveSetting("simpleui_tbr_list", list)
+        SUISettings:saveSetting("maxoutui_tbr_list", list)
     end
 
     local function _getTBR()
@@ -1293,7 +1293,7 @@ function M.patchCollections(plugin)
                     _syncTBRSettings(TBR)
                     plugin:_scheduleRebuild()
                 end)
-                if not ok2 then logger.warn("simpleui: RC.addItem TBR hook:", tostring(err)) end
+                if not ok2 then logger.warn("maxoutui: RC.addItem TBR hook:", tostring(err)) end
             end
         end
     end
@@ -1310,7 +1310,7 @@ function M.patchCollections(plugin)
                     _syncTBRSettings(TBR)
                     plugin:_scheduleRebuild()
                 end)
-                if not ok2 then logger.warn("simpleui: RC.removeItem TBR hook:", tostring(err)) end
+                if not ok2 then logger.warn("maxoutui: RC.removeItem TBR hook:", tostring(err)) end
             end
         end
     end
@@ -1486,11 +1486,11 @@ local function _ctBookInfoManager()
 end
 
 function CoverTransition.isOpenEnabled()
-    return SUISettings:isTrue("simpleui_reader_cover_open")
+    return SUISettings:isTrue("maxoutui_reader_cover_open")
 end
 
 function CoverTransition.isCloseEnabled()
-    return SUISettings:isTrue("simpleui_reader_cover_close")
+    return SUISettings:isTrue("maxoutui_reader_cover_close")
 end
 
 -- Off by default (stretch-to-fill, the original behaviour). When on, the
@@ -1499,7 +1499,7 @@ end
 -- black. Only changes how the widget is built in show() below; does not
 -- touch which cover source is used.
 function CoverTransition.isFitEnabled()
-    return SUISettings:isTrue("simpleui_reader_cover_fit")
+    return SUISettings:isTrue("maxoutui_reader_cover_fit")
 end
 
 -- Off by default. Only affects the single moment where no live document is
@@ -1509,7 +1509,7 @@ end
 -- comes straight off the live document at full quality, so this toggle
 -- changes nothing there.
 function CoverTransition.isBestQualityEnabled()
-    return SUISettings:isTrue("simpleui_reader_cover_bestquality")
+    return SUISettings:isTrue("maxoutui_reader_cover_bestquality")
 end
 
 -- Only source: the CoverBrowser cache DB, if the plugin is installed and has
@@ -1777,18 +1777,18 @@ function M.patchUIManagerShow(plugin)
     --
     -- On re-entry we update the shared plugin slot so the single live wrapper
     -- always resolves plugin references through the current FM instance.
-    if UIManager._simpleui_show_patched then
-        UIManager._simpleui_show_plugin = plugin
+    if UIManager._maxoutui_show_patched then
+        UIManager._maxoutui_show_plugin = plugin
         -- Give the new plugin instance a back-reference to the original so
         -- teardownAll can restore UIManager.show correctly.
-        plugin._orig_uimanager_show = UIManager._simpleui_show_orig
+        plugin._orig_uimanager_show = UIManager._maxoutui_show_orig
         return
     end
-    UIManager._simpleui_show_patched = true
-    UIManager._simpleui_show_plugin  = plugin
+    UIManager._maxoutui_show_patched = true
+    UIManager._maxoutui_show_plugin  = plugin
 
     local orig_show = UIManager.show
-    UIManager._simpleui_show_orig = orig_show
+    UIManager._maxoutui_show_orig = orig_show
     plugin._orig_uimanager_show   = orig_show
     local _show_depth = 0
 
@@ -1817,14 +1817,14 @@ function M.patchUIManagerShow(plugin)
     UIManager.show = function(um_self, widget, ...)
         -- Resolve the live plugin instance rather than the `plugin` upvalue
         -- captured when this wrapper was installed (only once per session --
-        -- see the guard above). UIManager._simpleui_show_plugin IS kept fresh
+        -- see the guard above). UIManager._maxoutui_show_plugin IS kept fresh
         -- on every patchUIManagerShow call (FM recreation after returning
         -- from the reader, rotation, suspend/resume, etc.), but until now
         -- nothing inside this closure actually read it back -- every
         -- reference below silently kept using the stale instance from the
         -- very first install. That mismatch is what let the navbar's active
         -- indicator drift out of sync with the widget actually on screen.
-        local plugin = UIManager._simpleui_show_plugin or plugin
+        local plugin = UIManager._maxoutui_show_plugin or plugin
 
         -- Cover Transition (open side, notice substitution): the very next
         -- UIManager.show call after ReaderUI.showReaderCoroutine flagged a
@@ -1861,7 +1861,7 @@ function M.patchUIManagerShow(plugin)
             -- check further down and the blocker cleanup need to know
             -- whether THIS ReaderUI is the reopened side of a reload; the
             -- flag itself is cleared for good at the end of this branch.
-            local was_reload = UIManager._simpleui_reload_in_progress
+            local was_reload = UIManager._maxoutui_reload_in_progress
 
             -- Remove the reload blocker pushed in patchUIManagerClose right
             -- after the old ReaderUI closed (see that comment). Deferred to
@@ -1873,11 +1873,11 @@ function M.patchUIManagerShow(plugin)
             -- synchronous call — which includes that orig_show — has
             -- finished, i.e. once the new ReaderUI is already covering
             -- everything.
-            if UIManager._simpleui_reload_blocker then
-                local blocker_to_close = UIManager._simpleui_reload_blocker
-                UIManager._simpleui_reload_blocker = nil
+            if UIManager._maxoutui_reload_blocker then
+                local blocker_to_close = UIManager._maxoutui_reload_blocker
+                UIManager._maxoutui_reload_blocker = nil
                 UIManager:nextTick(function()
-                    local orig_close_pristine = UIManager._simpleui_close_orig or UIManager.close
+                    local orig_close_pristine = UIManager._maxoutui_close_orig or UIManager.close
                     pcall(orig_close_pristine, UIManager, blocker_to_close)
                 end)
             end
@@ -1918,7 +1918,7 @@ function M.patchUIManagerShow(plugin)
             -- more ticks than a short fixed timer would cover, and that is
             -- exactly the case where these guards matter most.
             if was_reload then
-                UIManager._simpleui_reload_in_progress = nil
+                UIManager._maxoutui_reload_in_progress = nil
             end
         end
 
@@ -2069,7 +2069,7 @@ function M.patchUIManagerShow(plugin)
             if DTAP_ZONE_MENU and DTAP_ZONE_MENU_EXT then
                 local screen_h    = Screen:getHeight()
                 local zone_ratio_h
-                if SUISettings:nilOrTrue("simpleui_topbar_enabled") then
+                if SUISettings:nilOrTrue("maxoutui_topbar_enabled") then
                     local Topbar = require("mui_topbar")
                     zone_ratio_h = Topbar.TOTAL_TOP_H() / screen_h
                 else
@@ -2122,21 +2122,21 @@ function M.patchUIManagerShow(plugin)
 
                 widget:registerTouchZones({
                     {
-                        id          = "simpleui_menu_tap",
+                        id          = "maxoutui_menu_tap",
                         ges         = "tap",
                         screen_zone = { ratio_x = 0, ratio_y = 0, ratio_w = 1, ratio_h = zone_ratio_h },
                         handler     = function(ges)
                             local logger = require("logger")
-                            logger.dbg("simpleui_menu_tap FIRED pos=", ges.pos and ges.pos.x, ges.pos and ges.pos.y)
+                            logger.dbg("maxoutui_menu_tap FIRED pos=", ges.pos and ges.pos.x, ges.pos and ges.pos.y)
                             if _tapOnSubBtn(ges) then
-                                logger.dbg("simpleui_menu_tap: sub btn hit, passing through")
+                                logger.dbg("maxoutui_menu_tap: sub btn hit, passing through")
                                 return false
                             end
                             local m = _fmMenu(); if m then return m:onTapShowMenu(ges) end
                         end,
                     },
                     {
-                        id          = "simpleui_menu_swipe",
+                        id          = "maxoutui_menu_swipe",
                         ges         = "swipe",
                         screen_zone = { ratio_x = 0, ratio_y = 0, ratio_w = 1, ratio_h = zone_ratio_h },
                         handler     = function(ges)
@@ -2216,12 +2216,12 @@ function M.patchUIManagerShow(plugin)
         -- Schedule a navpager arrow update for the next event-loop tick.
         -- Snapshot has_prev/has_next now to avoid races with a second
         -- updatePageInfo call that may fire during the same tick.
-        if SUISettings:isTrue("simpleui_bar_navpager_enabled") and not _navpager_rebuild_pending then
+        if SUISettings:isTrue("maxoutui_bar_navpager_enabled") and not _navpager_rebuild_pending then
             local has_prev_snap, has_next_snap = Config.getNavpagerState()
             _navpager_rebuild_pending = true
             UIManager:scheduleIn(0, function()
                 _navpager_rebuild_pending = false
-                if not SUISettings:isTrue("simpleui_bar_navpager_enabled") then return end
+                if not SUISettings:isTrue("maxoutui_bar_navpager_enabled") then return end
                 local fm2 = plugin.ui
                 if not (fm2 and fm2._navbar_container) then return end
                 local target2 = (widget._navbar_container and widget) or fm2
@@ -2239,7 +2239,7 @@ function M.patchUIManagerShow(plugin)
         end) -- end pcall
         _show_depth = _show_depth - 1
         if not ok then
-            logger.warn("simpleui: UIManager.show error:", tostring(result))
+            logger.warn("maxoutui: UIManager.show error:", tostring(result))
         end
 
         -- Close the homescreen when a different fullscreen widget appears on top.
@@ -2288,18 +2288,18 @@ function M.patchUIManagerClose(plugin)
     --
     -- On re-entry we update the shared plugin slot so the single live wrapper
     -- always uses the current FM instance for all comparisons.
-    if UIManager._simpleui_close_patched then
-        UIManager._simpleui_close_plugin = plugin
+    if UIManager._maxoutui_close_patched then
+        UIManager._maxoutui_close_plugin = plugin
         -- Give the new plugin instance a back-reference to the original so
         -- teardownAll can restore UIManager.close correctly.
-        plugin._orig_uimanager_close = UIManager._simpleui_close_orig
+        plugin._orig_uimanager_close = UIManager._maxoutui_close_orig
         return
     end
-    UIManager._simpleui_close_patched = true
-    UIManager._simpleui_close_plugin  = plugin
+    UIManager._maxoutui_close_patched = true
+    UIManager._maxoutui_close_plugin  = plugin
 
     local orig_close = UIManager.close
-    UIManager._simpleui_close_orig = orig_close
+    UIManager._maxoutui_close_orig = orig_close
     plugin._orig_uimanager_close   = orig_close
 
     -- Show the homescreen after any fullscreen widget closes, if conditions allow.
@@ -2341,7 +2341,7 @@ function M.patchUIManagerClose(plugin)
         -- upvalue captured at install time.  The shared slot is updated on
         -- every installAll cycle so this always points to the current plugin
         -- instance (and therefore the current FM via .ui).
-        local active_plugin = UIManager._simpleui_close_plugin
+        local active_plugin = UIManager._maxoutui_close_plugin
 
         -- Identify a closing FM by identity (FM has no .name at class level).
         local widget_is_fm = (widget == active_plugin.ui)
@@ -2442,15 +2442,15 @@ function M.patchUIManagerClose(plugin)
         -- name and no title_bar, so it passes through every SimpleUI hook
         -- untouched. Removed once the rebuilt ReaderUI is shown (see the
         -- matching close in patchUIManagerShow's ReaderUI branch).
-        if widget.name == "ReaderUI" and UIManager._simpleui_reload_in_progress
-                and not UIManager._simpleui_reload_blocker then
+        if widget.name == "ReaderUI" and UIManager._maxoutui_reload_in_progress
+                and not UIManager._maxoutui_reload_blocker then
             local ok_wc, WC = pcall(require, "ui/widget/container/widgetcontainer")
             if ok_wc and WC then
                 local blocker = WC:new{ covers_fullscreen = true }
-                local orig_show_pristine = UIManager._simpleui_show_orig or UIManager.show
+                local orig_show_pristine = UIManager._maxoutui_show_orig or UIManager.show
                 local ok_show = pcall(orig_show_pristine, um_self, blocker)
                 if ok_show then
-                    UIManager._simpleui_reload_blocker = blocker
+                    UIManager._maxoutui_reload_blocker = blocker
                 end
             end
         end
@@ -2532,8 +2532,8 @@ function M.patchUIManagerClose(plugin)
                     -- rebuilt ReaderUI takes over. Skip the whole fallback outright for
                     -- a reload: the book was never really closed from the user's point
                     -- of view, so nothing should ever try to show the Home Screen here.
-                    if not widget.tearing_down and not UIManager._simpleui_reload_in_progress then
-                        local return_to_folder = SUISettings:isTrue("simpleui_hs_return_to_book_folder")
+                    if not widget.tearing_down and not UIManager._maxoutui_reload_in_progress then
+                        local return_to_folder = SUISettings:isTrue("maxoutui_hs_return_to_book_folder")
                         if not return_to_folder then
                             local prev_action = active_plugin.active_action
                             local _ao2 = { bookmark_browser=true, wifi_toggle=true, frontlight=true, power=true }
@@ -2641,7 +2641,7 @@ function M.patchMenuInitForPagination(plugin)
             end
         end
 
-        if SUISettings:nilOrTrue("simpleui_bar_pagination_visible") then return end
+        if SUISettings:nilOrTrue("maxoutui_bar_pagination_visible") then return end
         -- The structural fallback below (covers_fullscreen + is_borderless +
         -- title_bar_fm_style) is also matched by native KOReader Menus that are
         -- NOT FM-style overlays — e.g. ReaderSearch's "all results" Menu
@@ -2719,8 +2719,8 @@ function M.patchMenuForNavpager(plugin)
     _live_plugin = plugin
 
     local Menu = require("ui/widget/menu")
-    if Menu._simpleui_navpager_patched then return end
-    Menu._simpleui_navpager_patched = true
+    if Menu._maxoutui_navpager_patched then return end
+    Menu._maxoutui_navpager_patched = true
 
     -- Resolved once as upvalues; used in the hot paths below.
     local ffiUtil   = require("ffi/util")
@@ -2741,8 +2741,8 @@ function M.patchMenuForNavpager(plugin)
 
     -- True when any subtitle (page indicator or pagination subtitle) should show.
     local function _subtitleEnabled()
-        return SUISettings:isTrue("simpleui_bar_navpager_enabled")
-            or SUISettings:isTrue("simpleui_bar_pagination_show_subtitle")
+        return SUISettings:isTrue("maxoutui_bar_navpager_enabled")
+            or SUISettings:isTrue("maxoutui_bar_pagination_show_subtitle")
     end
     M._subtitleEnabled = _subtitleEnabled
 
@@ -2830,8 +2830,8 @@ function M.patchMenuForNavpager(plugin)
 
         UIManager:scheduleIn(0, function()
             _navpager_rebuild_pending = false
-            if not SUISettings:isTrue("simpleui_bar_navpager_enabled") then return end
-            -- Resolve the live plugin instance: Menu._simpleui_navpager_patched
+            if not SUISettings:isTrue("maxoutui_bar_navpager_enabled") then return end
+            -- Resolve the live plugin instance: Menu._maxoutui_navpager_patched
             -- guards this whole patch to a single installation per session, so
             -- the `plugin` upvalue captured above can go stale once the FM is
             -- recreated (reader return, rotation, suspend/resume). Falling back
@@ -2909,11 +2909,11 @@ function M.patchMenuForNavpager(plugin)
                 tb.left_button.callback       = function() end
                 tb.left_button.hold_callback  = function() end
                 local sb = fm_self._titlebar_search_btn
-                local x  = fm_self._simpleui_search_x_compact
+                local x  = fm_self._maxoutui_search_x_compact
                 if sb and x and sb.overlap_offset then sb.overlap_offset = { x, 0 } end
             else
                 local sb = fm_self._titlebar_search_btn
-                local x  = fm_self._simpleui_search_x
+                local x  = fm_self._maxoutui_search_x
                 if sb and x and sb.overlap_offset then sb.overlap_offset = { x, 0 } end
             end
             UIManager:setDirty(tb.show_parent or fm_self, "ui", tb.dimen)
@@ -3048,8 +3048,8 @@ end
 function M.patchBookInfoNavigation(plugin)
     local ok_util, fmutil = pcall(require, "apps/filemanager/filemanagerutil")
     if not ok_util or not fmutil then return end
-    if fmutil._simpleui_bookinfo_nav_patched then return end
-    fmutil._simpleui_bookinfo_nav_patched = true
+    if fmutil._maxoutui_bookinfo_nav_patched then return end
+    fmutil._maxoutui_bookinfo_nav_patched = true
 
     local orig_gen = fmutil.genBookInformationButton
     plugin._orig_fmutil_gen_bookinfo = orig_gen
@@ -3176,8 +3176,8 @@ end
 function M.patchStatusButtons(plugin)
     local ok_util, fmutil = pcall(require, "apps/filemanager/filemanagerutil")
     if not ok_util or not fmutil then return end
-    if fmutil._simpleui_status_buttons_patched then return end
-    fmutil._simpleui_status_buttons_patched = true
+    if fmutil._maxoutui_status_buttons_patched then return end
+    fmutil._maxoutui_status_buttons_patched = true
 
     -- ── genStatusButtonsRow ────────────────────────────────────────────────
     -- The single-file variant changes status directly (no ConfirmBox), but
@@ -3225,7 +3225,7 @@ end
 
 function M.unpatchStatusButtons(plugin)
     local fmutil = package.loaded["apps/filemanager/filemanagerutil"]
-    if not fmutil or not fmutil._simpleui_status_buttons_patched then return end
+    if not fmutil or not fmutil._maxoutui_status_buttons_patched then return end
 
     if plugin._orig_fmutil_gen_status_row then
         fmutil.genStatusButtonsRow        = plugin._orig_fmutil_gen_status_row
@@ -3235,7 +3235,7 @@ function M.unpatchStatusButtons(plugin)
         fmutil.genMultipleStatusButtonsRow        = plugin._orig_fmutil_gen_status_multi
         plugin._orig_fmutil_gen_status_multi      = nil
     end
-    fmutil._simpleui_status_buttons_patched = nil
+    fmutil._maxoutui_status_buttons_patched = nil
 end
 
 -- ---------------------------------------------------------------------------
@@ -3257,7 +3257,7 @@ end
 -- helper clears the sidecar cache entry, invalidates SP, flags the
 -- homescreen for a refresh, and (best-effort) drops any stale DeletedBooks
 -- entry for the file. Note this is *not* about the separate
--- "simpleui_preserve_deleted_books_in_stats" DeletedBooks feature, which
+-- "maxoutui_preserve_deleted_books_in_stats" DeletedBooks feature, which
 -- only fires on actual file deletion (see patchDeleteFile above) — this
 -- patch is purely about keeping the homescreen's books_year/books_total
 -- counters in sync when a "complete" book's sidecar is reset without being
@@ -3266,8 +3266,8 @@ end
 function M.patchResetSettingsButton(plugin)
     local ok_util, fmutil = pcall(require, "apps/filemanager/filemanagerutil")
     if not ok_util or not fmutil then return end
-    if fmutil._simpleui_reset_button_patched then return end
-    fmutil._simpleui_reset_button_patched = true
+    if fmutil._maxoutui_reset_button_patched then return end
+    fmutil._maxoutui_reset_button_patched = true
 
     -- ── genResetSettingsButton ──────────────────────────────────────────────
     -- Resolve the filepath the same way genResetSettingsButton itself does,
@@ -3312,7 +3312,7 @@ end
 
 function M.unpatchResetSettingsButton(plugin)
     local fmutil = package.loaded["apps/filemanager/filemanagerutil"]
-    if not fmutil or not fmutil._simpleui_reset_button_patched then return end
+    if not fmutil or not fmutil._maxoutui_reset_button_patched then return end
 
     if plugin._orig_fmutil_gen_reset then
         fmutil.genResetSettingsButton    = plugin._orig_fmutil_gen_reset
@@ -3322,7 +3322,7 @@ function M.unpatchResetSettingsButton(plugin)
         fmutil.genMultipleResetSettingsButton    = plugin._orig_fmutil_gen_reset_multi
         plugin._orig_fmutil_gen_reset_multi      = nil
     end
-    fmutil._simpleui_reset_button_patched = nil
+    fmutil._maxoutui_reset_button_patched = nil
 end
 
 -- ---------------------------------------------------------------------------
@@ -3347,12 +3347,12 @@ end
 
 function M.patchFontGetFace(plugin)
     local Font = require("ui/font")
-    if Font._simpleui_getface_patched then return end
+    if Font._maxoutui_getface_patched then return end
 
     local scale = Config.getFontScalePct() / 100
     if scale == 1 then return end  -- default: leave getFace fully untouched
 
-    Font._simpleui_getface_patched = true
+    Font._maxoutui_getface_patched = true
     local orig_getFace   = Font.getFace
     plugin._orig_font_getface = orig_getFace
 
@@ -3386,13 +3386,13 @@ end
 
 function M.unpatchFontGetFace(plugin)
     local Font = package.loaded["ui/font"]
-    if not Font or not Font._simpleui_getface_patched then return end
+    if not Font or not Font._maxoutui_getface_patched then return end
 
     if plugin._orig_font_getface then
         Font.getFace              = plugin._orig_font_getface
         plugin._orig_font_getface = nil
     end
-    Font._simpleui_getface_patched = nil
+    Font._maxoutui_getface_patched = nil
 end
 
 -- ---------------------------------------------------------------------------
@@ -3401,7 +3401,7 @@ end
 
 -- ---------------------------------------------------------------------------
 -- Debug: button bounds overlay
--- When "simpleui_debug_button_bounds" is enabled, wraps Button:paintTo so
+-- When "maxoutui_debug_button_bounds" is enabled, wraps Button:paintTo so
 -- every button draws a 2px border over itself, making it easy to verify
 -- the actual tap target real estate on device.
 -- ---------------------------------------------------------------------------
@@ -3415,14 +3415,14 @@ function M.installButtonBoundsDebug(plugin)
         plugin._orig_require_for_bounds = orig_require
         _G.require = function(modname, ...)
             local result = orig_require(modname, ...)
-            if modname == "ui/widget/button" and not result._simpleui_bounds_patched then
+            if modname == "ui/widget/button" and not result._maxoutui_bounds_patched then
                 M._wrapButtonPaintTo(plugin, result)
             end
             return result
         end
         return
     end
-    if not Button._simpleui_bounds_patched then
+    if not Button._maxoutui_bounds_patched then
         M._wrapButtonPaintTo(plugin, Button)
     end
 end
@@ -3431,11 +3431,11 @@ function M._wrapButtonPaintTo(plugin, Button)
     local Blitbuffer = require("ffi/blitbuffer")
     local orig_paintTo = Button.paintTo
     plugin._orig_button_paintTo = orig_paintTo
-    Button._simpleui_bounds_patched = true
+    Button._maxoutui_bounds_patched = true
 
     Button.paintTo = function(btn_self, bb, x, y)
         orig_paintTo(btn_self, bb, x, y)
-        if not SUISettings:isTrue("simpleui_debug_button_bounds") then return end
+        if not SUISettings:isTrue("maxoutui_debug_button_bounds") then return end
         local dimen = btn_self:getSize()
         if not dimen then return end
         bb:paintBorder(x, y, dimen.w, dimen.h, 2, Blitbuffer.COLOR_RED)
@@ -3453,7 +3453,7 @@ function M.uninstallButtonBoundsDebug(plugin)
     if Button and plugin._orig_button_paintTo then
         Button.paintTo = plugin._orig_button_paintTo
         plugin._orig_button_paintTo     = nil
-        Button._simpleui_bounds_patched = nil
+        Button._maxoutui_bounds_patched = nil
     end
 end
 
@@ -3545,7 +3545,7 @@ end
 -- ---------------------------------------------------------------------------
 local function _prepareReaderClose(plugin, readerui, via_gesture)
     local file = readerui.document and readerui.document.file
-    local return_to_folder = SUISettings:isTrue("simpleui_hs_return_to_book_folder")
+    local return_to_folder = SUISettings:isTrue("maxoutui_hs_return_to_book_folder")
     local fm_pre = liveFM()
 
     -- lazy_refresh defers FM file-list scan until HS closes (I/O optimisation).
@@ -3683,10 +3683,10 @@ end
 -- plugin just before the original reloadDocument runs.  The flag is consumed
 -- (and cleared) unconditionally at the top of onCloseDocument.
 --
--- Applied once per ReaderUI instance (guard: _simpleui_reload_patched).
+-- Applied once per ReaderUI instance (guard: _maxoutui_reload_patched).
 function M.patchReloadDocument(plugin, readerui)
     if not readerui then return end
-    if readerui._simpleui_reload_patched then return end
+    if readerui._maxoutui_reload_patched then return end
     local orig = readerui.reloadDocument
     if type(orig) ~= "function" then return end
     readerui.reloadDocument = function(self, ...)
@@ -3698,13 +3698,13 @@ function M.patchReloadDocument(plugin, readerui)
         -- rebuilds a brand new ReaderUI, and KOReader's plugin loader
         -- constructs a brand new SimpleUIPlugin instance for it too (exactly
         -- as it does for a normal open), re-running installAll and
-        -- reassigning UIManager._simpleui_show_plugin to that new instance
+        -- reassigning UIManager._maxoutui_show_plugin to that new instance
         -- *before* the rebuilt ReaderUI is ever shown. A flag set on the OLD
         -- plugin instance would silently read back as nil by the time the
         -- new ReaderUI's UIManager.show call happens — which is exactly what
         -- let the Cover Transition guards below fail intermittently. UIManager
         -- itself is never recreated, so a flag stored there survives the
-        -- plugin-instance swap same as _simpleui_show_plugin/_show_orig do.
+        -- plugin-instance swap same as _maxoutui_show_plugin/_show_orig do.
         -- Read by:
         --   - patchUIManagerClose: pushes the reload blocker right after the
         --     old ReaderUI closes, and stands the Home-Screen-raise fallback
@@ -3720,7 +3720,7 @@ function M.patchReloadDocument(plugin, readerui)
         -- rerendering finishes), so a fixed one-tick clear here could fire
         -- before the new ReaderUI is shown, leaving the guards below
         -- unprotected for exactly the slow case where they matter most.
-        UIManager._simpleui_reload_in_progress = true
+        UIManager._maxoutui_reload_in_progress = true
 
         local ret = { orig(self, ...) }
 
@@ -3732,19 +3732,19 @@ function M.patchReloadDocument(plugin, readerui)
         -- rerendering can themselves take several seconds) rather than a
         -- single tick, so this never races the legitimate case.
         UIManager:scheduleIn(8, function()
-            if not UIManager._simpleui_reload_in_progress then return end
-            UIManager._simpleui_reload_in_progress = nil
-            if UIManager._simpleui_reload_blocker then
-                local blocker_leftover = UIManager._simpleui_reload_blocker
-                UIManager._simpleui_reload_blocker = nil
-                local orig_close_pristine = UIManager._simpleui_close_orig or UIManager.close
+            if not UIManager._maxoutui_reload_in_progress then return end
+            UIManager._maxoutui_reload_in_progress = nil
+            if UIManager._maxoutui_reload_blocker then
+                local blocker_leftover = UIManager._maxoutui_reload_blocker
+                UIManager._maxoutui_reload_blocker = nil
+                local orig_close_pristine = UIManager._maxoutui_close_orig or UIManager.close
                 pcall(orig_close_pristine, UIManager, blocker_leftover)
             end
         end)
 
         return table.unpack(ret)
     end
-    readerui._simpleui_reload_patched = true
+    readerui._maxoutui_reload_patched = true
 end
 
 -- ---------------------------------------------------------------------------
@@ -3767,8 +3767,8 @@ end
 function M.patchReaderShowCoroutine(plugin)
     local ok, ReaderUI = pcall(require, "apps/reader/readerui")
     if not ok or not ReaderUI then return end
-    if ReaderUI._simpleui_show_coroutine_patched then return end
-    ReaderUI._simpleui_show_coroutine_patched = true
+    if ReaderUI._maxoutui_show_coroutine_patched then return end
+    ReaderUI._maxoutui_show_coroutine_patched = true
 
     local orig = ReaderUI.showReaderCoroutine
     ReaderUI.showReaderCoroutine = function(self, file, provider, seamless)
@@ -3778,7 +3778,7 @@ function M.patchReaderShowCoroutine(plugin)
         -- '...'." notice is left alone and shows normally; the Home Screen
         -- reveal it would otherwise sit over is handled directly in
         -- patchUIManagerClose (the reload blocker), not by hiding this notice.
-        if not UIManager._simpleui_reload_in_progress
+        if not UIManager._maxoutui_reload_in_progress
                 and not seamless and CoverTransition.isOpenEnabled() then
             CoverTransition._pending_open_file = file
         end
@@ -3790,7 +3790,7 @@ end
 function M.wireReaderMenuFMTab(plugin, readerui)
     if not (readerui and readerui.menu) then return end
     local menu_ref = readerui.menu
-    if menu_ref._simpleui_fm_tab_wrapped then return end
+    if menu_ref._maxoutui_fm_tab_wrapped then return end
     local items = menu_ref.menu_items
     if not (items and items.filemanager) then return end
 
@@ -3822,7 +3822,7 @@ function M.wireReaderMenuFMTab(plugin, readerui)
         _closeReaderToHomescreenSync(plugin, readerui, file,
                                      return_to_folder, prev_action)
     end
-    menu_ref._simpleui_fm_tab_wrapped = true
+    menu_ref._maxoutui_fm_tab_wrapped = true
 end
 
 -- ---------------------------------------------------------------------------
@@ -3846,22 +3846,22 @@ end
 -- path (same as onSimpleUIGoHomescreen) is safe and keeps "gesture_only"
 -- closing-notice mode consistent.
 --
--- Applied once per ReaderUI instance (guard: _simpleui_home_key_patched).
+-- Applied once per ReaderUI instance (guard: _maxoutui_home_key_patched).
 -- ---------------------------------------------------------------------------
 function M.wireReaderHomeKey(plugin, readerui)
     if not (readerui and Device:isPocketBook()) then return end
-    if readerui._simpleui_home_key_patched then return end
+    if readerui._maxoutui_home_key_patched then return end
     local orig = readerui.onHome
     if type(orig) ~= "function" then return end
 
     readerui.onHome = function(self, ...)
-        if SUISettings:isTrue("simpleui_pb_home_opens_hs") then
+        if SUISettings:isTrue("maxoutui_pb_home_opens_hs") then
             M.closeReaderToHomescreen(plugin, true)
             return true
         end
         return orig(self, ...)
     end
-    readerui._simpleui_home_key_patched = true
+    readerui._maxoutui_home_key_patched = true
 end
 
 -- Close the reader and return to the Library (FM at home_dir) with no
@@ -4040,8 +4040,8 @@ function M.patchWallpaperFM(plugin)
     local FileManager = require("apps/filemanager/filemanager")
 
     -- Guard: only install once per session.
-    if FileManager._simpleui_wallpaper_fm_patched then return end
-    FileManager._simpleui_wallpaper_fm_patched = true
+    if FileManager._maxoutui_wallpaper_fm_patched then return end
+    FileManager._maxoutui_wallpaper_fm_patched = true
 
     -- -----------------------------------------------------------------------
     -- Core approach: wrap paintTo on the FileManager CLASS, not on transient
@@ -4073,7 +4073,7 @@ function M.patchWallpaperFM(plugin)
     local orig_fm_paintTo = FileManager.paintTo  -- nil: inherits WidgetContainer:paintTo
     local base_wc_paintTo                        -- resolved lazily on first call
 
-    plugin._simpleui_orig_fm_paintTo = orig_fm_paintTo  -- may be nil; stored for teardown
+    plugin._maxoutui_orig_fm_paintTo = orig_fm_paintTo  -- may be nil; stored for teardown
 
     FileManager.paintTo = function(fm_self, bb, x, y)
         -- Only intercept the FileManager instance (not subclasses / other callers).
@@ -4190,7 +4190,7 @@ function M.patchWallpaperFM(plugin)
         -- even after this patch replaces IconWidget.init.  Without this, rawget(iw,"init")
         -- returns our wrapper, whose upvalues don't include ICONS_PATH/ICONS_DIRS, causing
         -- Strategy 3 / Layer 3 to fire on every normal build and double-wrap init again.
-        IconWidget._simpleui_orig_init_for_scan = orig_iw_init
+        IconWidget._maxoutui_orig_init_for_scan = orig_iw_init
 
         IconWidget.init = function(iw_self, ...)
             orig_iw_init(iw_self, ...)
@@ -4386,14 +4386,14 @@ end
 -- because the recursive call is `util.purgeDir(fullpath)` via the table,
 -- not a local upvalue.
 --
--- The patch is applied once (guarded by _simpleui_purgeDir_patched) and
+-- The patch is applied once (guarded by _maxoutui_purgeDir_patched) and
 -- reversed cleanly in teardownAll.
 -- ---------------------------------------------------------------------------
 function M.patchPurgeDir(plugin)
     local ok, ffiUtil = pcall(require, "ffi/util")
     if not ok or not ffiUtil or not ffiUtil.purgeDir then return end
-    if ffiUtil._simpleui_purgeDir_patched then return end
-    ffiUtil._simpleui_purgeDir_patched = true
+    if ffiUtil._maxoutui_purgeDir_patched then return end
+    ffiUtil._maxoutui_purgeDir_patched = true
 
     local lfs          = require("libs/libkoreader-lfs")
     local orig_purgeDir = ffiUtil.purgeDir
@@ -4427,8 +4427,8 @@ end
 
 -- (kept for teardown symmetry — no longer does folder-level guarding)
 function M.patchDeleteFile(FileManager, plugin)
-    if FileManager._simpleui_deleteFile_patched then return end
-    FileManager._simpleui_deleteFile_patched = true
+    if FileManager._maxoutui_deleteFile_patched then return end
+    FileManager._maxoutui_deleteFile_patched = true
 
     local orig_deleteFile = FileManager.deleteFile
     if plugin then plugin._orig_fm_deleteFile = orig_deleteFile end
@@ -4436,12 +4436,12 @@ function M.patchDeleteFile(FileManager, plugin)
     FileManager.deleteFile = function(fm_self, file, is_file)
         if not is_file then
             if not file then
-                logger.warn("simpleui: deleteFile called with nil folder path, aborting")
+                logger.warn("maxoutui: deleteFile called with nil folder path, aborting")
                 return false
             end
             local lfs2 = require("libs/libkoreader-lfs")
             if not lfs2.attributes(file, "mode") then
-                logger.warn("simpleui: deleteFile: folder gone before purgeDir:", tostring(file))
+                logger.warn("maxoutui: deleteFile: folder gone before purgeDir:", tostring(file))
                 -- Return true so post_delete_callback fires and FM refreshes.
                 return true
             end
@@ -4484,7 +4484,7 @@ function M.patchDeleteFile(FileManager, plugin)
                 end
                 pcall(function() ds:close() end)
                 DB.add(md5, title, authors, year)
-                logger.dbg("simpleui: preserved deleted finished book in stats:", title, "(md5:", md5, "year:", year, ")")
+                logger.dbg("maxoutui: preserved deleted finished book in stats:", title, "(md5:", md5, "year:", year, ")")
             end)
         end
 
@@ -4596,7 +4596,7 @@ function M.installAll(plugin)
         pcall(SUIStyle.installReaderTabIconPatch, plugin)
     end
     -- Install button-bounds overlay when the debug setting is on at startup.
-    if SUISettings:isTrue("simpleui_debug_button_bounds") then
+    if SUISettings:isTrue("maxoutui_debug_button_bounds") then
         M.installButtonBoundsDebug(plugin)
     end
     -- Folder covers are installed only when the feature is enabled to avoid
@@ -4651,17 +4651,17 @@ function M.teardownAll(plugin)
 
     -- Restore ffi/util.purgeDir patch.
     local ffiUtil = package.loaded["ffi/util"]
-    if ffiUtil and ffiUtil._simpleui_purgeDir_patched and plugin._orig_ffi_purgeDir then
+    if ffiUtil and ffiUtil._maxoutui_purgeDir_patched and plugin._orig_ffi_purgeDir then
         ffiUtil.purgeDir                  = plugin._orig_ffi_purgeDir
-        ffiUtil._simpleui_purgeDir_patched = nil
+        ffiUtil._maxoutui_purgeDir_patched = nil
         plugin._orig_ffi_purgeDir         = nil
     end
 
     -- Restore FileManager.deleteFile patch.
     local FM = package.loaded["apps/filemanager/filemanager"]
-    if FM and FM._simpleui_deleteFile_patched and plugin._orig_fm_deleteFile then
+    if FM and FM._maxoutui_deleteFile_patched and plugin._orig_fm_deleteFile then
         FM.deleteFile                    = plugin._orig_fm_deleteFile
-        FM._simpleui_deleteFile_patched  = nil
+        FM._maxoutui_deleteFile_patched  = nil
         plugin._orig_fm_deleteFile       = nil
     end
 
@@ -4671,16 +4671,16 @@ function M.teardownAll(plugin)
     if plugin._orig_uimanager_show then
         UIManager.show                   = plugin._orig_uimanager_show
         plugin._orig_uimanager_show      = nil
-        UIManager._simpleui_show_patched = nil
-        UIManager._simpleui_show_plugin  = nil
-        UIManager._simpleui_show_orig    = nil
+        UIManager._maxoutui_show_patched = nil
+        UIManager._maxoutui_show_plugin  = nil
+        UIManager._maxoutui_show_orig    = nil
     end
     if plugin._orig_uimanager_close then
         UIManager.close                   = plugin._orig_uimanager_close
         plugin._orig_uimanager_close      = nil
-        UIManager._simpleui_close_patched = nil
-        UIManager._simpleui_close_plugin  = nil
-        UIManager._simpleui_close_orig    = nil
+        UIManager._maxoutui_close_patched = nil
+        UIManager._maxoutui_close_plugin  = nil
+        UIManager._maxoutui_close_orig    = nil
     end
 
     -- Restore widget class patches via package.loaded.
@@ -4704,7 +4704,7 @@ function M.teardownAll(plugin)
             Menu.updatePageInfo                = plugin._orig_menu_update_page_info
             plugin._orig_menu_update_page_info = nil
         end
-        Menu._simpleui_navpager_patched = nil
+        Menu._maxoutui_navpager_patched = nil
     end
 
     local FileManager = package.loaded["apps/filemanager/filemanager"]
@@ -4713,13 +4713,13 @@ function M.teardownAll(plugin)
             FileManager.updateTitleBarPath         = plugin._orig_fm_updateTitleBarPath
             plugin._orig_fm_updateTitleBarPath     = nil
         end
-        if FileManager._simpleui_gesture_priority_applied then
+        if FileManager._maxoutui_gesture_priority_applied then
             UI.unapplyGesturePriorityHandleEvent(FileManager)
         end
         if plugin._orig_initGesListener then
             FileManager.initGesListener       = plugin._orig_initGesListener
             plugin._orig_initGesListener      = nil
-            FileManager._simpleui_ges_patched = nil
+            FileManager._maxoutui_ges_patched = nil
         end
         if plugin._orig_fm_setup then
             FileManager.setupLayout = plugin._orig_fm_setup
@@ -4727,7 +4727,7 @@ function M.teardownAll(plugin)
         end
         -- Clear the setupLayout guard so patchFileManagerClass reinstalls the
         -- wrapper cleanly on the next installAll (e.g. after disable→enable).
-        FileManager._simpleui_setup_patched = nil
+        FileManager._maxoutui_setup_patched = nil
     end
 
     local FMColl = package.loaded["apps/filemanager/filemanagercollection"]
@@ -4786,12 +4786,12 @@ function M.teardownAll(plugin)
     end
 
     local fmutil = package.loaded["apps/filemanager/filemanagerutil"]
-    if fmutil and fmutil._simpleui_bookinfo_nav_patched then
+    if fmutil and fmutil._maxoutui_bookinfo_nav_patched then
         if plugin._orig_fmutil_gen_bookinfo then
             fmutil.genBookInformationButton       = plugin._orig_fmutil_gen_bookinfo
             plugin._orig_fmutil_gen_bookinfo      = nil
         end
-        fmutil._simpleui_bookinfo_nav_patched = nil
+        fmutil._maxoutui_bookinfo_nav_patched = nil
     end
     M.unpatchStatusButtons(plugin)
     M.unpatchResetSettingsButton(plugin)
@@ -4805,10 +4805,10 @@ function M.teardownAll(plugin)
     end
 
     local FileManagerMenu = package.loaded["apps/filemanager/filemanagermenu"]
-    if FileManagerMenu and FileManagerMenu._simpleui_startwith_patched then
-        FileManagerMenu.getStartWithMenuTable   = FileManagerMenu._simpleui_startwith_orig
-        FileManagerMenu._simpleui_startwith_orig    = nil
-        FileManagerMenu._simpleui_startwith_patched = nil
+    if FileManagerMenu and FileManagerMenu._maxoutui_startwith_patched then
+        FileManagerMenu.getStartWithMenuTable   = FileManagerMenu._maxoutui_startwith_orig
+        FileManagerMenu._maxoutui_startwith_orig    = nil
+        FileManagerMenu._maxoutui_startwith_patched = nil
     end
     -- Remove the FM tab icon patch installed by SUIStyle.
     if plugin._sysicon_fmmenu_patched then
@@ -4824,10 +4824,10 @@ function M.teardownAll(plugin)
     end
 
     local Dispatcher = package.loaded["dispatcher"]
-    if Dispatcher and Dispatcher._simpleui_execute_patched then
-        Dispatcher.execute                   = Dispatcher._simpleui_execute_orig
-        Dispatcher._simpleui_execute_orig    = nil
-        Dispatcher._simpleui_execute_patched = nil
+    if Dispatcher and Dispatcher._maxoutui_execute_patched then
+        Dispatcher.execute                   = Dispatcher._maxoutui_execute_orig
+        Dispatcher._maxoutui_execute_orig    = nil
+        Dispatcher._maxoutui_execute_patched = nil
     end
 
     M.uninstallButtonBoundsDebug(plugin)
@@ -4885,12 +4885,12 @@ function M.teardownAll(plugin)
     local FM_wp = package.loaded["apps/filemanager/filemanager"]
     if FM_wp then
         -- Restore FileManager.paintTo (our wallpaper hook lives here).
-        -- _simpleui_orig_fm_paintTo is nil when FM had no own paintTo
+        -- _maxoutui_orig_fm_paintTo is nil when FM had no own paintTo
         -- (inherited WidgetContainer:paintTo) — setting to nil restores that.
-        FM_wp.paintTo                        = plugin._simpleui_orig_fm_paintTo
-        plugin._simpleui_orig_fm_paintTo     = nil
+        FM_wp.paintTo                        = plugin._maxoutui_orig_fm_paintTo
+        plugin._maxoutui_orig_fm_paintTo     = nil
         plugin._orig_fm_wallpaper_setup      = nil
-        FM_wp._simpleui_wallpaper_fm_patched = nil   -- allow reinstall on next init
+        FM_wp._maxoutui_wallpaper_fm_patched = nil   -- allow reinstall on next init
     end
 
     -- Restore wallpaper Button:paintTo patch.
@@ -4950,9 +4950,9 @@ end
 
 do
     local ok, Dispatcher = pcall(require, "dispatcher")
-    if ok and Dispatcher and not Dispatcher._simpleui_execute_patched then
+    if ok and Dispatcher and not Dispatcher._maxoutui_execute_patched then
         local orig_execute = Dispatcher.execute
-        Dispatcher._simpleui_execute_orig = orig_execute
+        Dispatcher._maxoutui_execute_orig = orig_execute
 
         Dispatcher.execute = function(self, settings, exec_props)
             local HS = liveHS()
@@ -4986,11 +4986,11 @@ do
             end
 
             if not ok2 then
-                logger.warn("simpleui: Dispatcher:execute error:", err)
+                logger.warn("maxoutui: Dispatcher:execute error:", err)
             end
         end
 
-        Dispatcher._simpleui_execute_patched = true
+        Dispatcher._maxoutui_execute_patched = true
     end
 end
 

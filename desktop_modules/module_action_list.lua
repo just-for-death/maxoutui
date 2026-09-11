@@ -103,7 +103,7 @@ local function buildListWidget(w, action_ids, show_icons, align, on_tap_fn, d, c
     -- Placeholder: no actions configured at all
     if not action_ids or #action_ids == 0 then
         local ph_fs   = math.max(8, math.floor(_BASE_PH_FS * (d.row_h / _BASE_ROW_H)))
-        local hold_on = SUISettings:nilOrTrue("simpleui_hs_settings_on_hold")
+        local hold_on = SUISettings:nilOrTrue("maxoutui_hs_settings_on_hold")
         local ph_text = hold_on and _("No actions configured  —  long press to configure")
                                  or _("No actions configured")
         return CenterContainer:new{
@@ -130,7 +130,7 @@ local function buildListWidget(w, action_ids, show_icons, align, on_tap_fn, d, c
     -- Placeholder: actions were saved but none are valid anymore
     if #valid_ids == 0 then
         local ph_fs   = math.max(8, math.floor(_BASE_PH_FS * (d.row_h / _BASE_ROW_H)))
-        local hold_on = SUISettings:nilOrTrue("simpleui_hs_settings_on_hold")
+        local hold_on = SUISettings:nilOrTrue("maxoutui_hs_settings_on_hold")
         local ph_text = hold_on and _("No actions configured  —  long press to configure")
                                  or _("No actions configured")
         return CenterContainer:new{

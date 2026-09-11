@@ -114,12 +114,12 @@ end
 -- alongside every other SimpleUI preference — no new file, no G_reader_settings
 -- keys, and nothing is ever written into KOReader's own `page_stat` table.
 --
---   simpleui_streak_mode                 — "freezes" (default) | "real"
---   simpleui_streak_freezes_available    — int, freezes banked and unspent
---   simpleui_streak_frozen_dates         — array of "YYYY-MM-DD" strings
---   simpleui_streak_freeze_time_secs     — int, cumulative seconds toward
+--   maxoutui_streak_mode                 — "freezes" (default) | "real"
+--   maxoutui_streak_freezes_available    — int, freezes banked and unspent
+--   maxoutui_streak_frozen_dates         — array of "YYYY-MM-DD" strings
+--   maxoutui_streak_freeze_time_secs     — int, cumulative seconds toward
 --                                           the next time-based freeze (mod FREEZE_TIME_THRESHOLD_SECS)
---   simpleui_streak_freeze_watermark     — int, highest streak length already
+--   maxoutui_streak_freeze_watermark     — int, highest streak length already
 --                                           rewarded a day-based freeze
 --
 -- This is the single gate for "is the freeze mechanic active right now" —
@@ -133,12 +133,12 @@ end
 -- genuinely lazy piece — seeding the watermark from the user's current
 -- streak — is deferred to first read rather than done at load time.
 
-local KEY_MODE            = "simpleui_streak_mode"
-local KEY_FREEZES         = "simpleui_streak_freezes_available"
-local KEY_FROZEN_DATES    = "simpleui_streak_frozen_dates"
-local KEY_TIME_PROGRESS   = "simpleui_streak_freeze_time_secs"
-local KEY_WATERMARK       = "simpleui_streak_freeze_watermark"
-local KEY_LAST_TOTAL_SECS = "simpleui_streak_freeze_last_total_secs"
+local KEY_MODE            = "maxoutui_streak_mode"
+local KEY_FREEZES         = "maxoutui_streak_freezes_available"
+local KEY_FROZEN_DATES    = "maxoutui_streak_frozen_dates"
+local KEY_TIME_PROGRESS   = "maxoutui_streak_freeze_time_secs"
+local KEY_WATERMARK       = "maxoutui_streak_freeze_watermark"
+local KEY_LAST_TOTAL_SECS = "maxoutui_streak_freeze_last_total_secs"
 
 local FREEZE_TIME_THRESHOLD_SECS = 500 * 60  -- 500 minutes
 local FREEZE_DAY_INTERVAL        = 5     -- +1 freeze every 5 consecutive days

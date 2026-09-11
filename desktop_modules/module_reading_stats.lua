@@ -57,7 +57,7 @@ local function getAlign(pfx)
 end
 
 local function _getItems(pfx)
-    local saved = SUISettings:readSetting((pfx or "simpleui_hs_") .. "reading_stats_items")
+    local saved = SUISettings:readSetting((pfx or "maxoutui_hs_") .. "reading_stats_items")
     if type(saved) ~= "table" or #saved == 0 then return { "total_books", "today_time", "streak" } end
     return saved
 end
@@ -373,7 +373,7 @@ function M.build(w, ctx)
 
     -- Show a placeholder when enabled but no stats have been selected yet.
     if #stat_ids == 0 then
-        local hold_on = SUISettings:nilOrTrue("simpleui_hs_settings_on_hold")
+        local hold_on = SUISettings:nilOrTrue("maxoutui_hs_settings_on_hold")
         local ph_text = hold_on and _("No stats selected  —  long press to configure")
                                  or _("No stats selected")
         return CenterContainer:new{

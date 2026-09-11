@@ -30,7 +30,7 @@
 --
 -- All patches are fully reversible via M.uninstall().
 --
--- Settings key: "simpleui_browsemeta_mode"
+-- Settings key: "maxoutui_browsemeta_mode"
 --   "normal"  (default) — standard filesystem browsing
 --   "author"            — browse by author
 --   "series"            — browse by series
@@ -90,7 +90,7 @@ local DIMS_ORDER = { "author", "series", "tags" }
 
 local M = {}
 
-local _FC_COVERS_KEY = "simpleui_fc_covers"
+local _FC_COVERS_KEY = "maxoutui_fc_covers"
 
 local _meta_values_cache    = {}
 local _matching_files_cache = {}
@@ -786,7 +786,7 @@ end
 -- Enabled / disabled setting
 -- ---------------------------------------------------------------------------
 
-local _BM_KEY = "simpleui_browsemeta_enabled"
+local _BM_KEY = "maxoutui_browsemeta_enabled"
 
 function M.isEnabled()
     return SUISettings:nilOrTrue(_BM_KEY)
@@ -815,7 +815,7 @@ end
 -- Persisted mode setting
 -- ---------------------------------------------------------------------------
 
-local _MODE_KEY = "simpleui_browsemeta_mode"
+local _MODE_KEY = "maxoutui_browsemeta_mode"
 
 function M.getSavedMode()
     return SUISettings:readSetting(_MODE_KEY) or "normal"

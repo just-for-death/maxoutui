@@ -23,7 +23,7 @@ local _SCALE_STEP = 10
 local _SCALE_DEF  = 100
 
 local function _scaleKey(mod_id, pfx)
-    return (pfx or "simpleui_hs_") .. mod_id .. "_scale"
+    return (pfx or "maxoutui_hs_") .. mod_id .. "_scale"
 end
 
 local function _clampSpacerScale(n)
@@ -109,6 +109,6 @@ M.id            = "spacer_row"
 M.name          = _("Spacer")
 M.instanciable  = true
 M.makeInstance  = makeInstance
-M.instances_key = "simpleui_spacer_row_instances"
+M.instances_key = "maxoutui_spacer_row_instances"
 
 return M

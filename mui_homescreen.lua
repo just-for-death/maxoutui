@@ -1,7 +1,7 @@
 -- sui_homescreen.lua — SimpleUI fullscreen homescreen widget.
 -- Shown when the "Homescreen" tab is tapped. Shares module registry and module
 -- files with the Continue page but is fully independent: separate settings
--- prefix (simpleui_hs_), separate caches, and its own lifecycle.
+-- prefix (maxoutui_hs_), separate caches, and its own lifecycle.
 
 local Blitbuffer       = require("ffi/blitbuffer")
 local BD               = require("ui/bidi")
@@ -41,7 +41,7 @@ local lfs              = require("libs/libkoreader-lfs")
 -- ---------------------------------------------------------------------------
 -- Look & Feel state — wallpaper background override
 --
--- All settings live under the "simpleui_style_*" namespace.
+-- All settings live under the "maxoutui_style_*" namespace.
 --
 
 local _style_bg_cache     = nil   -- cached ImageWidget for the current wallpaper
@@ -60,10 +60,10 @@ local function _getPic()
 end
 
 -- Setting readers — centralised so _styleGetBgWidget stays readable.
-local function _wpStretch()    return SUISettings:isTrue("simpleui_style_wallpaper_stretch")       end
-local function _wpAutoRotate() return SUISettings:nilOrTrue("simpleui_style_wallpaper_autorotate") end
-local function _wpInvertNight() return SUISettings:isTrue("simpleui_style_wallpaper_invert_night") end
-local function _wpOpacity()    return SUISettings:readSetting("simpleui_style_wallpaper_opacity", 0) end
+local function _wpStretch()    return SUISettings:isTrue("maxoutui_style_wallpaper_stretch")       end
+local function _wpAutoRotate() return SUISettings:nilOrTrue("maxoutui_style_wallpaper_autorotate") end
+local function _wpInvertNight() return SUISettings:isTrue("maxoutui_style_wallpaper_invert_night") end
+local function _wpOpacity()    return SUISettings:readSetting("maxoutui_style_wallpaper_opacity", 0) end
 
 -- Pure helper: tests whether (x, y) falls inside a ratio-defined zone.
 -- Defined at module level so it is created once and never re-allocated per
@@ -79,12 +79,12 @@ end
 -- Entries 1..n are valid after a call; the rest are nil-cleared before returning.
 local _candidates = {}
 
--- Returns DataStorage/simpleui/sui_wallpapers/, creating it if needed.
+-- Returns DataStorage/maxoutui/mui_wallpapers/, creating it if needed.
 local function _styleWallpapersDir()
     local ok_ds, DataStorage = pcall(require, "datastorage")
     local dir
     if ok_ds and DataStorage then
-        dir = DataStorage:getSettingsDir() .. "/simpleui/sui_wallpapers"
+        dir = DataStorage:getSettingsDir() .. "/maxoutui/mui_wallpapers"
     else
         local src = debug.getinfo(1, "S").source or ""
         dir = (src:match("^@(.+/)[^/]+$") or "./") .. "sui_wallpapers"
@@ -108,8 +108,8 @@ end
 local _style_bg_cache_bb = nil   -- pre-scaled Blitbuffer for stretch mode (or nil)
 
 local function _styleGetBgWidget()
-    if not SUISettings:isTrue("simpleui_style_wallpaper_enabled") then return nil end
-    local path = SUISettings:readSetting("simpleui_style_wallpaper")
+    if not SUISettings:isTrue("maxoutui_style_wallpaper_enabled") then return nil end
+    local path = SUISettings:readSetting("maxoutui_style_wallpaper")
     if not path then return nil end
 
     local sw, sh = Screen:getWidth(), Screen:getHeight()
@@ -343,8 +343,8 @@ function DotWidget:paintTo(bb, x, y)
 end
 
 -- Settings prefixes — homescreen is fully namespaced, independent from continue page.
-local PFX    = "simpleui_hs_"
-local PFX_QA = "simpleui_hs_qa_"
+local PFX    = "maxoutui_hs_"
+local PFX_QA = "maxoutui_hs_qa_"
 
 -- Forward declaration needed so onCloseWidget() can reference it.
 local Homescreen = { _instance = nil }
@@ -777,25 +777,10 @@ end
 
 local function openBook(filepath, pos0, page)
     if not filepath then return end
-    local is_suwayomi = tostring(filepath):match("^suwayomi://manga/(%d+)")
-    if is_suwayomi then
-        local manga_id = tonumber(is_suwayomi)
-        local SwBridge = require("desktop_modules/suwayomi_bridge")
-        local sw_plugin = SwBridge.getSuwayomiPlugin()
-        if sw_plugin then
-            local ok_m, Manga = pcall(require, "desktop_modules/module_manga")
-            local title = ok_m and Manga and Manga.getPinnedMangaTitle and Manga.getPinnedMangaTitle(filepath)
-            if sw_plugin.resumeMangaStream then
-                sw_plugin:resumeMangaStream({ id = manga_id, title = title })
-            elseif sw_plugin.showChaptersForManga then
-                sw_plugin:showChaptersForManga({ id = manga_id, title = title })
-            end
-            return
-        else
-            local InfoMessage = require("ui/widget/infomessage")
-            UIManager:show(InfoMessage:new{ text = _("Suwayomi plugin not available."), timeout = 2 })
-            return
-        end
+    local ok_m, Manga = pcall(require, "desktop_modules/module_manga")
+    if ok_m and Manga and Manga.openPinnedManga
+        and Manga.openPinnedManga(filepath, nil) then
+        return
     end
 
     -- ReaderUI:showReader() broadcasts ShowingReader before its first paint,
@@ -1362,7 +1347,7 @@ function HomescreenWidget:init()
             return nil
         end
 
-        local topbar_on  = SUISettings:nilOrTrue("simpleui_topbar_enabled")
+        local topbar_on  = SUISettings:nilOrTrue("maxoutui_topbar_enabled")
         local zone_ratio_h
         if topbar_on then
             local ok_tb, Topbar   = pcall(require, "mui_topbar")
@@ -1378,7 +1363,7 @@ function HomescreenWidget:init()
 
         self:registerTouchZones({
             {
-                id          = "simpleui_hs_menu_tap",
+                id          = "maxoutui_hs_menu_tap",
                 ges         = "tap",
                 screen_zone = { ratio_x = 0, ratio_y = 0, ratio_w = 1, ratio_h = zone_ratio_h },
                 handler = function(ges)
@@ -1388,7 +1373,7 @@ function HomescreenWidget:init()
                 end,
             },
             {
-                id          = "simpleui_hs_menu_swipe",
+                id          = "maxoutui_hs_menu_swipe",
                 ges         = "swipe",
                 screen_zone = { ratio_x = 0, ratio_y = 0, ratio_w = 1, ratio_h = zone_ratio_h },
                 handler = function(ges)
@@ -1411,7 +1396,7 @@ function HomescreenWidget:init()
 
     self:registerTouchZones({
         {
-            id          = "simpleui_hs_footer_tap",
+            id          = "maxoutui_hs_footer_tap",
             ges         = "tap",
             screen_zone = { ratio_x = 0, ratio_y = footer_ratio_y, ratio_w = 1, ratio_h = footer_ratio_h },
             overrides = { "BlockNavbarTap" },
@@ -1447,7 +1432,7 @@ function HomescreenWidget:init()
             end,
         },
         {
-            id          = "simpleui_hs_footer_swipe",
+            id          = "maxoutui_hs_footer_swipe",
             ges         = "swipe",
             screen_zone = { ratio_x = 0, ratio_y = footer_ratio_y, ratio_w = 1, ratio_h = footer_ratio_h },
             overrides = { "HSSwipe" },
@@ -1492,14 +1477,14 @@ function HomescreenWidget:init()
     local priority_zones = {}
     for _, gt in ipairs(_gesture_types) do
         priority_zones[#priority_zones + 1] = {
-            id          = "simpleui_hs_top_" .. gt.id_suffix,
+            id          = "maxoutui_hs_top_" .. gt.id_suffix,
             ges         = gt.ges,
             screen_zone = { ratio_x = 0, ratio_y = 0, ratio_w = 1, ratio_h = top_ratio_h },
             overrides = { gt.override },
             handler   = function(ges) return _hasModalOnTop(self) and false or _fmGestureAction(ges) end,
         }
         priority_zones[#priority_zones + 1] = {
-            id          = "simpleui_hs_bottom_" .. gt.id_suffix,
+            id          = "maxoutui_hs_bottom_" .. gt.id_suffix,
             ges         = gt.ges,
             screen_zone = { ratio_x = 0, ratio_y = footer_ratio_y, ratio_w = 1, ratio_h = footer_ratio_h },
             overrides = { gt.override },
@@ -1685,7 +1670,7 @@ function HomescreenWidget:_buildCtx()
                 self._cached_books_state = { current_fp = nil, recent_fps = {}, prefetched_data = {} }
             end
         else
-            logger.warn("simpleui: homescreen: cannot load module_books_shared")
+            logger.warn("maxoutui: homescreen: cannot load module_books_shared")
             self._cached_books_state = { current_fp = nil, recent_fps = {}, prefetched_data = {} }
         end
     end
@@ -1771,7 +1756,7 @@ function HomescreenWidget:_buildCtx()
                 stats_data = SP.get(self._db_conn, year_str, needs_books)
             end
             if stats_data and stats_data.db_conn_fatal then
-                logger.warn("simpleui: homescreen: StatsProvider reported fatal DB error — dropping connection")
+                logger.warn("maxoutui: homescreen: StatsProvider reported fatal DB error — dropping connection")
                 if self._db_conn then
                     pcall(function() self._db_conn:close() end)
                     self._db_conn = nil
@@ -1871,8 +1856,8 @@ function HomescreenWidget:_updateFooter(current_page, total_pages, topbar_on)
 
     local navpager_on   = Config.isNavpagerEnabled()
     local dot_pager_on  = Config.isDotPagerEnabled()
-    local pag_visible   = SUISettings:nilOrTrue("simpleui_bar_pagination_visible")
-    local hs_pag_hidden = SUISettings:isTrue("simpleui_hs_pagination_hidden")
+    local pag_visible   = SUISettings:nilOrTrue("maxoutui_bar_pagination_visible")
+    local hs_pag_hidden = SUISettings:isTrue("maxoutui_hs_pagination_hidden")
 
     local show_bar = not hs_pag_hidden
         and total_pages > 1 and (navpager_on or pag_visible or dot_pager_on)
@@ -1952,7 +1937,7 @@ end
 -- single function knows which module was held (no per-module closure needed).
 -- ---------------------------------------------------------------------------
 function HomescreenWidget:_onHoldModRelease(wrapper)
-    if not SUISettings:nilOrTrue("simpleui_hs_settings_on_hold") then
+    if not SUISettings:nilOrTrue("maxoutui_hs_settings_on_hold") then
         return true
     end
     local mod = wrapper._sui_mod
@@ -2057,7 +2042,7 @@ function HomescreenWidget:_makeModWrapper(mod, widget, inner_w)
             },
         }
         function w:onHoldMod()
-            if not SUISettings:nilOrTrue("simpleui_hs_settings_on_hold") then
+            if not SUISettings:nilOrTrue("maxoutui_hs_settings_on_hold") then
                 return
             end
             return true
@@ -2141,7 +2126,7 @@ function HomescreenWidget:_updatePage(keep_cache, books_only, stats_only)
     if not body then _restoreLandscapePatch() ; return end
 
     -- Module list cache — rebuilt whenever layout changes.
-    local layout = SUISettings:readSetting("simpleui_layout")
+    local layout = SUISettings:readSetting("maxoutui_layout")
     local raw_order = Registry.loadOrder(PFX)
     
     local layout_fingerprint = ""
@@ -2257,7 +2242,7 @@ function HomescreenWidget:_updatePage(keep_cache, books_only, stats_only)
 
     body:clear()
 
-    local topbar_on = SUISettings:nilOrTrue("simpleui_topbar_enabled")
+    local topbar_on = SUISettings:nilOrTrue("maxoutui_topbar_enabled")
 
     self._header_body_idx   = nil
     self._header_inner_w    = inner_w
@@ -2550,7 +2535,7 @@ function HomescreenWidget:_updatePage(keep_cache, books_only, stats_only)
     end
 
     if ctx.db_conn_fatal and self._db_conn then
-        logger.warn("simpleui: homescreen: fatal DB error detected — dropping shared connection")
+        logger.warn("maxoutui: homescreen: fatal DB error detected — dropping shared connection")
         pcall(function() self._db_conn:close() end)
         self._db_conn = nil
     end
@@ -2592,7 +2577,7 @@ function HomescreenWidget:_updatePage(keep_cache, books_only, stats_only)
     -- Warn when module heights overflow the visible area (portrait only).
     -- Skipped when the user has disabled the warning in settings.
     if not is_landscape
-       and SUISettings:nilOrTrue("simpleui_hs_overflow_warn") then
+       and SUISettings:nilOrTrue("maxoutui_hs_overflow_warn") then
         local total_body_h = 0
         for i = 1, #body do
             local ok, sz = pcall(function() return body[i]:getSize() end)
@@ -3535,7 +3520,7 @@ end
 -- ---------------------------------------------------------------------------
 
 function Homescreen.show(on_qa_tap, on_goal_tap)
-    local onboarding_pending = not SUISettings:get("simpleui_onboarding_done")
+    local onboarding_pending = not SUISettings:get("maxoutui_onboarding_done")
 
     if Homescreen._instance then
         UIManager:close(Homescreen._instance)
@@ -3558,7 +3543,7 @@ function Homescreen.show(on_qa_tap, on_goal_tap)
                 Homescreen.rebuildLayout()
             end)
         else
-            SUISettings:set("simpleui_onboarding_done", true)
+            SUISettings:set("maxoutui_onboarding_done", true)
         end
     end
 end
@@ -3617,15 +3602,15 @@ local function _rebuildHomescreenLayout()
 end
 
 function Homescreen.styleGetWallpaper()
-    return SUISettings:readSetting("simpleui_style_wallpaper")
+    return SUISettings:readSetting("maxoutui_style_wallpaper")
 end
 
 function Homescreen.styleSetWallpaper(path)
-    SUISettings:saveSetting("simpleui_style_wallpaper", path)
+    SUISettings:saveSetting("maxoutui_style_wallpaper", path)
     if not path then
-        SUISettings:saveSetting("simpleui_statusbar_transparent", false)
-        SUISettings:saveSetting("simpleui_navbar_transparent", false)
-        SUISettings:saveSetting("simpleui_wallpaper_show_in_fm", false)
+        SUISettings:saveSetting("maxoutui_statusbar_transparent", false)
+        SUISettings:saveSetting("maxoutui_navbar_transparent", false)
+        SUISettings:saveSetting("maxoutui_wallpaper_show_in_fm", false)
     end
     _styleFreeBgCache()
     _rebuildHomescreenLayout()
@@ -3633,38 +3618,38 @@ end
 
 -- ---------------------------------------------------------------------------
 -- Transparent bars — split into two independent settings.
--- Migration: if the old unified "simpleui_bars_transparent" key is present
+-- Migration: if the old unified "maxoutui_bars_transparent" key is present
 -- we copy its value to both new keys once, then delete the legacy key so
 -- it doesn't interfere on subsequent launches.
 -- ---------------------------------------------------------------------------
 do
-    local legacy = "simpleui_bars_transparent"
+    local legacy = "maxoutui_bars_transparent"
     if SUISettings:get(legacy) ~= nil then
         local v = SUISettings:isTrue(legacy)
-        SUISettings:saveSetting("simpleui_statusbar_transparent", v)
-        SUISettings:saveSetting("simpleui_navbar_transparent",    v)
+        SUISettings:saveSetting("maxoutui_statusbar_transparent", v)
+        SUISettings:saveSetting("maxoutui_navbar_transparent",    v)
         SUISettings:del(legacy)
     end
 end
 
 function Homescreen.styleStatusbarTransparent()
     if not Homescreen.styleGetWallpaperEnabled() or not Homescreen.styleGetWallpaper() then return false end
-    return SUISettings:isTrue("simpleui_statusbar_transparent")
+    return SUISettings:isTrue("maxoutui_statusbar_transparent")
 end
 
 function Homescreen.styleSetStatusbarTransparent(on)
-    SUISettings:saveSetting("simpleui_statusbar_transparent", on and true or false)
+    SUISettings:saveSetting("maxoutui_statusbar_transparent", on and true or false)
     _styleFreeBgCache()
     _rebuildHomescreenLayout()
 end
 
 function Homescreen.styleNavbarTransparent()
     if not Homescreen.styleGetWallpaperEnabled() or not Homescreen.styleGetWallpaper() then return false end
-    return SUISettings:isTrue("simpleui_navbar_transparent")
+    return SUISettings:isTrue("maxoutui_navbar_transparent")
 end
 
 function Homescreen.styleSetNavbarTransparent(on)
-    SUISettings:saveSetting("simpleui_navbar_transparent", on and true or false)
+    SUISettings:saveSetting("maxoutui_navbar_transparent", on and true or false)
     _styleFreeBgCache()
     _rebuildHomescreenLayout()
 end
@@ -3745,22 +3730,22 @@ end
 --- fullscreen overlays (Collections, History, etc.).
 function Homescreen.styleGetWallpaperShowInFM()
     if not Homescreen.styleGetWallpaperEnabled() or not Homescreen.styleGetWallpaper() then return false end
-    return SUISettings:isTrue("simpleui_wallpaper_show_in_fm")
+    return SUISettings:isTrue("maxoutui_wallpaper_show_in_fm")
 end
 function Homescreen.styleSetWallpaperShowInFM(on)
-    SUISettings:saveSetting("simpleui_wallpaper_show_in_fm", on and true or false)
+    SUISettings:saveSetting("maxoutui_wallpaper_show_in_fm", on and true or false)
 end
 
 function Homescreen.styleGetWallpaperEnabled()
-    return SUISettings:isTrue("simpleui_style_wallpaper_enabled")
+    return SUISettings:isTrue("maxoutui_style_wallpaper_enabled")
 end
 function Homescreen.styleSetWallpaperEnabled(on)
     local is_on = on ~= false and true or false
-    SUISettings:saveSetting("simpleui_style_wallpaper_enabled", is_on)
+    SUISettings:saveSetting("maxoutui_style_wallpaper_enabled", is_on)
     if not is_on then
-        SUISettings:saveSetting("simpleui_statusbar_transparent", false)
-        SUISettings:saveSetting("simpleui_navbar_transparent", false)
-        SUISettings:saveSetting("simpleui_wallpaper_show_in_fm", false)
+        SUISettings:saveSetting("maxoutui_statusbar_transparent", false)
+        SUISettings:saveSetting("maxoutui_navbar_transparent", false)
+        SUISettings:saveSetting("maxoutui_wallpaper_show_in_fm", false)
     end
     _styleFreeBgCache()
     _rebuildHomescreenLayout()
@@ -3770,7 +3755,7 @@ function Homescreen.styleGetWallpaperStretch()
     return _wpStretch()
 end
 function Homescreen.styleSetWallpaperStretch(on)
-    SUISettings:saveSetting("simpleui_style_wallpaper_stretch", on ~= false and true or false)
+    SUISettings:saveSetting("maxoutui_style_wallpaper_stretch", on ~= false and true or false)
     _styleFreeBgCache()
     _rebuildHomescreenLayout()
 end
@@ -3779,7 +3764,7 @@ function Homescreen.styleGetWallpaperAutoRotate()
     return _wpAutoRotate()
 end
 function Homescreen.styleSetWallpaperAutoRotate(on)
-    SUISettings:saveSetting("simpleui_style_wallpaper_autorotate", on ~= false and true or false)
+    SUISettings:saveSetting("maxoutui_style_wallpaper_autorotate", on ~= false and true or false)
     _styleFreeBgCache()
     _rebuildHomescreenLayout()
 end
@@ -3788,7 +3773,7 @@ function Homescreen.styleGetWallpaperInvertNight()
     return _wpInvertNight()
 end
 function Homescreen.styleSetWallpaperInvertNight(on)
-    SUISettings:saveSetting("simpleui_style_wallpaper_invert_night", on and true or false)
+    SUISettings:saveSetting("maxoutui_style_wallpaper_invert_night", on and true or false)
     _styleFreeBgCache()
     _rebuildHomescreenLayout()
 end
@@ -3797,7 +3782,7 @@ function Homescreen.styleGetWallpaperOpacity()
     return _wpOpacity()
 end
 function Homescreen.styleSetWallpaperOpacity(val)
-    SUISettings:saveSetting("simpleui_style_wallpaper_opacity", math.max(0, math.min(99, val or 0)))
+    SUISettings:saveSetting("maxoutui_style_wallpaper_opacity", math.max(0, math.min(99, val or 0)))
     -- Opacity is applied at paint-time (not baked into the ImageWidget cache),
     -- but a setDirty alone is not sufficient when called from a SpinWidget
     -- callback — the homescreen instance may not be in the foreground repaint
@@ -3807,7 +3792,7 @@ function Homescreen.styleSetWallpaperOpacity(val)
 end
 
 --- Frees the internal wallpaper widget cache.
---- Must be called after changing the simpleui_style_* keys directly
+--- Must be called after changing the maxoutui_style_* keys directly
 --- in SUISettings (e.g. after applying a preset), so that the next paint
 --- rebuilds the ImageWidget with the new wallpaper.
 function Homescreen.styleFreeBgCache()

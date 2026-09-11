@@ -168,11 +168,11 @@ end
 -- ---------------------------------------------------------------------------
 -- Settings keys
 -- ---------------------------------------------------------------------------
-local SETTINGS_KEY       = "simpleui_coll_list"
-local COVER_OVERRIDE_KEY = "simpleui_coll_covers"
-local BADGE_POSITION_KEY = "simpleui_coll_badge_position"
-local BADGE_COLOR_KEY    = "simpleui_coll_badge_color"
-local BADGE_HIDDEN_KEY   = "simpleui_coll_badge_hidden"
+local SETTINGS_KEY       = "maxoutui_coll_list"
+local COVER_OVERRIDE_KEY = "maxoutui_coll_covers"
+local BADGE_POSITION_KEY = "maxoutui_coll_badge_position"
+local BADGE_COLOR_KEY    = "maxoutui_coll_badge_color"
+local BADGE_HIDDEN_KEY   = "maxoutui_coll_badge_hidden"
 
 local function getBadgePosition()
     return SUISettings:readSetting(BADGE_POSITION_KEY) or "top"
@@ -478,7 +478,7 @@ function M.build(w, ctx)
     end
 
     if #selected == 0 then
-        local hold_on = SUISettings:nilOrTrue("simpleui_hs_settings_on_hold")
+        local hold_on = SUISettings:nilOrTrue("maxoutui_hs_settings_on_hold")
         local ph_text = hold_on and _("No collections selected  —  long press to configure")
                                  or _("No collections selected")
         return CenterContainer:new{
@@ -559,7 +559,7 @@ function M.build(w, ctx)
             if ok_tbx then
                 label_w = tbx
             else
-                logger.warn("simpleui: module_collections: makeAlphaTextBox failed, falling back: " .. tostring(tbx))
+                logger.warn("maxoutui: module_collections: makeAlphaTextBox failed, falling back: " .. tostring(tbx))
                 label_w = TextBoxWidget:new(label_args)
             end
         else

@@ -10,7 +10,7 @@
 --
 -- DB source: page_stat_data (base table) instead of the page_stat VIEW.
 -- Querying the base table directly allows SQLite to use the
--- idx_simpleui_pagestat_time index on start_time, which the VIEW indirection
+-- idx_maxoutui_pagestat_time index on start_time, which the VIEW indirection
 -- prevents. On devices with constrained I/O this can make a measurable
 -- difference on large databases.
 --
@@ -86,7 +86,7 @@ local _cache_day = nil   -- "YYYY-MM-DD" string when cache was built
 -- ---------------------------------------------------------------------------
 local _disk_load_tried = false  -- guards the single lazy disk read
 
-local _STALE_STATS_SETTING_KEY = "simpleui_stale_stats_v1"
+local _STALE_STATS_SETTING_KEY = "maxoutui_stale_stats_v1"
 
 -- Lazily resolve sui_store without a hard require at module load time —
 -- same defensive, lazy-require style as module_books_shared.lua's
@@ -189,7 +189,7 @@ end
 --
 -- page_stat_data is queried directly (instead of the page_stat VIEW) for
 -- better index utilisation on devices with constrained SQLite performance.
--- The idx_simpleui_pagestat_time index on page_stat_data.start_time is used
+-- The idx_maxoutui_pagestat_time index on page_stat_data.start_time is used
 -- by the WHERE clause; the VIEW adds an extra indirection layer that prevents
 -- the planner from pushing the predicate down to the base table.
 --
@@ -296,7 +296,7 @@ local function fetchTimeSeries(conn, start_today, week_start, month_start, year_
         end
     end)
     if not ok then
-        logger.warn("simpleui: stats_provider: fetchTimeSeries failed: " .. tostring(err))
+        logger.warn("maxoutui: stats_provider: fetchTimeSeries failed: " .. tostring(err))
         return r, err
     end
     return r, nil
@@ -360,7 +360,7 @@ local function fetchStreak(conn, today_str, yesterday_str)
         end
     end)
     if not ok then
-        logger.warn("simpleui: stats_provider: fetchStreak failed: " .. tostring(err))
+        logger.warn("maxoutui: stats_provider: fetchStreak failed: " .. tostring(err))
     end
     return streak
 end
@@ -436,7 +436,7 @@ local function countMarkedReadBoth(year_str)
     -- as a presence check, then using the shared SH table for the actual lookup.
     local SH = package.loaded["desktop_modules/module_books_shared"]
     if not SH then
-        logger.warn("simpleui: stats_provider: module_books_shared not loaded — sidecar cache unavailable")
+        logger.warn("maxoutui: stats_provider: module_books_shared not loaded — sidecar cache unavailable")
     end
 
     local limit = math.min(#ReadHistory.hist, _MAX_HIST)

@@ -176,4 +176,84 @@ function M.makeTappable(child, w, h, on_tap, on_hold)
     return tappable
 end
 
+-- Shared in-memory registry of manga metadata across all Suwayomi modules
+M._manga_by_id = {}
+
+function M.registerManga(manga, extra)
+    if not manga or not manga.id then return end
+    local id_str = tostring(manga.id)
+    local cur = M._manga_by_id[id_str] or {}
+    cur.id = manga.id
+    cur.title = manga.title or cur.title
+    cur.thumbnail_url = manga.thumbnail_url or cur.thumbnail_url
+    cur.unread = manga.unread_count or manga.unread or cur.unread
+    cur.author = manga.author or cur.author
+    cur.artist = manga.artist or cur.artist
+    if extra then
+        for k, v in pairs(extra) do
+            cur[k] = v
+        end
+    end
+    M._manga_by_id[id_str] = cur
+    return cur
+end
+
+function M.getManga(id_or_uri)
+    if not id_or_uri then return nil end
+    local id_str = tostring(id_or_uri):match("^suwayomi://manga/(%d+)") or tostring(id_or_uri):match("^(%d+)$")
+    if not id_str then return nil end
+    return M._manga_by_id[id_str]
+end
+
+function M.normalizeCoverPath(path)
+    if type(path) ~= "string" or path == "" then return nil end
+    local lfs = package.loaded["libs/libkoreader-lfs"] or require("libs/libkoreader-lfs")
+    local real_path = path
+    if real_path:sub(1, 2) == "./" then
+        local ok_ds, DataStorage = pcall(require, "datastorage")
+        if ok_ds and DataStorage then
+            local settings_dir = DataStorage:getSettingsDir()
+            local data_dir = DataStorage:getDataDir()
+            if real_path:sub(1, 11) == "./settings/" then
+                real_path = settings_dir .. "/" .. real_path:sub(12)
+            else
+                real_path = data_dir .. "/" .. real_path:sub(3)
+            end
+        end
+    end
+    if lfs.attributes(real_path, "mode") == "file" then
+        return real_path
+    end
+    return nil
+end
+
+function M.getMangaCoverPath(id_or_uri)
+    local manga = M.getManga(id_or_uri)
+    local thumb_url = manga and manga.thumbnail_url
+    if not thumb_url or thumb_url == "" then return nil end
+
+    local ok_s, SuwayomiSettings = pcall(require, "suwayomi/settings")
+    if not ok_s or not SuwayomiSettings then return nil end
+    local creds = SuwayomiSettings:load()
+    local ok_tc, tc = pcall(require, "suwayomi/ui/thumbnail_cache")
+    if not ok_tc or not tc then return nil end
+
+    local variants = {
+        { variant = "thumbnail" },
+        { variant = "thumbnail", width = 64, height = 96 },
+        { variant = "manga_cover", width = 64, height = 96 },
+        { variant = "poster", width = 240, height = 360 },
+        { variant = "poster", width = 160, height = 240 },
+        {},
+    }
+    for _, opts in ipairs(variants) do
+        local path = tc.find(creds, thumb_url, opts)
+        local norm = M.normalizeCoverPath(path)
+        if norm then
+            return norm
+        end
+    end
+    return nil
+end
+
 return M

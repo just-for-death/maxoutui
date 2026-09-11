@@ -1090,6 +1090,12 @@ function M.getCoverBB(filepath, w, h, align, stretch_limit)
         local Manga = require("desktop_modules/module_manga")
         manga_cover = Manga.getPinnedMangaCover and Manga.getPinnedMangaCover(filepath)
     end)
+    if not manga_cover and filepath:match("^suwayomi://") then
+        pcall(function()
+            local SwBridge = require("desktop_modules/suwayomi_bridge")
+            manga_cover = SwBridge.getMangaCoverPath and SwBridge.getMangaCoverPath(filepath)
+        end)
+    end
 
     if manga_cover and _lfsMode(manga_cover) == "file" then
         local raw_bb

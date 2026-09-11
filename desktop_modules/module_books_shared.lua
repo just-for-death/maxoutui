@@ -563,8 +563,21 @@ function SH.getBookData(filepath, prefetched)
         end
     end
 
-    if not meta.title or meta.title == "" then
-        if tostring(filepath):match("^suwayomi://") then
+    local suwayomi_info = nil
+    if tostring(filepath):match("^suwayomi://") then
+        pcall(function()
+            local SwBridge = require("desktop_modules/suwayomi_bridge")
+            suwayomi_info = SwBridge.getManga and SwBridge.getManga(filepath)
+        end)
+        if suwayomi_info then
+            if suwayomi_info.title and suwayomi_info.title ~= "" then
+                meta.title = suwayomi_info.title
+            end
+            if suwayomi_info.author or suwayomi_info.artist then
+                meta.authors = suwayomi_info.author or suwayomi_info.artist
+            end
+        end
+        if not meta.title or meta.title == "" then
             local ok_m, Manga = pcall(require, "desktop_modules/module_manga")
             if ok_m and Manga and Manga.getPinnedMangaTitle then
                 local t = Manga.getPinnedMangaTitle(filepath)
@@ -605,11 +618,13 @@ function SH.getBookData(filepath, prefetched)
     end
 
     return {
-        percent  = percent,
-        title    = meta.title,
-        authors  = meta.authors or "",
-        pages    = pages,
-        avg_time = avg_time,
+        percent      = percent,
+        title        = meta.title,
+        authors      = meta.authors or "",
+        pages        = pages,
+        avg_time     = avg_time,
+        unread       = suwayomi_info and suwayomi_info.unread,
+        chapter_name = suwayomi_info and suwayomi_info.chapter_name,
     }
 end
 

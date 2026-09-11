@@ -225,11 +225,22 @@ local pinned_manga_module = RowRenderer.makeModule{
     label       = _("Pinned Manga"),
     default_on  = true,
     is_book_mod = true,
-    max_items   = 999,
+    has_covers  = true,
+    max_items   = 5,
     paged       = true,
     cache_key   = "_pinned_manga_fps",
     getFileList = Manga.getPinnedMangaList,
     extra_menu_items_before = Manga.arrangeMenuItems,
+    labelForItem = function(bd)
+        if bd.percent and bd.percent > 0 then
+            return string.format(_("%d%% Read"), math.floor(bd.percent * 100 + 0.5))
+        elseif bd.unread and bd.unread > 0 then
+            return string.format(_("%d unread"), bd.unread)
+        else
+            return _("Pinned")
+        end
+    end,
+    toggles     = { progress = "off", text = "on", overlay = "off" },
 
     reset = function() RowRenderer.reset() end,
 }

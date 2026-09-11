@@ -72,7 +72,6 @@ local MODULES = {
     { require_mod = "desktop_modules/module_suwayomi_history"    },
     { require_mod = "desktop_modules/module_suwayomi_categories" },
     { require_mod = "desktop_modules/module_suwayomi_status"     },
-    { require_mod = "desktop_modules/module_suwayomi_pinned"     },
 }
 
 local _loaded        = nil
@@ -226,7 +225,11 @@ function Registry.list()
 end
 
 function Registry.get(id)
-    _load(); return _by_id[id]
+    _load()
+    if id == "suwayomi_pinned" then
+        return _by_id["pinned_manga"]
+    end
+    return _by_id[id]
 end
 
 function Registry.isEnabled(mod, pfx)
@@ -235,6 +238,9 @@ function Registry.isEnabled(mod, pfx)
     end
     if mod.enabled_key then
         local v = SUISettings:readSetting(pfx .. mod.enabled_key)
+        if v == nil and mod.id == "pinned_manga" then
+            v = SUISettings:readSetting(pfx .. "suwayomi_pinned_enabled")
+        end
         if v == nil then return mod.default_on ~= false end
         return v == true
     end
@@ -259,7 +265,13 @@ function Registry.loadOrder(pfx)
     end
     local default = Registry.defaultOrder()
     local seen = {}; local result = {}
-    for _, v in ipairs(saved)   do seen[v] = true; result[#result+1] = v end
+    for _, v in ipairs(saved) do
+        if v == "suwayomi_pinned" then v = "pinned_manga" end
+        if not seen[v] and _by_id[v] then
+            seen[v] = true
+            result[#result + 1] = v
+        end
+    end
     for _, v in ipairs(default) do
         if not seen[v] then
             if v == "coverdeck" then

@@ -34,12 +34,12 @@ local LineWidget      = require("ui/widget/linewidget")
 local OverlapGroup    = require("ui/widget/overlapgroup")
 local CenterContainer = require("ui/widget/container/centercontainer")
 local VerticalGroup   = require("ui/widget/verticalgroup")
-local _ = require("sui_i18n").translate
+local _ = require("mui_i18n").translate
 
-local Config      = require("sui_config")
-local UI          = require("sui_core")
-local SUISettings = require("sui_store")
-local SUIStyle    = require("sui_style")
+local Config      = require("mui_config")
+local UI          = require("mui_core")
+local SUISettings = require("mui_store")
+local SUIStyle    = require("mui_style")
 local PAD    = UI.PAD
 local Screen = require("device").screen
 
@@ -163,7 +163,7 @@ function RowRenderer.build(w, ctx, opts)
         page_fps[#page_fps + 1] = fps[i]
     end
 
-    local ok_ss, SUIStyle2 = pcall(require, "sui_style")
+    local ok_ss, SUIStyle2 = pcall(require, "mui_style")
     local _theme_fg        = ok_ss and SUIStyle2 and SUIStyle2.getThemeColor("fg")
     local _theme_secondary = ok_ss and SUIStyle2 and SUIStyle2.getThemeColor("text_secondary")
     local _clr_blk        = _theme_fg or Blitbuffer.COLOR_BLACK

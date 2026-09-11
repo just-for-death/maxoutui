@@ -30,7 +30,7 @@
 
 local logger = require("logger")
 local lfs    = require("libs/libkoreader-lfs")
-local Config = require("sui_config")
+local Config = require("mui_config")
 
 local SP = {}
 
@@ -94,7 +94,7 @@ local _STALE_STATS_SETTING_KEY = "simpleui_stale_stats_v1"
 local _SUIStore = nil
 local function _getSUIStore()
     if not _SUIStore then
-        local ok, m = pcall(require, "sui_store")
+        local ok, m = pcall(require, "mui_store")
         if ok then _SUIStore = m end
     end
     return _SUIStore
@@ -106,7 +106,7 @@ end
 local _StreakFreeze = nil
 local function _getStreakFreeze()
     if not _StreakFreeze then
-        local ok, m = pcall(require, "sui_streak")
+        local ok, m = pcall(require, "mui_streak")
         if ok then _StreakFreeze = m end
     end
     return _StreakFreeze
@@ -507,7 +507,7 @@ local function countMarkedReadBoth(year_str)
     -- We skip md5s already counted from the ReadHistory loop above to avoid
     -- doubles when a book was deleted and then re-added by the user (the live
     -- sidecar entry takes precedence).
-    local ok_SS, SUISettings2 = pcall(require, "sui_store")
+    local ok_SS, SUISettings2 = pcall(require, "mui_store")
     if ok_SS and SUISettings2 and SUISettings2.DeletedBooks then
         local DB = SUISettings2.DeletedBooks
         if DB.isEnabled() then

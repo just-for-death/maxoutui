@@ -51,8 +51,8 @@ local lfs     = require("libs/libkoreader-lfs")
 local util    = require("util")
 local ffiUtil = require("ffi/util")
 local logger  = require("logger")
-local _ = require("sui_i18n").translate
-local SUISettings = require("sui_store")
+local _ = require("mui_i18n").translate
+local SUISettings = require("mui_store")
 
 -- ---------------------------------------------------------------------------
 -- Virtual path constants
@@ -234,7 +234,7 @@ end
 local function _getSuiPatches()
     if _SP_tried then return _SP_cache end
     _SP_tried = true
-    local ok, SP = pcall(require, "sui_patches")
+    local ok, SP = pcall(require, "mui_patches")
     if ok and SP then _SP_cache = SP end
     return _SP_cache
 end
@@ -1378,7 +1378,7 @@ local function _installPatches()
                         -- grid always auto-selects covers; single-cover override
                         -- is not applicable in that mode).
                         local in_list_view = fc and fc.display_mode_type == "list"
-                        local ok_fc_mod, FC = pcall(require, "sui_foldercovers")
+                        local ok_fc_mod, FC = pcall(require, "mui_foldercovers")
                         local effective_style = (ok_fc_mod and FC and FC.resolveStyle)
                             and FC.resolveStyle(fc, item.path, item) or "single"
                         if effective_style ~= "quad" or in_list_view then

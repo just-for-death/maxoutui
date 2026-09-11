@@ -8,10 +8,10 @@
 local Device       = require("device")
 local VerticalSpan = require("ui/widget/verticalspan")
 local Screen       = Device.screen
-local _            = require("sui_i18n").translate
+local _            = require("mui_i18n").translate
 
-local Config      = require("sui_config")
-local SUISettings = require("sui_store")
+local Config      = require("mui_config")
+local SUISettings = require("mui_store")
 
 -- Altura base do spacer a 100% de escala.
 local _BASE_SPACER_H = Screen:scaleBySize(50)

@@ -16,13 +16,13 @@ local VerticalSpan    = require("ui/widget/verticalspan")
 local LeftContainer   = require("ui/widget/container/leftcontainer")
 local RightContainer  = require("ui/widget/container/rightcontainer")
 local Screen          = Device.screen
-local _ = require("sui_i18n").translate
+local _ = require("mui_i18n").translate
 
-local UI           = require("sui_core")
+local UI           = require("mui_core")
 local UIManager    = require("ui/uimanager")
-local SUIStyle     = require("sui_style")
-local Config       = require("sui_config")
-local SUISettings = require("sui_store")
+local SUIStyle     = require("mui_style")
+local Config       = require("mui_config")
+local SUISettings = require("mui_store")
 local PAD          = UI.PAD
 local PAD2         = UI.PAD2
 local CLR_TEXT_SUB = UI.CLR_TEXT_SUB
@@ -576,7 +576,7 @@ local function _tick()
     -- Abort if the homescreen instance has changed or gone away.
     local hs = _hs_widget
     if not hs then return end
-    local HS = package.loaded["sui_homescreen"]
+    local HS = package.loaded["mui_homescreen"]
     if not HS or HS._instance ~= hs then _hs_widget = nil; return end
 
     -- Do not update while suspended — some platforms fire pending timers
@@ -616,7 +616,7 @@ local function _tick()
 
     if body and idx and body[idx] and hs._navbar_container then
         local sw      = Screen:getWidth()
-        local SIDE_PAD = require("sui_core").SIDE_M()
+        local SIDE_PAD = require("mui_core").SIDE_M()
         local inner_w  = hs._clock_inner_w or (sw - SIDE_PAD * 2)
 
         -- In landscape mode the homescreen applies a scale reduction factor to
@@ -690,7 +690,7 @@ local function _tick()
     -- `plugin` was resolved above for the suspend guard — reuse it here.
     -- ---------------------------------------------------------------------------
     if plugin and not plugin._simpleui_suspended then
-        local Topbar = package.loaded["sui_topbar"]
+        local Topbar = package.loaded["mui_topbar"]
         if Topbar then
             -- Cancel the topbar's own pending timer before refreshing — without
             -- this, the topbar would fire again on its old schedule in addition

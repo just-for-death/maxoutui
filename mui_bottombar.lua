@@ -1,7 +1,7 @@
 -- bottombar.lua — Simple UI
 -- Bottom tab bar: dimensions, widget construction, touch zones, navigation, rebuild helpers.
 
--- Widget classes — required lazily on first use so that require("sui_bottombar")
+-- Widget classes — required lazily on first use so that require("mui_bottombar")
 -- at plugin load time does not force all these modules off disk.
 -- Each accessor caches its result in a module-local upvalue; subsequent calls
 -- are a single nil-check + table field read, with zero I/O.
@@ -26,17 +26,17 @@ local function InfoMessage() _InfoMessage = _InfoMessage or require("ui/widget/i
 local Device          = require("device")
 local Screen          = Device.screen
 local logger          = require("logger")
-local _ = require("sui_i18n").translate
+local _ = require("mui_i18n").translate
 local BD = require("ui/bidi")
 
-local Config = require("sui_config")
-local SUISettings = require("sui_store")
+local Config = require("mui_config")
+local SUISettings = require("mui_store")
 
 -- Lazy reference to sui_style — used by _safeIconFile() to validate icon paths
 -- before passing them to ImageWidget. Loaded on first use to avoid a circular
 -- require at startup (sui_style requires sui_store, not sui_bottombar).
 local function _SUIStyle()
-    return package.loaded["sui_style"] or require("sui_style")
+    return package.loaded["mui_style"] or require("mui_style")
 end
 
 -- Guard helper: validates an icon file path before it reaches ImageWidget.
@@ -62,13 +62,13 @@ end
 -- Lazy reference to sui_quickactions — single source of truth for QA resolution
 -- and execution.  Loaded on first use to avoid a circular require at startup.
 local function _QA()
-    return package.loaded["sui_quickactions"] or require("sui_quickactions")
+    return package.loaded["mui_quickactions"] or require("mui_quickactions")
 end
 
 -- Lazy reference to sui_browsemeta — avoids loading the module at startup when
 -- the Browse by Authors/Series feature may not be in use.
 local function _BM()
-    return package.loaded["sui_browsemeta"] or require("sui_browsemeta")
+    return package.loaded["mui_browsemeta"] or require("mui_browsemeta")
 end
 
 -- Action-only tabs: these fire a dialog/toggle without becoming the active tab.
@@ -289,7 +289,7 @@ function M.patchDimmedIcon(btn)
     lw._sui_dim_patched = true
     local orig_lw_pt = lw.paintTo
     local Blitbuffer = require("ffi/blitbuffer")
-    local UI_core    = require("sui_core")
+    local UI_core    = require("mui_core")
     lw.paintTo = function(self_lw, bb, x, y)
         if not btn.enabled then
             local sz = self_lw:getSize()
@@ -366,7 +366,7 @@ function M.getTabWidths(num_tabs, usable_w)
 end
 
 local function _makeColoredIcon(file, size, fgcolor)
-    local Config = require("sui_config")
+    local Config = require("mui_config")
     if Config.isNerdIcon(file) then
         local nerd_char = Config.nerdIconChar(file)
         local widget = require("ui/widget/container/widgetcontainer"):new{}
@@ -424,7 +424,7 @@ local function _makeColoredIcon(file, size, fgcolor)
     widget._inner = inner
     widget._fg = fgcolor
 
-    local UI_core = require("sui_core")
+    local UI_core = require("mui_core")
     function widget:getSize() return self.dimen end
     function widget:paintTo(bb, x, y)
         self.dimen.x, self.dimen.y = x, y
@@ -683,7 +683,7 @@ local function _buildBarContainer(hg_args, is_navpager)
         local inner_bg = _getBarBg()
         
 
-        local border_sz = require("sui_style").BORDER_SZ
+        local border_sz = require("mui_style").BORDER_SZ
         local hg = HorizontalGroup():new(hg_args)
         local fc = FrameContainer():new{
                 bordersize = border_sz,
@@ -864,7 +864,7 @@ function M.buildBarWidgetWithKeyFocus(active_action_id, tab_config, kbfocus_idx,
 end
 
 local function _showNavbarSettingsWindow(plugin)
-    local SUIWindow = require("sui_window")
+    local SUIWindow = require("mui_window")
 
     local function buildRoot(ctx)
         if not plugin._makeNavbarMenu then plugin:addToMainMenu({}) end
@@ -985,7 +985,7 @@ function M.registerTouchZones(plugin, fm_self)
     }
 
     -- Helper: find and call a page-navigation method on the topmost pageable widget.
-    local UI_mod = require("sui_core")
+    local UI_mod = require("mui_core")
     local function _callPageFn(fn_name)
         local stack  = UI_mod.getWindowStack()
         for i = #stack, 1, -1 do
@@ -1278,7 +1278,7 @@ function M.onTabTap(plugin, action_id, fm_self)
     -- navigate() will close it and then call replaceBar on the real FM, so
     -- painting the bar on the about-to-close widget is wasted work.
     local hs_open = (function()
-        local HS = package.loaded["sui_homescreen"]
+        local HS = package.loaded["mui_homescreen"]
         return HS and HS._instance ~= nil
     end)()
     local injected_open = fm_self ~= plugin.ui and fm_self._navbar_injected
@@ -1295,7 +1295,7 @@ function M.onTabTap(plugin, action_id, fm_self)
     -- FM replaceBar in navigate()), which means it never visually updates on
     -- the HS bar — noticeable when navpager is disabled.
     if hs_open and action_id ~= "homescreen" and not already_active then
-        local HS = package.loaded["sui_homescreen"]
+        local HS = package.loaded["mui_homescreen"]
         local hs_inst = HS and HS._instance
         if hs_inst and hs_inst._navbar_container then
             M.replaceBar(hs_inst, M.buildBarWidget(indicator_tab, tabs), tabs)
@@ -1345,9 +1345,9 @@ end
 -- After execution the HS is restored to the top and repainted.
 -- ---------------------------------------------------------------------------
 local function _executeInPlace(action_id, plugin, fm)
-    local HS      = package.loaded["sui_homescreen"]
+    local HS      = package.loaded["mui_homescreen"]
     local hs_inst = HS and HS._instance
-    local UI_mod  = require("sui_core")
+    local UI_mod  = require("mui_core")
     local stack   = UI_mod.getWindowStack()
     local hs_idx  = nil
 
@@ -1394,7 +1394,7 @@ function M.navigate(plugin, action_id, fm_self, tabs, force)
     if action_id == "homescreen" then
         local RUI = package.loaded["apps/reader/readerui"]
         if RUI and RUI.instance then
-            local ok_p, Patches = pcall(require, "sui_patches")
+            local ok_p, Patches = pcall(require, "mui_patches")
             if ok_p and Patches then
                 Patches.closeReaderToHomescreen(plugin, false)
                 return
@@ -1441,7 +1441,7 @@ function M.navigate(plugin, action_id, fm_self, tabs, force)
 
     -- Detect if the homescreen is currently open (fm_self is the FM but the
     -- HS is on top — the tap came through the HS's injected bottombar).
-    local HS = package.loaded["sui_homescreen"]
+    local HS = package.loaded["mui_homescreen"]
     local hs_open = HS and HS._instance ~= nil
 
     logger.dbg("simpleui navigate: action=", action_id, "hs_open=", hs_open)
@@ -1527,8 +1527,8 @@ end
 
 function M.rebuildAllNavbars(plugin)
     if plugin and plugin._simpleui_suspended then return end
-    local UI        = require("sui_core")
-    local Topbar    = require("sui_topbar")
+    local UI        = require("mui_core")
+    local Topbar    = require("mui_topbar")
     M.invalidateDimCache()
     -- Read config once; these values are shared across every widget in the loop.
     local tabs      = Config.loadTabConfig()
@@ -1581,7 +1581,7 @@ function M.setTempTabActive(plugin, action_id, active, prev_action)
         UIManager:setDirty(w, "ui")
     end
 
-    local UI    = require("sui_core")
+    local UI    = require("mui_core")
     local stack = UI.getWindowStack()
     updateWidget(plugin.ui)
     for _i, entry in ipairs(stack) do
@@ -1595,7 +1595,7 @@ function M.setPowerTabActive(plugin, active, prev_action)
 end
 
 function M.rewrapAllWidgets(plugin)
-    local UI        = require("sui_core")
+    local UI        = require("mui_core")
     local tabs      = Config.loadTabConfig()
     local stack     = UI.getWindowStack()  -- read once for the entire operation
     local seen      = {}
@@ -1660,7 +1660,7 @@ function M.rewrapAllWidgets(plugin)
             end
         end
 
-            local ok_p, Patches = pcall(require, "sui_patches")
+            local ok_p, Patches = pcall(require, "mui_patches")
             if ok_p and Patches and Patches.injectWallpaperIntoFullscreenWidget then
                 pcall(Patches.injectWallpaperIntoFullscreenWidget, w)
             end
@@ -1683,7 +1683,7 @@ function M.restoreTabInFM(plugin, tabs, prev_action)
     local fm = plugin.ui
     if not (fm and fm._navbar_container) then return end
     local should_skip = false
-    local UI = require("sui_core")
+    local UI = require("mui_core")
     pcall(function()
         for _i, entry in ipairs(UI.getWindowStack()) do
             if entry.widget and entry.widget._navbar_injected and entry.widget ~= fm then
@@ -1695,7 +1695,7 @@ function M.restoreTabInFM(plugin, tabs, prev_action)
     -- Always load tabs fresh: the `tabs` argument was captured at widget-open time
     -- and may be stale if the user changed tab config while the widget was open.
     local t = Config.loadTabConfig()
-    local Patches = require("sui_patches")
+    local Patches = require("mui_patches")
     local restored = (fm.file_chooser and Patches._resolveTabForPath(fm.file_chooser.path, t))
                   or prev_action or (t[1])
     plugin.active_action = restored

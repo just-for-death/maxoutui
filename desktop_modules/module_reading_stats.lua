@@ -17,14 +17,14 @@ local TextWidget      = require("ui/widget/textwidget")
 local UIManager       = require("ui/uimanager")
 local VerticalGroup   = require("ui/widget/verticalgroup")
 local Screen          = Device.screen
-local _ = require("sui_i18n").translate
-local N_ = require("sui_i18n").ngettext
-local Config          = require("sui_config")
+local _ = require("mui_i18n").translate
+local N_ = require("mui_i18n").ngettext
+local Config          = require("mui_config")
 
-local UI      = require("sui_core")
-local SUISettings = require("sui_store")
-local SUIStyle    = require("sui_style")
-local StreakFreeze = require("sui_streak")
+local UI      = require("mui_core")
+local SUISettings = require("mui_store")
+local SUIStyle    = require("mui_style")
+local StreakFreeze = require("mui_streak")
 local CLR_TEXT_SUB = UI.CLR_TEXT_SUB
 local PAD     = UI.PAD
 local MOD_GAP = UI.MOD_GAP
@@ -260,7 +260,7 @@ local function buildStatListCell(cell_w, stat_id, stats, show_sep, d, align, col
 end
 
 local function openReadingInsights()
-    local ok, SW = pcall(require, "sui_stats_windows")
+    local ok, SW = pcall(require, "mui_stats_windows")
     if ok and SW and SW.showReadingInsightsWindow then
         if SW.showLoadingNotice then SW.showLoadingNotice() end
         SW.showReadingInsightsWindow()
@@ -276,7 +276,7 @@ end
 --- mirrors the same fallback shape already used for the total_books ▸
 --- showFinishedBooksDialog routing just above/below this function.
 local function openStreakManager()
-    local ok, SW = pcall(require, "sui_stats_windows")
+    local ok, SW = pcall(require, "mui_stats_windows")
     if ok and SW and SW.showStreakManagerWindow then
         if SW.showLoadingNotice then SW.showLoadingNotice() end
         SW.showStreakManagerWindow()
@@ -365,7 +365,7 @@ function M.build(w, ctx)
     }
 
     -- Theme: when fg is set use it for all text; otherwise fall back to module defaults.
-    local ok_ss, SUIStyle  = pcall(require, "sui_style")
+    local ok_ss, SUIStyle  = pcall(require, "mui_style")
     local _theme_fg        = ok_ss and SUIStyle and SUIStyle.getThemeColor("fg")
     local _theme_secondary = ok_ss and SUIStyle and SUIStyle.getThemeColor("text_secondary")
     local _CLR_TEXT_BLK_EFF = _theme_fg or _CLR_TEXT_BLK
@@ -441,7 +441,7 @@ function M.build(w, ctx)
             if ges and ges.pos and self.dimen then
                 local idx = math.floor((ges.pos.x - self.dimen.x) / cell_w) + 1
                 if idx >= 1 and idx <= n and stat_ids[idx] == "total_books" then
-                    local ok, SW = pcall(require, "sui_stats_windows")
+                    local ok, SW = pcall(require, "mui_stats_windows")
                     if ok and SW and SW.showFinishedBooksDialog then
                         SW.showFinishedBooksDialog()
                         return true
@@ -508,7 +508,7 @@ function M.build(w, ctx)
                     local idx = math.floor(dx / step) + 1
                     if idx >= 1 and idx <= n and (dx % step) <= card_w then
                         if stat_ids[idx] == "total_books" then
-                            local ok, SW = pcall(require, "sui_stats_windows")
+                            local ok, SW = pcall(require, "mui_stats_windows")
                             if ok and SW and SW.showFinishedBooksDialog then
                                 SW.showFinishedBooksDialog()
                                 return true
@@ -639,7 +639,7 @@ function M.getMenuItems(ctx_menu)
                     item_table = sort_items, callback = on_save })
             end,
             sui_build = ctx_menu.is_sui and function(ctx, _item)
-                local SUIWindow = require("sui_window")
+                local SUIWindow = require("mui_window")
                 return SUIWindow.ListRow{
                     title        = _lc("Items"),
                     subtitle     = function()
@@ -689,7 +689,7 @@ function M.getMenuItems(ctx_menu)
                                                 if #cur >= MAX_RS then
                                                     local InfoMessage = ctx_menu.InfoMessage or require("ui/widget/infomessage")
                                                     local uim = ctx_menu.UIManager or require("ui/uimanager")
-                                                    local N_ = ctx_menu.N_ or require("sui_i18n").ngettext
+                                                    local N_ = ctx_menu.N_ or require("mui_i18n").ngettext
                                                     uim:show(InfoMessage:new{
                                                         text = string.format(N_("The maximum of %d stat per row has been reached. Remove one first.",
                                                                "The maximum of %d stats per row has been reached. Remove one first.", MAX_RS), MAX_RS), timeout = 2,
@@ -878,7 +878,7 @@ function M.getMenuItems(ctx_menu)
             local MCD = package.loaded["desktop_modules/module_coverdeck"]
             if MCD and MCD.invalidateCache then MCD.invalidateCache() end
             
-            local HS = package.loaded["sui_homescreen"]
+            local HS = package.loaded["mui_homescreen"]
             if HS then
                 HS._cached_books_state = nil
                 HS._cfg_cache = nil

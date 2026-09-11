@@ -31,7 +31,7 @@
 -- its callers hand it, which keeps it trivially testable and keeps the "is
 -- freeze mode on, what dates are frozen" policy decisions in the callers.
 
-local SUISettings = require("sui_store")
+local SUISettings = require("mui_store")
 
 local M = {}
 

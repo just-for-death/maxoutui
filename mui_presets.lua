@@ -32,9 +32,9 @@
 --   SUIIconPresets.exists(name)         SUIIconPresets.rename(old, new)
 --   SUIIconPresets.getAll()
 
-local SUISettings = require("sui_store")
+local SUISettings = require("mui_store")
 local logger      = require("logger")
-local _           = require("sui_i18n").translate
+local _           = require("mui_i18n").translate
 
 -- ============================================================================
 -- § 1  HOMESCREEN PRESETS
@@ -631,7 +631,7 @@ SUIPresets.listImportFiles = function() return _listImportFiles("_sui_hs.lua") e
 --
 -- Usage from a SUIWindow screen builder:
 --
---   local SUIPresets = require("sui_presets")
+--   local SUIPresets = require("mui_presets")
 --   local function buildPresets(ctx)
 --       return C.MenuTable{
 --           inner_w    = ctx.inner_w,
@@ -725,7 +725,7 @@ function SUIPresets.makeMenuItems(opts)
         sub_item_table = select_items,
         separator      = true,
         sui_build      = opts.lock_overlay and function(ctx, _item)
-            local SUIWindow = require("sui_window")
+            local SUIWindow = require("mui_window")
             return SUIWindow.ListRow{
                 title        = _("Select Preset"),
                 inner_w      = ctx.inner_w,
@@ -738,7 +738,7 @@ function SUIPresets.makeMenuItems(opts)
                                 {
                                     text = "Items List",
                                     sui_build = function(ctx2)
-                                        local SUIWindow2 = require("sui_window")
+                                        local SUIWindow2 = require("mui_window")
                                         local rows = {}
                                         
                                         local current_names = SUIPresets.listNames()
@@ -947,7 +947,7 @@ function SUIPresets.makeMenuItems(opts)
                 return sub
             end,
             sui_build = opts.lock_overlay and function(ctx, _item)
-                local SUIWindow = require("sui_window")
+                local SUIWindow = require("mui_window")
                 return SUIWindow.ListRow{
                     title        = _("Manage presets"),
                     inner_w      = ctx.inner_w,
@@ -960,7 +960,7 @@ function SUIPresets.makeMenuItems(opts)
                                     {
                                         text = "Items List",
                                         sui_build = function(ctx2)
-                                            local SUIWindow2 = require("sui_window")
+                                            local SUIWindow2 = require("mui_window")
                                             local rows = {}
                                             for _k, _name in ipairs(SUIPresets.listNames()) do
                                                 rows[#rows + 1] = SUIWindow2.ListRow{
@@ -1132,7 +1132,7 @@ SUIIconPresets.listImportFiles = function() return _listImportFiles("_sui_icn.lu
 
 return {
     -- Homescreen presets (compatibility with existing code that does
-    -- local P = require("sui_presets") and calls P.save / P.apply / etc.)
+    -- local P = require("mui_presets") and calls P.save / P.apply / etc.)
     save      = SUIPresets.save,
     apply     = SUIPresets.apply,
     delete    = SUIPresets.delete,

@@ -15,15 +15,15 @@ local Blitbuffer     = require("ffi/blitbuffer")
 local Device         = require("device")
 local Screen         = Device.screen
 local logger         = require("logger")
-local SUISettings = require("sui_store")
+local SUISettings = require("mui_store")
 
 -- Lazy references to sibling modules — resolved on first use to avoid
 -- circular-require issues at load time, but stored as upvalues so that
 -- the hot paths (getContentHeight, getContentTop, wrapWithNavbar,
 -- applyNavbarState) never pay a require() lookup after the first call.
 local _Bottombar, _Topbar
-local function _BB() _Bottombar = _Bottombar or require("sui_bottombar"); return _Bottombar end
-local function _TB() _Topbar    = _Topbar    or require("sui_topbar");    return _Topbar    end
+local function _BB() _Bottombar = _Bottombar or require("mui_bottombar"); return _Bottombar end
+local function _TB() _Topbar    = _Topbar    or require("mui_topbar");    return _Topbar    end
 
 local M   = {}
 local _dim = {}
@@ -64,7 +64,7 @@ M.MOD_GAP       = Screen:scaleBySize(23)   -- includes former LABEL_PAD_TOP (8px
 M.SIDE_PAD      = Screen:scaleBySize(14)
 M.LABEL_PAD_TOP = 0                         -- absorbed into MOD_GAP
 M.LABEL_PAD_BOT = M.PAD2                    -- padding_bottom of sectionLabel (was 4px, now 8px)
-local _ok_ss, _SUIStyle_core = pcall(require, "sui_style")
+local _ok_ss, _SUIStyle_core = pcall(require, "mui_style")
 local _body_fs = (_ok_ss and _SUIStyle_core and _SUIStyle_core.FS_BODY) or 18
 M.LABEL_TEXT_H  = Screen:scaleBySize(_body_fs)  -- TextWidget height for FS_BODY (18pt)
 M.LABEL_H       = M.LABEL_PAD_TOP + M.LABEL_PAD_BOT + M.LABEL_TEXT_H
@@ -192,13 +192,13 @@ end
 
 function M.invalidateDimCache()
     _dim = {}
-    local bb = package.loaded["sui_bottombar"]
+    local bb = package.loaded["mui_bottombar"]
     if bb and bb.invalidateDimCache then bb.invalidateDimCache() end
-    local tb = package.loaded["sui_topbar"]
+    local tb = package.loaded["mui_topbar"]
     if tb and tb.invalidateDimCache then tb.invalidateDimCache() end
     -- Clear VerticalSpan pools so stale px values (computed before resize)
     -- are not reused after scaleBySize produces different numbers.
-    local hs = package.loaded["sui_homescreen"]
+    local hs = package.loaded["mui_homescreen"]
     if hs and hs._instance and hs._instance._vspan_pool then
         hs._instance._vspan_pool = {}
     end
@@ -479,7 +479,7 @@ function M.showSettingsMenu(title, item_table_fn, top_offset, screen_h, bottomba
             -- before executing scheduled callbacks — so the HS was painted with
             -- the stale tree before the rebuild ran. The synchronous call ensures
             -- the widget tree is replaced before any paint is flushed.
-            local ok, HS = pcall(require, "sui_homescreen")
+            local ok, HS = pcall(require, "mui_homescreen")
             if not (ok and HS and HS._instance) then return end
             HS._instance:_refreshImmediate(false)
         end,
@@ -711,7 +711,7 @@ end
 function M.progressBar(w, pct, bar_h, fg_color, bg_color)
     bar_h = bar_h or Screen:scaleBySize(4)
     
-    local ok, SUIStyle = pcall(require, "sui_style")
+    local ok, SUIStyle = pcall(require, "mui_style")
     local style = SUISettings:get("simpleui_style_progress_bar_type") or "flat"
 
     local bg = bg_color or (ok and SUIStyle.getThemeColor("progress_bg")) or Blitbuffer.gray(0.15)

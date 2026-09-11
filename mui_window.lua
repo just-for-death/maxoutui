@@ -13,7 +13,7 @@
 --
 -- Minimal usage:
 --
---   local SUI = require("sui_window")
+--   local SUI = require("mui_window")
 --   SUI:new{
 --       title    = "Title",
 --       screens  = {
@@ -108,7 +108,7 @@ local OverlapGroup    = require("ui/widget/overlapgroup")
 local RightContainer  = require("ui/widget/container/rightcontainer")
 local Size            = require("ui/size")
 local T               = require("ffi/util").template
-local _               = require("sui_i18n").translate
+local _               = require("mui_i18n").translate
 local BD              = require("ui/bidi")
 local TextWidget      = require("ui/widget/textwidget")
 local TitleBar        = require("ui/widget/titlebar")
@@ -118,8 +118,8 @@ local VerticalSpan    = require("ui/widget/verticalspan")
 local Screen          = Device.screen
 local logger          = require("logger")
 
-local SUIStyle = require("sui_style")
-local UI       = require("sui_core")
+local SUIStyle = require("mui_style")
+local UI       = require("mui_core")
 
 -- Landscape-aware size multiplier — the counterpart, inside SUIWindow, of the
 -- home screen's Config-scale patch. In portrait _sui_scale is 1 (no-op); in
@@ -297,13 +297,13 @@ function SUIWindow:show()
     -- Compute the usable vertical area between the topbar and the navbar so
     -- the modal is centred in that region and never overlaps either bar.
     local top_h = 0
-    local ok_tb, Topbar = pcall(require, "sui_topbar")
+    local ok_tb, Topbar = pcall(require, "mui_topbar")
     if ok_tb and Topbar and Topbar.TOTAL_TOP_H then
         top_h = Topbar.TOTAL_TOP_H()
     end
 
     local bot_h = 0
-    local ok_bb_early, Bottombar_early = pcall(require, "sui_bottombar")
+    local ok_bb_early, Bottombar_early = pcall(require, "mui_bottombar")
     if ok_bb_early and Bottombar_early and Bottombar_early.TOTAL_H then
         bot_h = Bottombar_early.TOTAL_H()
     end
@@ -443,7 +443,7 @@ function SUIWindow:show()
         -- work while this modal is visible.  We compute the geometry the same
         -- way registerTouchZones() does so the hit areas are identical.
         if Device:isTouchDevice() then
-            local ok_bb, Bottombar = pcall(require, "sui_bottombar")
+            local ok_bb, Bottombar = pcall(require, "mui_bottombar")
             if ok_bb and Bottombar then
                 local screen_w = self._screen_w
                 local screen_h = self._screen_h
@@ -452,7 +452,7 @@ function SUIWindow:show()
                 local side_m   = Bottombar.SIDE_M()
                 local usable_w = screen_w - side_m * 2
                 -- navpager mode always has 4 centre tabs + 2 arrow slots = 6
-                local ok_cfg, Config = pcall(require, "sui_config")
+                local ok_cfg, Config = pcall(require, "mui_config")
                 local n_center = (ok_cfg and Config and Config.NAVPAGER_CENTER_TABS) or 4
                 local total_slots = n_center + 2
                 local widths = Bottombar.getTabWidths(total_slots, usable_w)
@@ -551,21 +551,21 @@ function SUIWindow:close()
     -- when getNavpagerState() runs (otherwise it would still find this window).
     if self._navpager_mode then
         UIManager:nextTick(function()
-            local ok_bb, Bottombar = pcall(require, "sui_bottombar")
+            local ok_bb, Bottombar = pcall(require, "mui_bottombar")
             if not ok_bb or not Bottombar then return end
-            local ok_cfg, Config2 = pcall(require, "sui_config")
+            local ok_cfg, Config2 = pcall(require, "mui_config")
             local has_prev, has_next = false, false
             if ok_cfg and Config2 and Config2.getNavpagerState then
                 has_prev, has_next = Config2.getNavpagerState()
             end
-            local patches = package.loaded["sui_patches"]
+            local patches = package.loaded["mui_patches"]
             local target
             if patches and patches._getNavbarTarget then
                 local fm_mod  = package.loaded["apps/filemanager/filemanager"]
                 local fm_inst = fm_mod and fm_mod.instance
                 target = patches._getNavbarTarget(fm_inst)
             else
-                local UI = package.loaded["sui_core"]
+                local UI = package.loaded["mui_core"]
                 local stack = UI and UI.getWindowStack and UI.getWindowStack()
                 if stack then
                     for i = #stack, 1, -1 do
@@ -876,7 +876,7 @@ function SUIWindow:_rebuildFrame(ctx, items)
         local win = self
         function settings_btn:onTapSettings()
             win:close()
-            local SettingsWindow = require("sui_settings_window")
+            local SettingsWindow = require("mui_settings_window")
             SettingsWindow:show()
             return true
         end
@@ -952,7 +952,7 @@ function SUIWindow:_repaint()
         -- used for this window's own chrome (frame, title bar), handed to
         -- every screen builder for free. Any screen — existing or new —
         -- gets correct-by-construction scaling on ctx.SZ(n) with zero setup:
-        -- no require("sui_core"), no per-file "local function SZ(n) ... end"
+        -- no require("mui_core"), no per-file "local function SZ(n) ... end"
         -- boilerplate, and no risk of drifting from the chrome's own factor.
         SZ            = SZ,
         current       = function() return win:_navCurrent() end,
@@ -1074,7 +1074,7 @@ end
 -- after the _wrapper is on the UIManager stack.
 function SUIWindow:_updateNavbarArrows()
     if not self._navpager_mode then return end
-    local ok_bb, Bottombar = pcall(require, "sui_bottombar")
+    local ok_bb, Bottombar = pcall(require, "mui_bottombar")
     if not ok_bb or not Bottombar then return end
 
     local has_prev = self._current_page > 1
@@ -1084,13 +1084,13 @@ function SUIWindow:_updateNavbarArrows()
     -- Use _getNavbarTarget from sui_patches if available (matches existing logic),
     -- otherwise fall back to walking the stack for _navbar_container.
     local target
-    local patches = package.loaded["sui_patches"]
+    local patches = package.loaded["mui_patches"]
     if patches and patches._getNavbarTarget then
         local fm_mod  = package.loaded["apps/filemanager/filemanager"]
         local fm_inst = fm_mod and fm_mod.instance
         target = patches._getNavbarTarget(fm_inst)
     else
-        local UI = package.loaded["sui_core"]
+        local UI = package.loaded["mui_core"]
         local stack = UI and UI.getWindowStack and UI.getWindowStack()
         if stack then
             for i = #stack, 1, -1 do
@@ -1106,7 +1106,7 @@ function SUIWindow:_updateNavbarArrows()
 
     if not Bottombar.updateNavpagerArrows(target, has_prev, has_next) then
         -- Bar structure unrecognised — full rebuild.
-        local ok_cfg, Config2 = pcall(require, "sui_config")
+        local ok_cfg, Config2 = pcall(require, "mui_config")
         local tabs = target._navbar_tabs or
             (ok_cfg and Config2 and Config2.loadTabConfig and Config2.loadTabConfig()) or {}
         local mode = (ok_cfg and Config2 and Config2.getNavbarMode and
@@ -3189,8 +3189,8 @@ function SUIWindow.makeCtxMenu(ctx)
         show_arrange = function(params) ctx.push("arrange", params) end,
         show_row_page= function(params) ctx.push("row_page", params) end,
         UIManager    = require("ui/uimanager"),
-        _            = require("sui_i18n").translate,
-        N_           = require("sui_i18n").ngettext,
+        _            = require("mui_i18n").translate,
+        N_           = require("mui_i18n").ngettext,
         InfoMessage  = require("ui/widget/infomessage"),
         SortWidget   = require("ui/widget/sortwidget"),
         lock_overlay   = ctx.lockOverlay,

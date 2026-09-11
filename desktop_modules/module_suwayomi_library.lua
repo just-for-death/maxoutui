@@ -22,12 +22,12 @@ local VerticalGroup   = require("ui/widget/verticalgroup")
 local VerticalSpan    = require("ui/widget/verticalspan")
 local ImageWidget     = require("ui/widget/imagewidget")
 
-local _ = require("sui_i18n").translate
-local Config      = require("sui_config")
-local UI          = require("sui_core")
-local SUISettings = require("sui_store")
-local SUIStyle    = require("sui_style")
-local RowRenderer = require("desktop_modules/sui_book_row")
+local _ = require("mui_i18n").translate
+local Config      = require("mui_config")
+local UI          = require("mui_core")
+local SUISettings = require("mui_store")
+local SUIStyle    = require("mui_style")
+local RowRenderer = require("desktop_modules/mui_book_row")
 
 local PAD    = UI.PAD
 local MOD_ID = "suwayomi_library"
@@ -127,7 +127,7 @@ local function prefetchThumbnailsAsync(credentials, manga_list)
                             ThumbnailWorker:run(credentials, thumb_url, path, { variant = "thumbnail" })
                         end,
                         on_finish = function()
-                            local HS = package.loaded["sui_homescreen"]
+                            local HS = package.loaded["mui_homescreen"]
                             local hs_inst = HS and HS._instance
                             if hs_inst then
                                 pcall(function()
@@ -180,7 +180,7 @@ local function fetchLibraryAsync(callback)
                 _library_cache      = sorted
                 _library_cache_time = os.time()
                 prefetchThumbnailsAsync(credentials, _library_cache)
-                local HS = package.loaded["sui_homescreen"]
+                local HS = package.loaded["mui_homescreen"]
                 local hs_inst = HS and HS._instance
                 if hs_inst then
                     pcall(function()
@@ -427,6 +427,22 @@ end
 function M.reset()
     _library_cache      = nil
     _library_cache_time = 0
+end
+
+--- Returns a snapshot of cached library stats for use by sibling modules
+--- (e.g. module_suwayomi_status) via package.loaded. Returns nil when the
+--- cache is empty so callers can distinguish "not fetched yet" from "zero".
+function M.getCacheStats()
+    if not _library_cache then return nil end
+    local total_unread = 0
+    for _, manga in ipairs(_library_cache) do
+        total_unread = total_unread + (manga.unread_count or 0)
+    end
+    return {
+        total_manga  = #_library_cache,
+        total_unread = total_unread,
+        cache_time   = _library_cache_time,
+    }
 end
 
 return M

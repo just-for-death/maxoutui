@@ -19,7 +19,7 @@ local UIManager   = require("ui/uimanager")
 local InfoMessage = require("ui/widget/infomessage")
 local ConfirmBox  = require("ui/widget/confirmbox")
 local logger      = require("logger")
-local _           = require("sui_i18n").translate
+local _           = require("mui_i18n").translate
 
 -- ---------------------------------------------------------------------------
 -- Configuration
@@ -554,7 +554,7 @@ end
 function M.scheduleAutoCheck()
     -- Opt-in only: skip silently if the user has not enabled auto-check.
     -- SUISettings:isTrue() returns false for missing keys → disabled by default.
-    local ok_s, SUISettings = pcall(require, "sui_settings")
+    local ok_s, SUISettings = pcall(require, "mui_settings")
     if not ok_s or not SUISettings then return end
     if not SUISettings:isTrue("simpleui_updater_auto_check") then
         logger.dbg("simpleui updater: auto-check disabled — skipping")

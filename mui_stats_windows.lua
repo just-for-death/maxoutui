@@ -18,13 +18,13 @@ local UIManager       = require("ui/uimanager")
 local VerticalGroup   = require("ui/widget/verticalgroup")
 local VerticalSpan    = require("ui/widget/verticalspan")
 local Screen          = Device.screen
-local _               = require("sui_i18n").translate
-local N_              = require("sui_i18n").ngettext
+local _               = require("mui_i18n").translate
+local N_              = require("mui_i18n").ngettext
 local logger          = require("logger")
-local Config          = require("sui_config")
-local SUIStyle        = require("sui_style")
-local UI              = require("sui_core")
-local SUIStreak       = require("sui_streak")
+local Config          = require("mui_config")
+local SUIStyle        = require("mui_style")
+local UI              = require("mui_core")
+local SUIStreak       = require("mui_streak")
 
 -- Landscape-aware size multiplier for the few call sites in this file that
 -- run BEFORE any SUIWindow ctx exists — e.g. shared fonts computed once in
@@ -775,7 +775,7 @@ end
 
 function StatsWindows.showFinishedBooksDialog(initial_page)
     _lazyLoad()
-    local SUIWindow = require("sui_window")
+    local SUIWindow = require("mui_window")
     local year_str  = _getYearStr()
 
     local books = _getFinishedBooksThisYear()
@@ -1299,7 +1299,7 @@ function StatsWindows.showFinishedBooksDialog(initial_page)
         -- 23/30 of portrait height), same as Reading Insights/Streak.
         height         = math.floor((select(2, UI.getPortraitDims())) * 23 / 30),
         position       = "bottom",
-        navpager_mode  = require("sui_config").isNavpagerEnabled(),
+        navpager_mode  = require("mui_config").isNavpagerEnabled(),
         screens        = {
             __root__   = buildListScreen,
             book_stats = buildStatsScreen,
@@ -2489,7 +2489,7 @@ local _ri_mode_key = "days"  -- "days" | "hours"
 --- Callers must invoke this *before* any blocking work so the notice reaches
 --- the screen while the homescreen/library dialog is still the background.
 function StatsWindows.showLoadingNotice()
-    local ok_ss, SUISettings = pcall(require, "sui_settings")
+    local ok_ss, SUISettings = pcall(require, "mui_settings")
     if ok_ss and SUISettings and not SUISettings:nilOrTrue("simpleui_stats_loading_notice") then
         return nil
     end
@@ -2510,7 +2510,7 @@ end
 --- SimpleUI touch-point.
 function StatsWindows.showReadingInsightsWindow(on_close_extra)
     _lazyLoad()
-    local SUIWindow = require("sui_window")
+    local SUIWindow = require("mui_window")
 
     -- Pre-flight: load streaks once; they span all years.
     if not _ri_streaks then
@@ -3032,7 +3032,7 @@ end
 --- SimpleUI touch-point.
 function StatsWindows.showStreakManagerWindow()
     _lazyLoad()
-    local SUIWindow = require("sui_window")
+    local SUIWindow = require("mui_window")
 
     -- Loaded once per window session. `streaks` (the full _riGetStreaks()
     -- result — both day- and week-streak data) is a mutable upvalue, not a
@@ -3543,7 +3543,7 @@ end
 -- dialog without requiring the user to navigate through the history list.
 --
 -- Usage:
---   local ok, SW = pcall(require, "sui_stats_windows")
+--   local ok, SW = pcall(require, "mui_stats_windows")
 --   if ok and SW then SW.showBookStatsFromFile(filepath) end
 -- ===========================================================================
 function StatsWindows.showBookStatsFromFile(filepath)
@@ -3595,7 +3595,7 @@ function StatsWindows.showBookStatsFromFile(filepath)
         return
     end
 
-    local SUIWindow = require("sui_window")
+    local SUIWindow = require("mui_window")
 
     -- Reuse the same buildStatsScreen logic from showFinishedBooksDialog,
     -- reproduced here as a self-contained closure so the two call-sites stay
@@ -3963,7 +3963,7 @@ function StatsWindows.showBookStatsFromFile(filepath)
         -- 23/30 of portrait height), same as the other stats windows.
         height   = math.floor((select(2, UI.getPortraitDims())) * 23 / 30),
         position = "bottom",
-        navpager_mode = require("sui_config").isNavpagerEnabled(),
+        navpager_mode = require("mui_config").isNavpagerEnabled(),
         screens  = { __root__ = buildStatsScreen },
     }
     if StatsWindows._loading_notice then

@@ -13,14 +13,14 @@ local OverlapGroup   = require("ui/widget/overlapgroup")
 local TextWidget     = require("ui/widget/textwidget")
 local VerticalGroup  = require("ui/widget/verticalgroup")
 local Screen         = Device.screen
-local _ = require("sui_i18n").translate
-local N_ = require("sui_i18n").ngettext
+local _ = require("mui_i18n").translate
+local N_ = require("mui_i18n").ngettext
 local logger         = require("logger")
 
-local Config       = require("sui_config")
-local UI           = require("sui_core")
-local SUISettings  = require("sui_store")
-local SUIStyle     = require("sui_style")
+local Config       = require("mui_config")
+local UI           = require("mui_core")
+local SUISettings  = require("mui_store")
+local SUIStyle     = require("mui_style")
 local PAD          = UI.PAD
 local PAD2         = UI.PAD2
 local CLR_TEXT_SUB = UI.CLR_TEXT_SUB
@@ -505,7 +505,7 @@ function M.build(w, ctx)
     if not SH then return nil end
 
     -- Theme colors
-    local ok_ss, SUIStyle  = pcall(require, "sui_style")
+    local ok_ss, SUIStyle  = pcall(require, "mui_style")
     local _theme_fg        = ok_ss and SUIStyle and SUIStyle.getThemeColor("fg")
     local _theme_secondary = ok_ss and SUIStyle and SUIStyle.getThemeColor("text_secondary")
     local CLR_TEXT_EFF     = _theme_fg or Blitbuffer.COLOR_BLACK
@@ -1375,7 +1375,7 @@ function M.getMenuItems(ctx_menu)
             },
         },
         sui_build = ctx_menu.is_sui and function(ctx, _item)
-            local SUIWindow = require("sui_window")
+            local SUIWindow = require("mui_window")
             return SUIWindow.ListRow{
                 title        = _lc("Items"),
                 subtitle     = function()
@@ -1465,7 +1465,7 @@ function M.getMenuItems(ctx_menu)
             local MCD = package.loaded["desktop_modules/module_coverdeck"]
             if MCD and MCD.invalidateCache then MCD.invalidateCache() end
             
-            local HS = package.loaded["sui_homescreen"]
+            local HS = package.loaded["mui_homescreen"]
             if HS then
                 HS._cached_books_state = nil
                 HS._cfg_cache = nil

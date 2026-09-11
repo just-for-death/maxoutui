@@ -21,16 +21,16 @@
 -- sui_settings_window.lua para distinguir instâncias de módulos singleton.
 -- Ver a nota em moduleregistry.lua se este padrão for alterado no futuro.
 
-local _  = require("sui_i18n").translate
+local _  = require("mui_i18n").translate
 
 local CenterContainer = require("ui/widget/container/centercontainer")
 local Font            = require("ui/font")
 local Geom            = require("ui/geometry")
 
-local SUISettings = require("sui_store")
-local SUIStyle    = require("sui_style")
-local UI          = require("sui_core")
-local RowRenderer = require("desktop_modules/sui_book_row")
+local SUISettings = require("mui_store")
+local SUIStyle    = require("mui_style")
+local UI          = require("mui_core")
+local RowRenderer = require("desktop_modules/mui_book_row")
 
 local PAD = UI.PAD
 
@@ -239,7 +239,7 @@ local function makeInstance(inst_id)
                 return sub_items
             end,
             sui_build = ctx_menu.is_sui and function(ctx, _item)
-                local SUIWindow = require("sui_window")
+                local SUIWindow = require("mui_window")
                 return SUIWindow.ListRow{
                     title        = _lc("Arrange"),
                     subtitle     = function()
@@ -266,7 +266,7 @@ local function makeInstance(inst_id)
                                     {
                                         text = "Items List",
                                         sui_build = function(ctx2)
-                                            local SUIWindow2 = require("sui_window")
+                                            local SUIWindow2 = require("mui_window")
                                             local function save_order(items_to_save)
                                                 local new_list = {}
                                                 for _, it in ipairs(items_to_save) do

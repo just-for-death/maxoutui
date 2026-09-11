@@ -52,7 +52,7 @@
 -- are unaffected; it remains loadable as a standalone file.
 
 local logger = require("logger")
-local SUISettings = require("sui_store")
+local SUISettings = require("mui_store")
 
 local MODULES = {
     { require_mod = "desktop_modules/module_clock"         },
@@ -67,8 +67,11 @@ local MODULES = {
     { require_mod = "desktop_modules/module_quick_actions" },
     { require_mod = "desktop_modules/module_action_list"   },
     { require_mod = "desktop_modules/module_spacer"        },
-    { require_mod = "desktop_modules/module_suwayomi_library" },
-    { require_mod = "desktop_modules/module_suwayomi_updates" },
+    { require_mod = "desktop_modules/module_suwayomi_library"    },
+    { require_mod = "desktop_modules/module_suwayomi_updates"    },
+    { require_mod = "desktop_modules/module_suwayomi_history"    },
+    { require_mod = "desktop_modules/module_suwayomi_categories" },
+    { require_mod = "desktop_modules/module_suwayomi_status"     },
 }
 
 local _loaded        = nil

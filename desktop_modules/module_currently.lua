@@ -4,8 +4,8 @@
 -- External dependencies
 local Device  = require("device")
 local Screen  = Device.screen
-local _ = require("sui_i18n").translate
-local N_ = require("sui_i18n").ngettext
+local _ = require("mui_i18n").translate
+local N_ = require("mui_i18n").ngettext
 local logger  = require("logger")
 
 local Blitbuffer      = require("ffi/blitbuffer")
@@ -27,10 +27,10 @@ local VerticalSpan    = require("ui/widget/verticalspan")
 local Size            = require("ui/size")
 
 -- Internal dependencies
-local Config       = require("sui_config")
-local UI           = require("sui_core")
-local SUISettings  = require("sui_store")
-local SUIStyle     = require("sui_style")
+local Config       = require("mui_config")
+local UI           = require("mui_core")
+local SUISettings  = require("mui_store")
+local SUIStyle     = require("mui_style")
 local PAD          = UI.PAD
 local LABEL_H      = UI.LABEL_H
 local CLR_TEXT_SUB = UI.CLR_TEXT_SUB
@@ -1155,7 +1155,7 @@ function M.getMenuItems(ctx_menu)
                     SUISettings:saveSetting(pfx .. ELEM_ORDER_KEY, new_order)
                     refresh()
                 end
-                local SUIWindow = require("sui_window")
+                local SUIWindow = require("mui_window")
                 return SUIWindow.ArrangeList{ inner_w = ctx.inner_w, items = sort_items, on_change = on_save }
             end or nil,
         },
@@ -1185,7 +1185,7 @@ function M.getMenuItems(ctx_menu)
             text           = _lc("Items"),
             sub_item_table = items_submenu,
             sui_build = ctx_menu.is_sui and function(ctx, _item)
-                local SUIWindow = require("sui_window")
+                local SUIWindow = require("mui_window")
                 return SUIWindow.ListRow{
                     title        = _lc("Items"),
                     subtitle     = function()
@@ -1267,7 +1267,7 @@ function M.getMenuItems(ctx_menu)
                                     {
                                         text = "Items List",
                                         sui_build = function(ctx2)
-                                            local SUIWindow = require("sui_window")
+                                            local SUIWindow = require("mui_window")
                                             local is_compact = getStatsStyle(pfx) == "compact"
                                             local function make_sort_items()
                                                 local t = {}
@@ -1347,7 +1347,7 @@ function M.getMenuItems(ctx_menu)
                                                                     {
                                                                         text = "Stats Sub-Items List",
                                                                         sui_build = function(ctx3)
-                                                                            local SUIWindow2 = require("sui_window")
+                                                                            local SUIWindow2 = require("mui_window")
                                                                             local function make_sub_items()
                                                                                 local st = {}
                                                                                 for _, k in ipairs(_getElemOrder(pfx)) do
@@ -1564,7 +1564,7 @@ function M.getMenuItems(ctx_menu)
                 local MCD = package.loaded["desktop_modules/module_coverdeck"]
                 if MCD and MCD.invalidateCache then MCD.invalidateCache() end
                 
-                local HS = package.loaded["sui_homescreen"]
+                local HS = package.loaded["mui_homescreen"]
                 if HS then
                     HS._cached_books_state = nil
                     HS._cfg_cache = nil

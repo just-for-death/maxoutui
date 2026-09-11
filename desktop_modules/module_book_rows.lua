@@ -21,10 +21,10 @@
 
 local Device      = require("device")
 local lfs          = require("libs/libkoreader-lfs")
-local _ = require("sui_i18n").translate
+local _ = require("mui_i18n").translate
 
-local SUISettings = require("sui_store")
-local RowRenderer = require("desktop_modules/sui_book_row")
+local SUISettings = require("mui_store")
+local RowRenderer = require("desktop_modules/mui_book_row")
 local TBR         = require("desktop_modules/module_tbr")
 
 -- =============================================================================

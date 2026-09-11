@@ -16,10 +16,10 @@
 --   M.arrangeMenuItems(ctx_menu)               → { item, ... }
 
 local lfs    = require("libs/libkoreader-lfs")
-local _      = require("sui_i18n").translate
+local _      = require("mui_i18n").translate
 local logger = require("logger")
 
-local SUISettings = require("sui_store")
+local SUISettings = require("mui_store")
 
 local MANGA_MAX       = 999
 local MANGA_SETTING   = "simpleui_pinned_manga_list"
@@ -372,7 +372,7 @@ local function arrangeMenuItems(ctx_menu)
                 return sub_items
             end,
             sui_build = ctx_menu.is_sui and function(ctx, _item)
-                local SUIWindow = require("sui_window")
+                local SUIWindow = require("mui_window")
                 return SUIWindow.ListRow{
                     title        = _lc("Arrange"),
                     subtitle     = function()
@@ -402,7 +402,7 @@ local function arrangeMenuItems(ctx_menu)
                                     {
                                         text = "Items List",
                                         sui_build = function(ctx2)
-                                            local SUIWindow2 = require("sui_window")
+                                            local SUIWindow2 = require("mui_window")
                                             local function save_order(items_to_save)
                                                 local new_list = {}
                                                 for _, it in ipairs(items_to_save) do

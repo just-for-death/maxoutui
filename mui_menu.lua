@@ -8,8 +8,8 @@ local Device    = require("device")
 local Screen    = Device.screen
 local lfs       = require("libs/libkoreader-lfs")
 local logger    = require("logger")
-local _ = require("sui_i18n").translate
-local N_ = require("sui_i18n").ngettext
+local _ = require("mui_i18n").translate
+local N_ = require("mui_i18n").ngettext
 local T = require("ffi/util").template
 
 -- Heavy UI widgets — lazy-loaded on first use so that require("menu") at boot
@@ -23,10 +23,10 @@ local function MultiInputDialog() return require("ui/widget/multiinputdialog") e
 local function PathChooser()      return require("ui/widget/pathchooser")       end
 local function SortWidget()       return require("ui/widget/sortwidget")        end
 
-local Config    = require("sui_config")
-local UI        = require("sui_core")
-local Bottombar = require("sui_bottombar")
-local SUISettings = require("sui_store")
+local Config    = require("mui_config")
+local UI        = require("mui_core")
+local Bottombar = require("mui_bottombar")
+local SUISettings = require("mui_store")
 
 -- ---------------------------------------------------------------------------
 -- Installer function
@@ -172,8 +172,8 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
     -- Currently only "frontlight" is hardware-gated; all other ids are always shown.
     local function actionAvailable(id)
         if id == "frontlight" then return hasFrontlight() end
-        if require("sui_quickactions").getBrowseMode(id) then
-            local ok_bm, BM = pcall(require, "sui_browsemeta")
+        if require("mui_quickactions").getBrowseMode(id) then
+            local ok_bm, BM = pcall(require, "mui_browsemeta")
             return ok_bm and BM and BM.isEnabled()
         end
         return true
@@ -500,7 +500,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                                 SUISettings:saveSetting("simpleui_bar_dotpager_always", true)
                             end
                             plugin:_scheduleRebuild()
-                            local ok_hs, HS = pcall(require, "sui_homescreen")
+                            local ok_hs, HS = pcall(require, "mui_homescreen")
                             if ok_hs and HS then HS.refresh(true) end
                         end,
                         keep_menu_open = true,
@@ -522,7 +522,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                                 SUISettings:saveSetting("simpleui_bar_dotpager_always", false)
                             end
                             plugin:_scheduleRebuild()
-                            local ok_hs, HS = pcall(require, "sui_homescreen")
+                            local ok_hs, HS = pcall(require, "mui_homescreen")
                             if ok_hs and HS then HS.refresh(true) end
                         end,
                         keep_menu_open = true,
@@ -540,7 +540,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                         callback     = function()
                             if SUISettings:isTrue("simpleui_hs_pagination_hidden") then return end
                             SUISettings:saveSetting("simpleui_hs_pagination_hidden", true)
-                            local ok_hs, HS = pcall(require, "sui_homescreen")
+                            local ok_hs, HS = pcall(require, "mui_homescreen")
                             if ok_hs and HS then HS.refresh(true) end
                         end,
                         keep_menu_open = true,
@@ -853,7 +853,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                 text = _("Items"),
                 sub_item_table_func = function() return makeTopbarItemsMenu(ctx_menu) end,
                 sui_build = ctx_menu and ctx_menu.is_sui and function(ctx, _item)
-                    local SUIWindow = require("sui_window")
+                    local SUIWindow = require("mui_window")
                     return SUIWindow.ListRow{
                         title        = _("Items"),
                         subtitle     = function()
@@ -886,7 +886,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                                     local t = Config.getTopbarCustomText()
                                     if t ~= "" then subtitle = t else subtitle = _("Empty") end
                                     on_more = function(anchor_dimen)
-                                        local SUIWindow2 = require("sui_window")
+                                        local SUIWindow2 = require("mui_window")
                                         SUIWindow2.ActionMenu{
                                             anchor = anchor_dimen,
                                             items = {
@@ -1040,7 +1040,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                             Config.setTopbarSizePct(spin.value)
                             UI.invalidateDimCache()
                             plugin:_rewrapAllWidgets()
-                            local ok_hs, HS = pcall(require, "sui_homescreen")
+                            local ok_hs, HS = pcall(require, "mui_homescreen")
                             if ok_hs and HS then HS.refresh(true) end
                             UIManager:show(ConfirmBox():new{
                                 text       = _("A restart is required to apply the new bar size across all layouts.\n\nRestart now?"),
@@ -1127,7 +1127,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                 end,
                 sub_item_table_func = function() return makeTabsMenu(ctx_menu) end,
                 sui_build = ctx_menu and ctx_menu.is_sui and function(ctx, _item)
-                    local SUIWindow = require("sui_window")
+                    local SUIWindow = require("mui_window")
                     return SUIWindow.ListRow{
                         title        = _("Tabs"),
                         subtitle     = function()
@@ -1218,7 +1218,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                                                     if #cur >= limit then
                                                         local InfoMessage = ctx_menu and ctx_menu.InfoMessage or require("ui/widget/infomessage")
                                                         local uim = ctx_menu and ctx_menu.UIManager or require("ui/uimanager")
-                                                        local N_ = ctx_menu and ctx_menu.N_ or require("sui_i18n").ngettext
+                                                        local N_ = ctx_menu and ctx_menu.N_ or require("mui_i18n").ngettext
                                                         uim:show(InfoMessage:new{
                                                             text = string.format(N_("The maximum of %d tab has been reached. Remove one first.",
                                                                    "The maximum of %d tabs has been reached. Remove one first.", limit), limit), timeout = 2,
@@ -1259,7 +1259,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                     {
                         text           = _("Default"),
                         radio          = true,
-                        checked_func   = function() return require("sui_bottombar").getBarStyle() == "default" end,
+                        checked_func   = function() return require("mui_bottombar").getBarStyle() == "default" end,
                         keep_menu_open = true,
                         callback       = function()
                             SUISettings:saveSetting("simpleui_bar_style", "default")
@@ -1271,7 +1271,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                     {
                         text           = _("Framed"),
                         radio          = true,
-                        checked_func   = function() return require("sui_bottombar").getBarStyle() == "framed" end,
+                        checked_func   = function() return require("mui_bottombar").getBarStyle() == "framed" end,
                         keep_menu_open = true,
                         callback       = function()
                             SUISettings:saveSetting("simpleui_bar_style", "framed")
@@ -1283,7 +1283,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                     {
                         text           = _("Bare"),
                         radio          = true,
-                        checked_func   = function() return require("sui_bottombar").getBarStyle() == "bare" end,
+                        checked_func   = function() return require("mui_bottombar").getBarStyle() == "bare" end,
                         keep_menu_open = true,
                         callback       = function()
                             SUISettings:saveSetting("simpleui_bar_style", "bare")
@@ -1317,7 +1317,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                             Config.setBarSizePct(spin.value)
                             UI.invalidateDimCache()
                             plugin:_rewrapAllWidgets()
-                            local ok_hs, HS = pcall(require, "sui_homescreen")
+                            local ok_hs, HS = pcall(require, "mui_homescreen")
                             if ok_hs and HS then HS.refresh(true) end
                             UIManager:show(ConfirmBox():new{
                                 text       = _("A restart is required to apply the new bar size across all layouts.\n\nRestart now?"),
@@ -1360,7 +1360,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                 set           = function(pct) Config.setBottomMarginPct(pct) end,
                 refresh       = function()
                     UI.invalidateDimCache(); plugin:_rewrapAllWidgets()
-                    local ok_hs, HS = pcall(require, "sui_homescreen")
+                    local ok_hs, HS = pcall(require, "mui_homescreen")
                     if ok_hs and HS then HS.refresh(true) end
                 end,
                 value_min     = Config.BOT_MARGIN_MIN, value_max = Config.BOT_MARGIN_MAX,
@@ -1397,17 +1397,17 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
     -- '_reapplyAllTitlebars' (a nil value)" on any Titlebar Buttons change.
     local _reapplyAllTitlebars
     _reapplyAllTitlebars = function()
-        local Titlebar = require("sui_titlebar")
+        local Titlebar = require("mui_titlebar")
         local FM = package.loaded["apps/filemanager/filemanager"]
         local fm = FM and FM.instance
-        local stack = require("sui_core").getWindowStack()
+        local stack = require("mui_core").getWindowStack()
         Titlebar.reapplyAll(fm, stack)
         if fm then UIManager:setDirty(fm[1], "ui") end
     end
 
     -- Builds a visibility toggle list for one context ("fm" or "inj").
     local function makeTitleBarItemsForCtx(ctx)
-        local Titlebar = require("sui_titlebar")
+        local Titlebar = require("mui_titlebar")
         local items = {}
         for _i, item in ipairs(Titlebar.ITEMS) do
             if item.ctx == ctx then
@@ -1435,7 +1435,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
     -- cfg_getter / cfg_saver — functions that load/save the side config.
     -- ctx — "fm" or "inj", used to filter M.ITEMS.
     local function makeTitleBarArrangeMenu(ctx_menu, ctx, cfg_getter, cfg_saver)
-        local Titlebar   = require("sui_titlebar")
+        local Titlebar   = require("mui_titlebar")
         local SEP_LEFT   = "__sep_left__"
         local SEP_RIGHT  = "__sep_right__"
 
@@ -1551,8 +1551,8 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
 
     local function makeTitleBarSUIBuild(ctx_menu, title_str, tb_ctx, cfg_getter, cfg_saver)
         return ctx_menu and ctx_menu.is_sui and function(ctx, _item)
-            local SUIWindow = require("sui_window")
-            local Titlebar  = require("sui_titlebar")
+            local SUIWindow = require("mui_window")
+            local Titlebar  = require("mui_titlebar")
 
             return SUIWindow.ListRow{
                 title        = title_str,
@@ -1714,7 +1714,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
     end
 
     local function makeTitleBarFMMenu(ctx_menu)
-        local Titlebar = require("sui_titlebar")
+        local Titlebar = require("mui_titlebar")
         local items = makeTitleBarItemsForCtx("fm")
         if #items > 0 then items[#items].separator = true end
         items[#items + 1] = {
@@ -1729,7 +1729,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
     end
 
     local function makeTitleBarSubMenu(ctx_menu)
-        local Titlebar = require("sui_titlebar")
+        local Titlebar = require("mui_titlebar")
         local items = makeTitleBarItemsForCtx("sub")
         if #items > 0 then items[#items].separator = true end
         items[#items + 1] = {
@@ -1749,9 +1749,9 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                 text         = label,
                 radio        = true,
                 keep_menu_open = true,
-                checked_func = function() return require("sui_titlebar").getSizeKey() == key end,
+                checked_func = function() return require("mui_titlebar").getSizeKey() == key end,
                 callback     = function()
-                    require("sui_titlebar").setSizeKey(key)
+                    require("mui_titlebar").setSizeKey(key)
                     _reapplyAllTitlebars()
                 end,
             }
@@ -1761,10 +1761,10 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                 text_func    = function()
                     return _("Enable Title Bar")
                 end,
-                checked_func = function() return require("sui_titlebar").isEnabled() end,
+                checked_func = function() return require("mui_titlebar").isEnabled() end,
                 separator    = true,
                 callback     = function()
-                    local Titlebar = require("sui_titlebar")
+                    local Titlebar = require("mui_titlebar")
                     local on = Titlebar.isEnabled()
                     Titlebar.setEnabled(not on)
                     SUISettings:flush()
@@ -1783,21 +1783,21 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
             },
             {
                 text         = _("Library Buttons"),
-                enabled_func = function() return require("sui_titlebar").isEnabled() end,
+                enabled_func = function() return require("mui_titlebar").isEnabled() end,
                 sub_item_table_func = function() return makeTitleBarFMMenu(ctx_menu) end,
-                sui_build = makeTitleBarSUIBuild(ctx_menu, _("Library Buttons"), "fm", require("sui_titlebar").getFMConfig, require("sui_titlebar").saveFMConfig),
+                sui_build = makeTitleBarSUIBuild(ctx_menu, _("Library Buttons"), "fm", require("mui_titlebar").getFMConfig, require("mui_titlebar").saveFMConfig),
             },
             {
                 text         = _("Sub-page Buttons"),
-                enabled_func = function() return require("sui_titlebar").isEnabled() end,
+                enabled_func = function() return require("mui_titlebar").isEnabled() end,
                 sub_item_table_func = function() return makeTitleBarSubMenu(ctx_menu) end,
-                sui_build = makeTitleBarSUIBuild(ctx_menu, _("Sub-page Buttons"), "sub", require("sui_titlebar").getSubConfig, require("sui_titlebar").saveSubConfig),
+                sui_build = makeTitleBarSUIBuild(ctx_menu, _("Sub-page Buttons"), "sub", require("mui_titlebar").getSubConfig, require("mui_titlebar").saveSubConfig),
             },
             {
                 text      = _("Appearance"):upper(),
                 is_divider= true,
                 sui_build = function(ctx)
-                    return require("sui_window").SectionLabel{ text = _("Appearance"):upper(), inner_w = ctx.inner_w }
+                    return require("mui_window").SectionLabel{ text = _("Appearance"):upper(), inner_w = ctx.inner_w }
                 end,
                 dim       = true,
                 enabled_func = function() return false end,
@@ -1806,7 +1806,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
             },
             {
                 text      = _("Button Size"),
-                enabled_func = function() return require("sui_titlebar").isEnabled() end,
+                enabled_func = function() return require("mui_titlebar").isEnabled() end,
                 sub_item_table = {
                     sizeItem(_("Compact"), "compact"),
                     sizeItem(_("Default"), "default"),
@@ -1823,7 +1823,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
     -- -----------------------------------------------------------------------
 
     -- Quick Actions — delegated to sui_quickactions.lua
-    local QA = require("sui_quickactions")
+    local QA = require("mui_quickactions")
     local function makeQuickActionsMenu(ctx_menu)
         return QA.makeMenuItems(plugin, ctx_menu)
     end
@@ -1844,7 +1844,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
         -- only repaints the menu frame region, not the full HS. nextTick runs after
         -- the current event's onCloseWidget teardown, so the HS is the top widget
         -- by the time the dirty is processed.
-        local HS = package.loaded["sui_homescreen"]
+        local HS = package.loaded["mui_homescreen"]
         if not (HS and HS._instance) then return end
         local hs = HS._instance
         hs:_refreshImmediate(false)
@@ -1975,7 +1975,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                 text                = _("Items"),
                 sub_item_table_func = function() return items_sub end,
                 sui_build = ctx and ctx.is_sui and function(ctx2, _item)
-                    local SUIWindow = require("sui_window")
+                    local SUIWindow = require("mui_window")
                     return SUIWindow.ListRow{
                         title        = _("Items"),
                         subtitle     = function()
@@ -2033,7 +2033,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                                                     if #cur >= MAX_QA_ITEMS then
                                                         local InfoMessage = ctx.InfoMessage or require("ui/widget/infomessage")
                                                         local uim = ctx.UIManager or require("ui/uimanager")
-                                                        local N_ = ctx.N_ or require("sui_i18n").ngettext
+                                                        local N_ = ctx.N_ or require("mui_i18n").ngettext
                                                         uim:show(InfoMessage:new{
                                                             text = string.format(N_("The maximum of %d action per module has been reached. Remove one first.",
                                                                    "The maximum of %d actions per module has been reached. Remove one first.", MAX_QA_ITEMS), MAX_QA_ITEMS), timeout = 2,
@@ -2171,7 +2171,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                         {
                             text = _("Edit Layout"),
                             callback = function()
-                                local SettingsWindow = require("sui_settings_window")
+                                local SettingsWindow = require("mui_settings_window")
                                 SettingsWindow:show()
                             end,
                         },
@@ -2190,9 +2190,9 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
     -- Mirrors the equivalent helper in the stable 1.5.0 Homescreen menu.
     local function _applyFullLayoutRefresh()
         plugin:_rewrapAllWidgets()
-        local Patches = package.loaded["sui_patches"]
+        local Patches = package.loaded["mui_patches"]
         if Patches and Patches.injectWallpaperIntoFullscreenWidget then
-            local core_ok, core = pcall(require, "sui_core")
+            local core_ok, core = pcall(require, "mui_core")
             local stack = core_ok and core.getWindowStack and core.getWindowStack()
             if stack then
                 for _, entry in ipairs(stack) do
@@ -2202,7 +2202,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                 end
             end
         end
-        local HS = package.loaded["sui_homescreen"]
+        local HS = package.loaded["mui_homescreen"]
         if HS and HS.rebuildLayout then
             HS.rebuildLayout()
         end
@@ -2220,7 +2220,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                 text           = _("Enable Wallpaper"),
                 checked_func = function() return SUISettings:isTrue("simpleui_style_wallpaper_enabled") end,
                 callback     = function()
-                    local HS = require("sui_homescreen")
+                    local HS = require("mui_homescreen")
                     HS.styleSetWallpaperEnabled(not SUISettings:isTrue("simpleui_style_wallpaper_enabled"))
                     _applyFullLayoutRefresh()
                 end,
@@ -2231,7 +2231,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                 text = _("Select Wallpaper"),
                 enabled_func = function() return SUISettings:isTrue("simpleui_style_wallpaper_enabled") end,
                 sub_item_table_func = function()
-                    local HS = require("sui_homescreen")
+                    local HS = require("mui_homescreen")
                     local items = {}
                     local wps = HS.styleScanWallpapers()
                     for _, wp in ipairs(wps) do
@@ -2259,15 +2259,15 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
             {
                 text         = _("Transparent status bar"),
                 checked_func = function()
-                    local HS = require("sui_homescreen")
+                    local HS = require("mui_homescreen")
                     return HS.styleStatusbarTransparent()
                 end,
                 enabled_func = function()
                     return SUISettings:isTrue("simpleui_style_wallpaper_enabled")
-                        and require("sui_homescreen").styleGetWallpaper() ~= nil
+                        and require("mui_homescreen").styleGetWallpaper() ~= nil
                 end,
                 callback = function()
-                    local HS = require("sui_homescreen")
+                    local HS = require("mui_homescreen")
                     HS.styleSetStatusbarTransparent(not HS.styleStatusbarTransparent())
                     _applyFullLayoutRefresh()
                 end,
@@ -2278,16 +2278,16 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                 text         = _("Transparent navigation bar"),
                 checked_func = function()
                     if Bottombar.getBarStyle() == "bare" then return true end
-                    local HS = require("sui_homescreen")
+                    local HS = require("mui_homescreen")
                     return HS.styleNavbarTransparent()
                 end,
                 enabled_func = function()
                     return SUISettings:isTrue("simpleui_style_wallpaper_enabled")
-                        and require("sui_homescreen").styleGetWallpaper() ~= nil
+                        and require("mui_homescreen").styleGetWallpaper() ~= nil
                         and Bottombar.getBarStyle() ~= "bare"
                 end,
                 callback = function()
-                    local HS = require("sui_homescreen")
+                    local HS = require("mui_homescreen")
                     HS.styleSetNavbarTransparent(not HS.styleNavbarTransparent())
                     _applyFullLayoutRefresh()
                 end,
@@ -2297,15 +2297,15 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
             {
                 text         = _("Show wallpaper on all screens"),
                 checked_func = function()
-                    local HS = require("sui_homescreen")
+                    local HS = require("mui_homescreen")
                     return HS.styleGetWallpaperShowInFM()
                 end,
                 enabled_func = function()
                     return SUISettings:isTrue("simpleui_style_wallpaper_enabled")
-                        and require("sui_homescreen").styleGetWallpaper() ~= nil
+                        and require("mui_homescreen").styleGetWallpaper() ~= nil
                 end,
                 callback = function()
-                    local HS = require("sui_homescreen")
+                    local HS = require("mui_homescreen")
                     HS.styleSetWallpaperShowInFM(not HS.styleGetWallpaperShowInFM())
                     _applyFullLayoutRefresh()
                 end,
@@ -2315,10 +2315,10 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
             {
                 text = _("Stretch to fill screen"),
                 enabled_func = function() return SUISettings:isTrue("simpleui_style_wallpaper_enabled") end,
-                checked_func = function() return require("sui_homescreen").styleGetWallpaperStretch() end,
+                checked_func = function() return require("mui_homescreen").styleGetWallpaperStretch() end,
                 keep_menu_open = true,
                 callback = function()
-                    local HS = require("sui_homescreen")
+                    local HS = require("mui_homescreen")
                     HS.styleSetWallpaperStretch(not HS.styleGetWallpaperStretch())
                     _applyFullLayoutRefresh()
                 end,
@@ -2326,10 +2326,10 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
             {
                 text = _("Auto-rotate"),
                 enabled_func = function() return SUISettings:isTrue("simpleui_style_wallpaper_enabled") end,
-                checked_func = function() return require("sui_homescreen").styleGetWallpaperAutoRotate() end,
+                checked_func = function() return require("mui_homescreen").styleGetWallpaperAutoRotate() end,
                 keep_menu_open = true,
                 callback = function()
-                    local HS = require("sui_homescreen")
+                    local HS = require("mui_homescreen")
                     HS.styleSetWallpaperAutoRotate(not HS.styleGetWallpaperAutoRotate())
                     _applyFullLayoutRefresh()
                 end,
@@ -2337,10 +2337,10 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
             {
                 text = _("Invert in Night Mode"),
                 enabled_func = function() return SUISettings:isTrue("simpleui_style_wallpaper_enabled") end,
-                checked_func = function() return require("sui_homescreen").styleGetWallpaperInvertNight() end,
+                checked_func = function() return require("mui_homescreen").styleGetWallpaperInvertNight() end,
                 keep_menu_open = true,
                 callback = function()
-                    local HS = require("sui_homescreen")
+                    local HS = require("mui_homescreen")
                     HS.styleSetWallpaperInvertNight(not HS.styleGetWallpaperInvertNight())
                     _applyFullLayoutRefresh()
                 end,
@@ -2350,14 +2350,14 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                     return _("Lighten")
                 end,
                 value_func = function()
-                    local HS = require("sui_homescreen")
+                    local HS = require("mui_homescreen")
                     local op = HS.styleGetWallpaperOpacity()
                     return op .. "%"
                 end,
                 enabled_func = function() return SUISettings:isTrue("simpleui_style_wallpaper_enabled") end,
                 keep_menu_open = true,
                 callback = function()
-                    local HS = require("sui_homescreen")
+                    local HS = require("mui_homescreen")
                     local SpinWidget = require("ui/widget/spinwidget")
                     UIManager:show(SpinWidget:new{
                         title_text = _("Lighten Wallpaper"),
@@ -2444,7 +2444,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                                 default_value = Config.SCALE_DEF,
                                 callback = function(spin)
                                     Config.setModuleScale(spin.value)
-                                    local HS = package.loaded["sui_homescreen"]
+                                    local HS = package.loaded["mui_homescreen"]
                                     if HS and HS.invalidateLabelCache then HS.invalidateLabelCache() end
                                     _applyFullLayoutRefresh()
                                     if ctx and ctx.refresh then ctx.refresh() end
@@ -2481,7 +2481,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                                 default_value = Config.SCALE_DEF,
                                 callback = function(spin)
                                     Config.setLabelScale(spin.value)
-                                    local HS = package.loaded["sui_homescreen"]
+                                    local HS = package.loaded["mui_homescreen"]
                                     if HS and HS.invalidateLabelCache then HS.invalidateLabelCache() end
                                     _applyFullLayoutRefresh()
                                     if ctx and ctx.refresh then ctx.refresh() end
@@ -2499,7 +2499,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                                 ok_text = _("Reset"),
                                 ok_callback = function()
                                     Config.resetAllScales(ctx.pfx, ctx.pfx_qa)
-                                    local HS = package.loaded["sui_homescreen"]
+                                    local HS = package.loaded["mui_homescreen"]
                                     if HS and HS.invalidateLabelCache then HS.invalidateLabelCache() end
                                     _applyFullLayoutRefresh()
                                     if ctx and ctx.refresh then ctx.refresh() end
@@ -2708,10 +2708,10 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
             {
                 text = _("Presets"),
                 sub_item_table_func = function()
-                    local P = require("sui_presets")
+                    local P = require("mui_presets")
                     return P.makeMenuItems{
                         on_apply       = function()
-                            local HS = package.loaded["sui_homescreen"]
+                            local HS = package.loaded["mui_homescreen"]
                             if HS and HS.rebuildLayout then HS.rebuildLayout() end
                             refreshHomescreen()
                             _applyFullLayoutRefresh()
@@ -2738,7 +2738,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
             {
                 text = _("Quick Settings Bar"),
                 sub_item_table_func = function()
-                    local ok, QSBar = pcall(require, "sui_quicksettings_bar")
+                    local ok, QSBar = pcall(require, "mui_quicksettings_bar")
                     return ok and QSBar.makeMenuItems(ctx_menu) or {}
                 end
             },
@@ -2748,7 +2748,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
     plugin.makeBarsMenuItems = makeBarsMenuItems
 
     local function makeLibraryMenuItems(ctx_menu)
-        local ok_fc, FC = pcall(require, "sui_foldercovers")
+        local ok_fc, FC = pcall(require, "mui_foldercovers")
         if not ok_fc or not FC then return {} end
         -- Refresh the mosaic view immediately after any setting change.
         local function _refreshFC()
@@ -2781,18 +2781,18 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
             {
                 text         = _("Enable Browse by Author / Series / Tags"),
                 checked_func = function()
-                    local ok_bm, BM = pcall(require, "sui_browsemeta")
+                    local ok_bm, BM = pcall(require, "mui_browsemeta")
                     return ok_bm and BM and BM.isEnabled()
                 end,
                 callback     = function()
-                    local ok_bm, BM = pcall(require, "sui_browsemeta")
+                    local ok_bm, BM = pcall(require, "mui_browsemeta")
                     if not (ok_bm and BM) then return end
                     local enabling = not BM.isEnabled()
                     BM.setEnabled(enabling)
                     local FM2 = package.loaded["apps/filemanager/filemanager"]
                     local fm2 = FM2 and FM2.instance
                     if fm2 then
-                        local ok_tb, TB = pcall(require, "sui_titlebar")
+                        local ok_tb, TB = pcall(require, "mui_titlebar")
                         if ok_tb and TB then pcall(TB.restore, fm2) end
                     end
                     if enabling then
@@ -2808,7 +2808,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                         pcall(BM.uninstall)
                     end
                     if fm2 then
-                        local ok_tb, TB = pcall(require, "sui_titlebar")
+                        local ok_tb, TB = pcall(require, "mui_titlebar")
                         if ok_tb and TB then pcall(TB.apply, fm2) end
                     end
                 end,
@@ -3375,7 +3375,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                                         },
                                     },
                                     (function()
-                                        local Config = require("sui_config")
+                                        local Config = require("mui_config")
                                         return Config.makeScaleItem({
                                             text_func    = function() return _("Text Size") end,
                                             enabled_func = function() return FC.getLabelMode() ~= "hidden" end,
@@ -3615,7 +3615,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                     -- ── System Icons ──────────────────────────────────────────
                     {
                         text_func = function()
-                            local ok_ss, SUIStyle = pcall(require, "sui_style")
+                            local ok_ss, SUIStyle = pcall(require, "mui_style")
                             if not ok_ss or not SUIStyle then return _("System Icons") end
                             local has_custom = false
                             for _, s in ipairs(SUIStyle.SLOTS) do
@@ -3627,18 +3627,18 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                             return _("System Icons") .. (has_custom and "  \u{270E}" or "")
                         end,
                         sub_item_table_func = function()
-                            local ok_ss, SUIStyle = pcall(require, "sui_style")
+                            local ok_ss, SUIStyle = pcall(require, "mui_style")
                             if not ok_ss or not SUIStyle then return {} end
                             return SUIStyle.makeMenuItems(plugin)
                         end,
                         sui_build = ctx_menu and ctx_menu.is_sui and function(ctx, _item)
-                            local SUIWindow = require("sui_window")
+                            local SUIWindow = require("mui_window")
                             return SUIWindow.ListRow{
                                 title        = type(_item.text_func) == "function" and _item.text_func() or _item.text,
                                 inner_w      = ctx.inner_w,
                                 show_chevron = true,
                                 on_tap       = function()
-                                    local SUIStyle = require("sui_style")
+                                    local SUIStyle = require("mui_style")
                                     if SUIStyle.sui_build_system_icons then SUIStyle.sui_build_system_icons(plugin, ctx_menu, ctx) end
                                 end
                             }
@@ -3648,7 +3648,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                     {
                         text_func = function()
                             local has_custom = false
-                            local ok_qa, QA2 = pcall(require, "sui_quickactions")
+                            local ok_qa, QA2 = pcall(require, "mui_quickactions")
                             if ok_qa and QA2 then
                                 for _, a in ipairs(Config.ALL_ACTIONS) do
                                     if QA2.getDefaultActionIcon(a.id) ~= nil then
@@ -3674,7 +3674,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                                 end
                             end
                             if not has_custom then
-                                local ok_ss, SUIStyle = pcall(require, "sui_style")
+                                local ok_ss, SUIStyle = pcall(require, "mui_style")
                                 if ok_ss and SUIStyle then
                                     for _, s in ipairs(SUIStyle.SLOTS) do
                                         if s.group == "sui_qa_defaults" and SUIStyle.getIcon(s.id) ~= nil then
@@ -3687,18 +3687,18 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                             return _("Quick Actions Icons") .. (has_custom and "  \u{270E}" or "")
                         end,
                         sub_item_table_func = function()
-                            local ok_qa, QA2 = pcall(require, "sui_quickactions")
+                            local ok_qa, QA2 = pcall(require, "mui_quickactions")
                             if not ok_qa or not QA2 then return {} end
                             return QA2.makeIconsMenuItems(plugin)
                         end,
                         sui_build = ctx_menu and ctx_menu.is_sui and function(ctx, _item)
-                            local SUIWindow = require("sui_window")
+                            local SUIWindow = require("mui_window")
                             return SUIWindow.ListRow{
                                 title        = type(_item.text_func) == "function" and _item.text_func() or _item.text,
                                 inner_w      = ctx.inner_w,
                                 show_chevron = true,
                                 on_tap       = function()
-                                    local QA2 = require("sui_quickactions")
+                                    local QA2 = require("mui_quickactions")
                                     if QA2.sui_build_qa_icons then QA2.sui_build_qa_icons(plugin, ctx_menu, ctx) end
                                 end
                             }
@@ -3708,7 +3708,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                     {
                         text = _("Icon Packs"),
                         sub_item_table_func = function()
-                            local ok_ip, IP = pcall(require, "sui_style")
+                            local ok_ip, IP = pcall(require, "mui_style")
                             if not ok_ip or not IP then
                                 return {{ text = _("Module unavailable"), enabled = false }}
                             end
@@ -3716,7 +3716,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                             -- ── Helper: reapply all icon changes ─────────────────
                             local function _reapplyAllPacks()
                                 -- Titlebar (system icons)
-                                local ok_tb, TB = pcall(require, "sui_titlebar")
+                                local ok_tb, TB = pcall(require, "mui_titlebar")
                                 if ok_tb and TB then
                                     local FM = package.loaded["apps/filemanager/filemanager"]
                                     local fm = FM and FM.instance
@@ -3728,7 +3728,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                                     end
                                 end
                                 -- Pagination chevrons and collections back button
-                                local ok_ss2, SS2 = pcall(require, "sui_style")
+                                local ok_ss2, SS2 = pcall(require, "mui_style")
                                 if ok_ss2 and SS2 then
                                     local FM2 = package.loaded["apps/filemanager/filemanager"]
                                     local fm2 = FM2 and FM2.instance
@@ -3750,9 +3750,9 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                                 end
 
                                 -- Invalidate Quick Actions & Folder Covers caches
-                                local ok_qa, QA_pack = pcall(require, "sui_quickactions")
+                                local ok_qa, QA_pack = pcall(require, "mui_quickactions")
                                 if ok_qa and QA_pack and QA_pack.invalidateCustomQACache then QA_pack.invalidateCustomQACache() end
-                                local ok_fc, FC = pcall(require, "sui_foldercovers")
+                                local ok_fc, FC = pcall(require, "mui_foldercovers")
                                 if ok_fc and FC and FC.invalidateCache then FC.invalidateCache() end
                                 local FM = package.loaded["apps/filemanager/filemanager"]
                                 local fm_inst = FM and FM.instance
@@ -3765,7 +3765,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                                 -- QA navbars
                                 plugin:_rebuildAllNavbars()
                                 -- Homescreen
-                                local HS = package.loaded["sui_homescreen"]
+                                local HS = package.loaded["mui_homescreen"]
                                 if HS and HS._instance then
                                     local hs = HS._instance
                                     UIManager:nextTick(function()
@@ -3875,16 +3875,16 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                     {
                         text = _("Icon Presets"),
                         sub_item_table_func = function()
-                            local ok_ip, P   = pcall(require, "sui_presets")
-                            local ok_qa, QA2 = pcall(require, "sui_quickactions")
-                            local ok_ss, SS2 = pcall(require, "sui_style")
+                            local ok_ip, P   = pcall(require, "mui_presets")
+                            local ok_qa, QA2 = pcall(require, "mui_quickactions")
+                            local ok_ss, SS2 = pcall(require, "mui_style")
                             local IP  = ok_ip and P and P.icons or nil
                             local QA2 = ok_qa and QA2 or nil
 
                             -- Helper: reapply all icon changes after a preset is applied.
                             local function _reapplyAll()
                                 -- Titlebar (system icons).
-                                local ok_tb, TB = pcall(require, "sui_titlebar")
+                                local ok_tb, TB = pcall(require, "mui_titlebar")
                                 if ok_tb and TB then
                                     local FM = package.loaded["apps/filemanager/filemanager"]
                                     local fm = FM and FM.instance
@@ -3896,7 +3896,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                                     end
                                 end
                                 -- Pagination chevrons and collections back button.
-                                local ok_ss2, SS2 = pcall(require, "sui_style")
+                                local ok_ss2, SS2 = pcall(require, "mui_style")
                                 if ok_ss2 and SS2 then
                                     local FM2 = package.loaded["apps/filemanager/filemanager"]
                                     local fm2 = FM2 and FM2.instance
@@ -3919,7 +3919,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
 
                                 -- Invalidate Quick Actions & Folder Covers caches
                                 if QA2 and QA2.invalidateCustomQACache then QA2.invalidateCustomQACache() end
-                                local ok_fc, FC = pcall(require, "sui_foldercovers")
+                                local ok_fc, FC = pcall(require, "mui_foldercovers")
                                 if ok_fc and FC and FC.invalidateCache then FC.invalidateCache() end
                                 local FM = package.loaded["apps/filemanager/filemanager"]
                                 local fm_inst = FM and FM.instance
@@ -3934,7 +3934,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                                 -- Homescreen: rebuild layout after the menu
                                 -- closes (nextTick) so setDirty is
                                 -- processed with the HS on top of the stack.
-                                local HS = package.loaded["sui_homescreen"]
+                                local HS = package.loaded["mui_homescreen"]
                                 if HS and HS._instance then
                                     local hs = HS._instance
                                     UIManager:nextTick(function()
@@ -4116,7 +4116,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                                         return sub
                                     end,
                                     sui_build = ctx_menu and ctx_menu.is_sui and function(ctx, _item)
-                                        local SUIWindow = require("sui_window")
+                                        local SUIWindow = require("mui_window")
                                         return SUIWindow.ListRow{
                                             title        = _("Manage presets"),
                                             inner_w      = ctx.inner_w,
@@ -4129,7 +4129,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                                                             {
                                                                 text = "Items List",
                                                                 sui_build = function(ctx2)
-                                                                    local SUIWindow2 = require("sui_window")
+                                                                    local SUIWindow2 = require("mui_window")
                                                                     local rows = {}
                                                                     for _k, name in ipairs(IP and IP.listNames() or {}) do
                                                                         local _name = name
@@ -4299,7 +4299,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
             {
                 text = _("UI Font"),
                 text_func = function()
-                    local ok_ss, SUIStyle = pcall(require, "sui_style")
+                    local ok_ss, SUIStyle = pcall(require, "mui_style")
                     if not ok_ss or not SUIStyle then return _("UI Font") end
                     local enabled = SUISettings:isTrue("simpleui_ui_font_enabled")
                     local name    = SUISettings:get("simpleui_ui_font_name") or "Noto Sans"
@@ -4309,7 +4309,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                     return string.format(_("UI Font  [%s]"), name)
                 end,
                 sub_item_table_func = function()
-                    local ok_ss, SUIStyle = pcall(require, "sui_style")
+                    local ok_ss, SUIStyle = pcall(require, "mui_style")
                     if not ok_ss or not SUIStyle then return {} end
                     local ok_fi, items = pcall(SUIStyle.makeFontMenuItems)
                     if not ok_fi or type(items) ~= "table" then return {} end
@@ -4404,7 +4404,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                     return _("Theme Colors") .. (has and "  \u{270E}" or "")
                 end,
                 sub_item_table_func = function()
-                    local ok_ss, SUIStyle = pcall(require, "sui_style")
+                    local ok_ss, SUIStyle = pcall(require, "mui_style")
                     if not ok_ss or not SUIStyle then return {} end
                     local ok_fi, items = pcall(SUIStyle.makeThemeMenuItems)
                     if not ok_fi or type(items) ~= "table" then return {} end
@@ -4447,7 +4447,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
             {
                 text      = _("Check for Updates"),
                 callback  = function()
-                    local ok_upd, Updater = pcall(require, "sui_updater")
+                    local ok_upd, Updater = pcall(require, "mui_updater")
                     if not ok_upd then
                         local UIM = ctx_menu and ctx_menu.UIManager or UIManager
                         local InfoMsg = ctx_menu and ctx_menu.InfoMessage or InfoMessage()
@@ -4609,7 +4609,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
     -- Update banner: injected as the first item of the main menu
     -- when a newer version is available. Uses in-memory cache (zero I/O).
     do
-        local ok_u, Updater = pcall(require, "sui_updater")
+        local ok_u, Updater = pcall(require, "mui_updater")
         local banner = (ok_u and Updater) and Updater.build_update_banner_item() or nil
         if banner then
             table.insert(menu_items.simpleui.sub_item_table, 1, banner)

@@ -5,11 +5,11 @@
 -- 1. Requires
 -- ---------------------------------------------------------------------------
 
-local _           = require("sui_i18n").translate
+local _           = require("mui_i18n").translate
 local lfs         = require("libs/libkoreader-lfs")
 local logger      = require("logger")
-local SUISettings = require("sui_store")
-local SUIStyle    = require("sui_style")
+local SUISettings = require("mui_store")
+local SUIStyle    = require("mui_style")
 
 -- Cached at module level so require() hits the cache on every cell render.
 local AlphaContainer  = require("ui/widget/container/alphacontainer")
@@ -955,7 +955,7 @@ local function _installFileDialogButton(BookInfoManager)
                     if is_virtual_series then
                         _openSeriesGroupCoverPicker(file, fc, BookInfoManager)
                     elseif is_virtual_meta then
-                        local ok_bm, BM = pcall(require, "sui_browsemeta")
+                        local ok_bm, BM = pcall(require, "mui_browsemeta")
                         if ok_bm and BM and BM.openVirtualCoverPicker then
                             BM.openVirtualCoverPicker(file, fc)
                         end
@@ -1188,7 +1188,7 @@ local function _sgOpenGroup(file_chooser, group_item)
     items._sg_is_series_view = true
     items._sg_parent_path    = file_chooser.path
     file_chooser:switchItemTable(nil, items, nil, nil, group_item.text)
-    local ok_p, Patches = pcall(require, "sui_patches")
+    local ok_p, Patches = pcall(require, "mui_patches")
     if ok_p and Patches and Patches.setFMPathBase then
         local fm = require("apps/filemanager/filemanager").instance
         Patches.setFMPathBase(group_item.text, fm)
@@ -1345,7 +1345,7 @@ local function _installSeriesGrouping()
 
         -- Flush disk-level cover caches only when the library was actually
         -- visited (files may have been added/removed).
-        local HS = package.loaded["sui_homescreen"]
+        local HS = package.loaded["mui_homescreen"]
         if HS and HS._library_was_visited then
             for k in pairs(_cover_file_cache)   do _cover_file_cache[k]   = nil end
             for k in pairs(_cfc_b)              do _cfc_b[k]              = nil end
@@ -2015,7 +2015,7 @@ local function _installStripPatch(MosaicMenuItem, BookInfoManager, _STRIP_H,
         local TextWidget_s  = require("ui/widget/textwidget")
         local BD_s          = require("ui/bidi")
         local Screen_s      = require("device").screen
-        local UI_core       = require("sui_core")
+        local UI_core       = require("mui_core")
 
         local TITLE_FONT_S  = SUIStyle.FS_DETAIL    -- 15: cover title in size-probe context
         local AUTHOR_FONT_S = SUIStyle.FS_CAPTION   -- 12: cover author in size-probe context
@@ -2154,7 +2154,7 @@ local function _installStripPatch(MosaicMenuItem, BookInfoManager, _STRIP_H,
 
             -- Blit the strip immediately below the cover area.
             if self._simpleui_strip_bb then
-                local ok_hs, HS_s = pcall(require, "sui_homescreen")
+                local ok_hs, HS_s = pcall(require, "mui_homescreen")
                 local wp_active = ok_hs and HS_s
                     and HS_s.styleGetWallpaperShowInFM()
                     and HS_s.styleGetBgWidget() ~= nil
@@ -2487,14 +2487,14 @@ function M.install()
 
         -- Defer the first folder-cover pass when the homescreen is visible
         -- so the HS paints first and the user sees no blank frames.
-        local HS = package.loaded["sui_homescreen"]
+        local HS = package.loaded["mui_homescreen"]
         if HS and HS._instance and not self.menu._fc_hs_deferred then
             self.menu._fc_hs_deferred = true
             local menu_ref = self.menu
             local UIManager = require("ui/uimanager")
             UIManager:nextTick(function()
                 menu_ref._fc_hs_deferred = false
-                local HS2 = package.loaded["sui_homescreen"]
+                local HS2 = package.loaded["mui_homescreen"]
                 if HS2 and HS2._instance then return end
                 local fm = package.loaded["apps/filemanager/filemanager"]
                 if not fm or not fm.instance or fm.instance.tearing_down then return end
@@ -2780,12 +2780,12 @@ function M.install()
 
         local actual_icon_path = _ICON_PATH
         pcall(function()
-            local SUIStyle = require("sui_style")
+            local SUIStyle = require("mui_style")
             local custom = SUIStyle.getIcon("sui_fc_empty")
             if custom then actual_icon_path = custom end
         end)
 
-        local Config    = require("sui_config")
+        local Config    = require("mui_config")
         local nerd_char = Config.nerdIconChar(actual_icon_path)
 
         if nerd_char then

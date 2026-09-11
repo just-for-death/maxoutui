@@ -51,12 +51,12 @@
 local Device      = require("device")
 local Geom        = require("ui/geometry")
 local UIManager   = require("ui/uimanager")
-local _           = require("sui_i18n").translate
+local _           = require("mui_i18n").translate
 
-local SUI         = require("sui_window")
-local SUIStyle    = require("sui_style")
+local SUI         = require("mui_window")
+local SUIStyle    = require("mui_style")
 local Registry    = require("desktop_modules/moduleregistry")
-local SUISettings = require("sui_store")
+local SUISettings = require("mui_store")
 
 local SortWidget  = require("ui/widget/sortwidget")
 local ButtonDialog = require("ui/widget/buttondialog")
@@ -127,7 +127,7 @@ function LayoutService.save(layout)
         end
     end
 
-    local HS = package.loaded["sui_homescreen"]
+    local HS = package.loaded["mui_homescreen"]
     if HS and HS._instance then
         pcall(function() HS.refresh(false) end)
     end
@@ -200,7 +200,7 @@ local function buildScreens(st)
             show_item_picker  = function(params) ctx.push("item_picker", params) end,
             UIManager    = UIManager,
             _            = _,
-            N_           = require("sui_i18n").ngettext,
+            N_           = require("mui_i18n").ngettext,
             InfoMessage  = require("ui/widget/infomessage"),
             SortWidget   = SortWidget,
             lock_overlay   = ctx.lockOverlay,
@@ -278,7 +278,7 @@ local function buildScreens(st)
             SUI.ListRow{
                 title        = _("Quick Actions"),
                 subtitle     = (function()
-                    local Config = require("sui_config")
+                    local Config = require("mui_config")
                     local n = #Config.getCustomQAList()
                     if n == 0 then return _("Global custom quick actions") end
                     return string.format(_("Global custom quick actions  (%d/%d)"), n, Config.MAX_CUSTOM_QA)
@@ -286,7 +286,7 @@ local function buildScreens(st)
                 inner_w      = iw,
                 show_chevron = true,
                 on_tap       = function()
-                    local ok, QA = pcall(require, "sui_quickactions")
+                    local ok, QA = pcall(require, "mui_quickactions")
                     if ok and QA and QA.sui_show_qa_list then
                         QA.sui_show_qa_list(getPlugin(), makeCtxMenu(ctx), ctx)
                     else
@@ -431,7 +431,7 @@ local function buildScreens(st)
             if row_counters[mod_id] then
                 local entry = row_counters[mod_id]
                 if entry.kind == "spacer" then
-                    local ok_cfg, Config2 = pcall(require, "sui_config")
+                    local ok_cfg, Config2 = pcall(require, "mui_config")
                     if ok_cfg and Config2 then
                         local pct = Config2.getModuleScalePct(mod_id, "simpleui_hs_")
                         mod_subtitle = pct .. "%"
@@ -440,7 +440,7 @@ local function buildScreens(st)
                     local items_key = "simpleui_hs_qa_" .. mod_id .. "_items"
                     local qa_ids = SUISettings:readSetting(items_key) or {}
                     if #qa_ids > 0 then
-                        local ok_qa, QA = pcall(require, "sui_quickactions")
+                        local ok_qa, QA = pcall(require, "mui_quickactions")
                         if ok_qa and QA and QA.getEntry then
                             local names = {}
                             for _, qa_id in ipairs(qa_ids) do
@@ -692,7 +692,7 @@ local function buildScreens(st)
 
     -- ── 2.9. Presets ─────────────────────────────────────────────────────────
     local function buildPresets(ctx)
-        local ok, SUIPresets = pcall(require, "sui_presets")
+        local ok, SUIPresets = pcall(require, "mui_presets")
         if not ok or not SUIPresets then
             return { SUI.ListRow{ title = _("Presets module unavailable."), inner_w = ctx.inner_w } }
         end
@@ -700,9 +700,9 @@ local function buildScreens(st)
         local function _applyFullLayoutRefresh()
             local plugin = getPlugin()
             if plugin then plugin:_rewrapAllWidgets() end
-            local Patches = package.loaded["sui_patches"]
+            local Patches = package.loaded["mui_patches"]
             if Patches and Patches.injectWallpaperIntoFullscreenWidget then
-                local core_ok, core = pcall(require, "sui_core")
+                local core_ok, core = pcall(require, "mui_core")
                 local stack = core_ok and core.getWindowStack and core.getWindowStack()
                 if stack then
                     for _, entry in ipairs(stack) do
@@ -722,7 +722,7 @@ local function buildScreens(st)
 
         local items = SUIPresets.makeMenuItems{
             on_apply       = function()
-                local HS = package.loaded["sui_homescreen"]
+                local HS = package.loaded["mui_homescreen"]
                 if HS and HS.rebuildLayout then HS.rebuildLayout() end
                 _applyFullLayoutRefresh()
                 ctx.repaint()
@@ -919,7 +919,7 @@ function SettingsWindow:show(on_close)
     local screens = buildScreens(st)
     local titles  = makeScreenTitles(st)
 
-    local Config = require("sui_config")
+    local Config = require("mui_config")
     local win = SUI:new{
         name           = "sui_win_settings",
         screens        = screens,

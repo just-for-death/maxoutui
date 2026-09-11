@@ -41,16 +41,16 @@ local VerticalSpan      = require("ui/widget/verticalspan")
 local InputContainer    = require("ui/widget/container/inputcontainer")
 local GestureRange      = require("ui/gesturerange")
 
-local SUISettings = require("sui_store")
-local _           = require("sui_i18n").translate
-local N_          = require("sui_i18n").ngettext
+local SUISettings = require("mui_store")
+local _           = require("mui_i18n").translate
+local N_          = require("mui_i18n").ngettext
 
 -- Lazy references
 local function _QA()
-    return package.loaded["sui_quickactions"] or require("sui_quickactions")
+    return package.loaded["mui_quickactions"] or require("mui_quickactions")
 end
 local function _Config()
-    return package.loaded["sui_config"] or require("sui_config")
+    return package.loaded["mui_config"] or require("mui_config")
 end
 
 local QSBar = {}
@@ -139,7 +139,7 @@ local function buildPanel(touch_menu)
     -- ── Action-button row ────────────────────────────────────────────────────
     local btn_size  = Screen:scaleBySize(60)
     local icon_size = math.floor(btn_size * 0.52)
-    local ok_style, SUIStyle = pcall(require, "sui_style")
+    local ok_style, SUIStyle = pcall(require, "mui_style")
     local lbl_fs    = math.max(6, math.floor((ok_style and SUIStyle.FS_DETAIL or 15) * (getLabelScalePct() / 100)))
     local lbl_face  = Font:getFace(ok_style and SUIStyle.FACE_REGULAR or "cfont", lbl_fs)
     local border_sz = ok_style and SUIStyle.BORDER_SZ or 1
@@ -152,7 +152,7 @@ local function buildPanel(touch_menu)
         local icon_widget
         local Config = _Config()
         local is_nerd = Config.isNerdIcon(entry.icon)
-        local ok_style, SUIStyle = pcall(require, "sui_style")
+        local ok_style, SUIStyle = pcall(require, "mui_style")
         
         if is_nerd then
             local nerd_char = Config.nerdIconChar(entry.icon)
@@ -305,7 +305,7 @@ local function buildPanel(touch_menu)
 
                         if in_reader and not is_in_place then
                             if _aid == "homescreen" then
-                                require("sui_patches").closeReaderToHomescreen(plugin_live)
+                                require("mui_patches").closeReaderToHomescreen(plugin_live)
                             else
                                 local readerui = RUI.instance
                                 local file = readerui.document and readerui.document.file
@@ -327,7 +327,7 @@ local function buildPanel(touch_menu)
                                 if not ok then logger.warn("simpleui QSBar: execute error", _aid, tostring(err)) end
                             else
                                 local fm_self = fm_live
-                                local UI = package.loaded["sui_core"]
+                                local UI = package.loaded["mui_core"]
                                 if UI then
                                     local stack = UI.getWindowStack()
                                     for i = #stack, 1, -1 do
@@ -812,7 +812,7 @@ local _panel_tab = {
 --- ReaderMenu's tab_item_table, so mutating its `.icon` field here updates
 --- the tab everywhere it appears, independent of injection/patch ordering.
 function QSBar.refreshPanelTabIcon()
-    local ok_ss, SUIStyle = pcall(require, "sui_style")
+    local ok_ss, SUIStyle = pcall(require, "mui_style")
     local override_path = ok_ss and SUIStyle and SUIStyle.getIcon("sui_tab_qs_panel")
     local name = nil
     if override_path and ok_ss and SUIStyle.registerTabIconName then
@@ -1023,7 +1023,7 @@ function QSBar.uninstall()
 end
 
 _showQSBarSettingsWindow = function(touch_menu)
-    local SUIWindow = require("sui_window")
+    local SUIWindow = require("mui_window")
     
     local function buildRoot(ctx)
         local ctx_menu = SUIWindow.makeCtxMenu(ctx)
@@ -1196,7 +1196,7 @@ function QSBar.makeMenuItems(ctx_menu)
         text                = _("Quick Actions"),
         sub_item_table_func = function() return items_sub end,
         sui_build = ctx_menu and ctx_menu.is_sui and function(ctx, _item)
-            local SUIWindow = require("sui_window")
+            local SUIWindow = require("mui_window")
             return SUIWindow.ListRow{
                 title        = _("Quick Actions"),
                         subtitle     = function()

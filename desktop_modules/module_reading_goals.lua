@@ -18,14 +18,14 @@ local UIManager       = require("ui/uimanager")
 local VerticalGroup   = require("ui/widget/verticalgroup")
 local VerticalSpan    = require("ui/widget/verticalspan")
 local Screen          = Device.screen
-local _ = require("sui_i18n").translate
-local N_ = require("sui_i18n").ngettext
+local _ = require("mui_i18n").translate
+local N_ = require("mui_i18n").ngettext
 local logger          = require("logger")
-local Config          = require("sui_config")
+local Config          = require("mui_config")
 
-local UI           = require("sui_core")
-local SUISettings  = require("sui_store")
-local SUIStyle     = require("sui_style")
+local UI           = require("mui_core")
+local SUISettings  = require("mui_store")
+local SUIStyle     = require("mui_style")
 local PAD          = UI.PAD
 local PAD2         = UI.PAD2
 local LABEL_H      = UI.LABEL_H
@@ -376,7 +376,7 @@ end
 local function _refreshHS()
     local SP = package.loaded["desktop_modules/module_stats_provider"]
     if SP then SP.invalidate() end
-    local HS = package.loaded["sui_homescreen"]
+    local HS = package.loaded["mui_homescreen"]
     if HS then HS.refresh(false) end
 end
 
@@ -584,7 +584,7 @@ function M.build(w, ctx)
 
     local rg_update_funcs = {}
     -- Theme
-    local ok_ss, SUIStyle  = pcall(require, "sui_style")
+    local ok_ss, SUIStyle  = pcall(require, "mui_style")
     local _theme_fg        = ok_ss and SUIStyle and SUIStyle.getThemeColor("fg")
     local _theme_secondary = ok_ss and SUIStyle and SUIStyle.getThemeColor("text_secondary")
     local CLR_TEXT_BLK_EFF = _theme_fg or _CLR_TEXT_LBL
@@ -622,7 +622,7 @@ function M.build(w, ctx)
                 local row_widget, row_update_fn = buildCompactGoalRow(
                     inner_w, lbl_w, pct_w, year_str, ann_pct, ann_pct_str, ann_detail,
                     function()
-                        local ok, SW = pcall(require, "sui_stats_windows")
+                        local ok, SW = pcall(require, "mui_stats_windows")
                         if ok and SW and SW.showFinishedBooksDialog then
                             if SW.showLoadingNotice then SW.showLoadingNotice() end
                             SW.showFinishedBooksDialog()
@@ -676,7 +676,7 @@ function M.build(w, ctx)
                 local row_widget, row_update_fn = buildGoalRow(
                     inner_w, year_str, pct, pct_str, detail,
                     function()
-                        local ok, SW = pcall(require, "sui_stats_windows")
+                        local ok, SW = pcall(require, "mui_stats_windows")
                         if ok and SW and SW.showFinishedBooksDialog then
                             if SW.showLoadingNotice then SW.showLoadingNotice() end
                             SW.showFinishedBooksDialog()
@@ -792,7 +792,7 @@ function M.getHeight(_ctx)
     local n = (showAnnual() and 1 or 0) + (showMonthly() and 1 or 0) + (showDaily() and 1 or 0)
     if n == 0 then return 0 end
     local pfx = _ctx and _ctx.pfx or ""
-    local label_h = require("sui_config").getScaledLabelH()
+    local label_h = require("mui_config").getScaledLabelH()
     local h = 0
     if isCompact() then
         h = _compactRowsHeight(n, _compactDims(Config.getModuleScale("reading_goals", pfx)))
@@ -892,7 +892,7 @@ function M.getMenuItems(ctx_menu)
                 },
             },
             sui_build = ctx_menu.is_sui and function(ctx, _item)
-                local SUIWindow = require("sui_window")
+                local SUIWindow = require("mui_window")
                 return SUIWindow.ListRow{
                     title        = _lc("Goals"),
                     subtitle     = function()
@@ -1032,7 +1032,7 @@ function M.getMenuItems(ctx_menu)
             keep_menu_open = true,
             callback = function() showAnnualPhysicalDialog(refresh) end,
             sui_build = ctx_menu.is_sui and function(ctx, _item)
-                local SUIWindow = require("sui_window")
+                local SUIWindow = require("mui_window")
                 local p = getAnnualPhysical()
                 local right = p > 0
                     and string.format(N_lc("%d in %s", "%d in %s", p), p, _getYearStr())
@@ -1099,7 +1099,7 @@ function M.getMenuItems(ctx_menu)
                 local MCD = package.loaded["desktop_modules/module_coverdeck"]
                 if MCD and MCD.invalidateCache then MCD.invalidateCache() end
                 
-                local HS = package.loaded["sui_homescreen"]
+                local HS = package.loaded["mui_homescreen"]
                 if HS then
                     HS._cached_books_state = nil
                     HS._cfg_cache = nil

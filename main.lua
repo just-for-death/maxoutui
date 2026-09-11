@@ -10,16 +10,16 @@ local Dispatcher      = require("dispatcher")
 -- Each simpleui module captures its own local translation proxy from sui_i18n.
 -- The native package.loaded["gettext"] is never wrapped or replaced, which
 -- prevents state-mutation conflicts with other plugins (e.g. zlibrary).
-local I18n = require("sui_i18n")
+local I18n = require("mui_i18n")
 local _    = I18n.translate
 
-local Config       = require("sui_config")
-local UI           = require("sui_core")
-local Bottombar    = require("sui_bottombar")
-local Topbar       = require("sui_topbar")
-local QSBar        = require("sui_quicksettings_bar")
-local Patches      = require("sui_patches")
-local SUISettings  = require("sui_store")
+local Config       = require("mui_config")
+local UI           = require("mui_core")
+local Bottombar    = require("mui_bottombar")
+local Topbar       = require("mui_topbar")
+local QSBar        = require("mui_quicksettings_bar")
+local Patches      = require("mui_patches")
+local SUISettings  = require("mui_store")
 
 -- ---------------------------------------------------------------------------
 -- ReaderStatistics class-table accessor
@@ -66,7 +66,7 @@ local function _requireStatistics()
     return nil
 end
 
-local SimpleUIPlugin = WidgetContainer:new{
+local MaxOutUIPlugin = WidgetContainer:new{
     name = "simpleui",
 
     active_action             = nil,
@@ -95,7 +95,7 @@ local SimpleUIPlugin = WidgetContainer:new{
 -- Lifecycle
 -- ---------------------------------------------------------------------------
 
-function SimpleUIPlugin:init()
+function MaxOutUIPlugin:init()
     local ok, err = pcall(function()
         -- Ensure the simpleui settings directory tree exists before any
         -- SUISettings call.  SUISettings is lazy — its LuaSettings store is
@@ -155,7 +155,7 @@ function SimpleUIPlugin:init()
                     "— restart recommended")
                 UIManager:scheduleIn(1, function()
                     local InfoMessage = require("ui/widget/infomessage")
-                    local _t = require("sui_i18n").translate
+                    local _t = require("mui_i18n").translate
                     UIManager:show(InfoMessage:new{
                         text = string.format(
                             _t("MaxOutUI was updated (%s → %s).\n\nA restart is recommended to apply all changes cleanly."),
@@ -852,7 +852,7 @@ function SimpleUIPlugin:init()
         -- SUIStyle is lazy (module-level init runs only when the font menu opens)
         -- so this pcall is cheap on the common path where no custom font is set.
         do
-            local ok_ss, SUIStyle = pcall(require, "sui_style")
+            local ok_ss, SUIStyle = pcall(require, "mui_style")
             if ok_ss and SUIStyle and SUIStyle.applyUIFont then
                 pcall(SUIStyle.applyUIFont)
             end
@@ -865,31 +865,31 @@ function SimpleUIPlugin:init()
         Dispatcher:init()
         Dispatcher:registerAction("simpleui_go_homescreen", {
             category = "none",
-            event    = "SimpleUIGoHomescreen",
+            event    = "MaxOutUIGoHomescreen",
             title    = _("MaxOutUI: Go to Homescreen"),
             general  = true,
         })
         Dispatcher:registerAction("simpleui_go_library", {
             category = "none",
-            event    = "SimpleUIGoLibrary",
+            event    = "MaxOutUIGoLibrary",
             title    = _("MaxOutUI: Go to Library"),
             general  = true,
         })
         Dispatcher:registerAction("simpleui_toggle_home_library", {
             category = "none",
-            event    = "SimpleUIToggleHomeLibrary",
+            event    = "MaxOutUIToggleHomeLibrary",
             title    = _("MaxOutUI: Toggle Homescreen / Library"),
             general  = true,
         })
     Dispatcher:registerAction("simpleui_settings_window", {
         category = "none",
-        event    = "SimpleUISettingsWindow",
+        event    = "MaxOutUISettingsWindow",
         title    = _("MaxOutUI: Settings"),
         general  = true,
     })
     Dispatcher:registerAction("simpleui_recent_window", {
         category = "none",
-        event    = "SimpleUIRecentWindow",
+        event    = "MaxOutUIRecentWindow",
         title    = _("MaxOutUI: Recent"),
         general  = true,
     })
@@ -948,7 +948,7 @@ function SimpleUIPlugin:init()
                 -- After toggling TBR, close the dialog and refresh the file list,
                 -- matching the same behaviour as "On Hold", "Reading", etc.
                 -- Note: file_dialog is a property of file_chooser, not FM.instance.
-                FM.instance:addFileDialogButtons("sui_tbr", function(file, is_file, book_props)
+                FM.instance:addFileDialogButtons("mui_tbr", function(file, is_file, book_props)
                     local close_refresh = function()
                         local fc = FM.instance and FM.instance.file_chooser
                         local dlg = fc and fc.file_dialog
@@ -960,7 +960,7 @@ function SimpleUIPlugin:init()
 
                 local ok_manga, Manga = pcall(require, "desktop_modules/module_manga")
                 if ok_manga and Manga then
-                    FM.instance:addFileDialogButtons("sui_pinned_manga", function(file, is_file, _book_props)
+                    FM.instance:addFileDialogButtons("mui_pinned_manga", function(file, is_file, _book_props)
                         if not is_file then return nil end
                         local close_refresh = function()
                             local fc = FM.instance and FM.instance.file_chooser
@@ -1027,12 +1027,12 @@ function SimpleUIPlugin:init()
                     -- Note: row_func here accepts an optional 4th arg (close_cb)
                     -- injected by the patched onMenuHold above.
                     FS.file_dialog_added_buttons = FS.file_dialog_added_buttons or { index = {} }
-                    if FS.file_dialog_added_buttons.index["sui_tbr"] == nil then
+                    if FS.file_dialog_added_buttons.index["mui_tbr"] == nil then
                         local row_func = function(file, is_file, book_props, close_cb)
                             return _makeTBRRow(file, is_file, book_props, close_cb)
                         end
                         table.insert(FS.file_dialog_added_buttons, row_func)
-                        FS.file_dialog_added_buttons.index["sui_tbr"] =
+                        FS.file_dialog_added_buttons.index["mui_tbr"] =
                             #FS.file_dialog_added_buttons
                     end
                 end
@@ -1049,7 +1049,7 @@ function SimpleUIPlugin:init()
             UIManager:scheduleIn(0, function()
                 local ok_fm2, FM2 = pcall(require, "apps/filemanager/filemanager")
                 if not (ok_fm2 and FM2 and FM2.instance) then return end
-                local ok_bm, BM = pcall(require, "sui_browsemeta")
+                local ok_bm, BM = pcall(require, "mui_browsemeta")
                 if not (ok_bm and BM) then return end
 
                 -- Shared factory: returns a button row or nil.
@@ -1080,7 +1080,7 @@ function SimpleUIPlugin:init()
                 end
 
                 -- 1. Library browser (FileManager.showFileDialog).
-                FM2.instance:addFileDialogButtons("sui_browse_author", function(file, is_file, book_props)
+                FM2.instance:addFileDialogButtons("mui_browse_author", function(file, is_file, book_props)
                     local close_nav = function()
                         local fc2 = FM2.instance and FM2.instance.file_chooser
                         local dlg = fc2 and fc2.file_dialog
@@ -1096,12 +1096,12 @@ function SimpleUIPlugin:init()
                 local ok_fs2, FS2 = pcall(require, "apps/filemanager/filemanagerfilesearcher")
                 if ok_fs2 and FS2 then
                     FS2.file_dialog_added_buttons = FS2.file_dialog_added_buttons or { index = {} }
-                    if FS2.file_dialog_added_buttons.index["sui_browse_author"] == nil then
+                    if FS2.file_dialog_added_buttons.index["mui_browse_author"] == nil then
                         local row_func = function(file, is_file, book_props, close_cb)
                             return _makeAuthorRow(file, is_file, book_props, close_cb)
                         end
                         table.insert(FS2.file_dialog_added_buttons, row_func)
-                        FS2.file_dialog_added_buttons.index["sui_browse_author"] =
+                        FS2.file_dialog_added_buttons.index["mui_browse_author"] =
                             #FS2.file_dialog_added_buttons
                     end
                 end
@@ -1124,7 +1124,7 @@ function SimpleUIPlugin:init()
                         text = _("Book statistics"),
                         callback = function()
                             if close_cb then close_cb() end
-                            local ok_sw, SW = pcall(require, "sui_stats_windows")
+                            local ok_sw, SW = pcall(require, "mui_stats_windows")
                             if ok_sw and SW then
                                 if SW.showLoadingNotice then SW.showLoadingNotice() end
                                 SW.showBookStatsFromFile(file)
@@ -1134,7 +1134,7 @@ function SimpleUIPlugin:init()
                 end
 
                 -- 1. Library browser (FileManager.showFileDialog).
-                FM3.instance:addFileDialogButtons("sui_book_stats", function(file, is_file, book_props)
+                FM3.instance:addFileDialogButtons("mui_book_stats", function(file, is_file, book_props)
                     local close_cb = function()
                         local fc3 = FM3.instance and FM3.instance.file_chooser
                         local dlg = fc3 and fc3.file_dialog
@@ -1150,11 +1150,11 @@ function SimpleUIPlugin:init()
                 local ok_fs3, FS3 = pcall(require, "apps/filemanager/filemanagerfilesearcher")
                 if ok_fs3 and FS3 then
                     FS3.file_dialog_added_buttons = FS3.file_dialog_added_buttons or { index = {} }
-                    if FS3.file_dialog_added_buttons.index["sui_book_stats"] == nil then
+                    if FS3.file_dialog_added_buttons.index["mui_book_stats"] == nil then
                         table.insert(FS3.file_dialog_added_buttons, function(file, is_file, book_props, close_cb)
                             return _makeBookStatsRow(file, is_file, book_props, close_cb)
                         end)
-                        FS3.file_dialog_added_buttons.index["sui_book_stats"] =
+                        FS3.file_dialog_added_buttons.index["mui_book_stats"] =
                             #FS3.file_dialog_added_buttons
                     end
                 end
@@ -1177,7 +1177,7 @@ function SimpleUIPlugin:init()
             -- scheduleIn(3) ensures it runs after the first paint is stable
             -- and does not compete with the module preload above.
             UIManager:scheduleIn(3, function()
-                local ok, Updater = pcall(require, "sui_updater")
+                local ok, Updater = pcall(require, "mui_updater")
                 if ok and Updater then Updater.scheduleAutoCheck() end
             end)
             -- Patch ReaderStatistics:onSyncBookStats to close the SimpleUI
@@ -1256,12 +1256,12 @@ end
 -- without restarting KOReader) always loads fresh code.
 -- ---------------------------------------------------------------------------
 local _PLUGIN_MODULES = {
-    "sui_i18n", "sui_config", "sui_core", "sui_bottombar", "sui_topbar",
-    "sui_patches", "sui_menu", "sui_titlebar", "sui_quickactions",
-    "sui_homescreen", "sui_foldercovers", "sui_browsemeta", "sui_updater",
-    "sui_store", "sui_presets", "sui_style",
-    "sui_settings_window",
-    "sui_quicksettings_bar",
+    "mui_i18n", "mui_config", "mui_core", "mui_bottombar", "mui_topbar",
+    "mui_patches", "mui_menu", "mui_titlebar", "mui_quickactions",
+    "mui_homescreen", "mui_foldercovers", "mui_browsemeta", "mui_updater",
+    "mui_store", "mui_presets", "mui_style",
+    "mui_settings_window",
+    "mui_quicksettings_bar",
     "desktop_modules/moduleregistry",
     "desktop_modules/module_books_shared",
     "desktop_modules/module_clock",
@@ -1272,7 +1272,7 @@ local _PLUGIN_MODULES = {
     "desktop_modules/module_reading_goals",
     "desktop_modules/module_reading_stats",
     "desktop_modules/module_stats_provider",
-    "desktop_modules/sui_book_row",
+    "desktop_modules/mui_book_row",
     "desktop_modules/module_book_rows",
     "desktop_modules/module_tbr",
     "desktop_modules/module_manga",
@@ -1291,7 +1291,7 @@ local _PLUGIN_MODULES = {
 -- (sui_patches._hs_pending_after_reader), regardless of whether that
 -- setting is actually enabled.
 -- When outside the Reader: equivalent to tapping the Homescreen tab.
-function SimpleUIPlugin:onSimpleUIGoHomescreen()
+function MaxOutUIPlugin:onMaxOutUIGoHomescreen()
     local RUI = package.loaded["apps/reader/readerui"]
     if RUI and RUI.instance then
         Patches.closeReaderToHomescreen(self)
@@ -1307,7 +1307,7 @@ end
 -- (home_dir) without showing the Homescreen, as if "return to book folder"
 -- were disabled — the FM file browser becomes the top widget.
 -- When outside the Reader: equivalent to tapping the Library tab.
-function SimpleUIPlugin:onSimpleUIGoLibrary()
+function MaxOutUIPlugin:onMaxOutUIGoLibrary()
     local RUI = package.loaded["apps/reader/readerui"]
     if RUI and RUI.instance then
         Patches.closeReaderToLibrary(self)
@@ -1323,8 +1323,8 @@ end
 -- If inside the Reader: closes the reader and opens the Homescreen (same
 -- path as GoHomescreen above).
 -- Otherwise (library or any other view): opens the Homescreen.
-function SimpleUIPlugin:onSimpleUIToggleHomeLibrary()
-    local HS = package.loaded["sui_homescreen"]
+function MaxOutUIPlugin:onMaxOutUIToggleHomeLibrary()
+    local HS = package.loaded["mui_homescreen"]
     if HS and HS._instance then
         self:_navigate("home", self.ui, Config.loadTabConfig(), false)
         return true
@@ -1338,14 +1338,14 @@ function SimpleUIPlugin:onSimpleUIToggleHomeLibrary()
     return true
 end
 
-function SimpleUIPlugin:onSimpleUISettingsWindow()
-    local SettingsWindow = require("sui_settings_window")
+function MaxOutUIPlugin:onMaxOutUISettingsWindow()
+    local SettingsWindow = require("mui_settings_window")
     SettingsWindow:show()
     return true
 end
 
-function SimpleUIPlugin:onSimpleUIRecentWindow()
-    local ok, QA = pcall(require, "sui_quickactions")
+function MaxOutUIPlugin:onMaxOutUIRecentWindow()
+    local ok, QA = pcall(require, "mui_quickactions")
     if ok and QA and QA.showRecentWindow then QA.showRecentWindow() end
     return true
 end
@@ -1357,8 +1357,8 @@ end
 -- FM only when the reader is about to open (filemanager.lua:onShowingReader /
 -- onSetupShowReader). On a real exit the FM closes via onClose() directly,
 -- without tearing_down, so we correctly close the HS and let the stack drain.
-function SimpleUIPlugin:onCloseWidget()
-    local HS = package.loaded["sui_homescreen"]
+function MaxOutUIPlugin:onCloseWidget()
+    local HS = package.loaded["mui_homescreen"]
     local hs_inst = HS and HS._instance
     if not hs_inst then return end
     if self.ui and self.ui.tearing_down then return end
@@ -1367,7 +1367,7 @@ function SimpleUIPlugin:onCloseWidget()
     if HS._instance == hs_inst then HS._instance = nil end
 end
 
-function SimpleUIPlugin:onTeardown()
+function MaxOutUIPlugin:onTeardown()
     -- Flush the plugin settings store so any in-memory writes are persisted
     -- before the plugin is unloaded or KOReader exits.
     SUISettings:flush()
@@ -1402,8 +1402,8 @@ function SimpleUIPlugin:onTeardown()
     -- Remove the TBR & Pinned Manga buttons from the Library browser dialog and search results.
     local FM = package.loaded["apps/filemanager/filemanager"]
     if FM and FM.instance and FM.instance.removeFileDialogButtons then
-        pcall(function() FM.instance:removeFileDialogButtons("sui_tbr") end)
-        pcall(function() FM.instance:removeFileDialogButtons("sui_pinned_manga") end)
+        pcall(function() FM.instance:removeFileDialogButtons("mui_tbr") end)
+        pcall(function() FM.instance:removeFileDialogButtons("mui_pinned_manga") end)
     end
     -- Remove the TBR button from the FileSearcher table and restore the original onMenuHold.
     local FS = package.loaded["apps/filemanager/filemanagerfilesearcher"]
@@ -1420,11 +1420,11 @@ function SimpleUIPlugin:onTeardown()
         end
         if FS.file_dialog_added_buttons then
             local idx = FS.file_dialog_added_buttons.index
-                and FS.file_dialog_added_buttons.index["sui_tbr"]
+                and FS.file_dialog_added_buttons.index["mui_tbr"]
             if idx then
                 pcall(function()
                     table.remove(FS.file_dialog_added_buttons, idx)
-                    FS.file_dialog_added_buttons.index["sui_tbr"] = nil
+                    FS.file_dialog_added_buttons.index["mui_tbr"] = nil
                     for id, i in pairs(FS.file_dialog_added_buttons.index) do
                         if i > idx then
                             FS.file_dialog_added_buttons.index[id] = i - 1
@@ -1439,15 +1439,15 @@ function SimpleUIPlugin:onTeardown()
     end
     -- Remove the "More by <Author>" button from the Library browser and FileSearcher.
     if FM and FM.instance and FM.instance.removeFileDialogButtons then
-        pcall(function() FM.instance:removeFileDialogButtons("sui_browse_author") end)
+        pcall(function() FM.instance:removeFileDialogButtons("mui_browse_author") end)
     end
     if FS and FS.file_dialog_added_buttons then
         local idx2 = FS.file_dialog_added_buttons.index
-            and FS.file_dialog_added_buttons.index["sui_browse_author"]
+            and FS.file_dialog_added_buttons.index["mui_browse_author"]
         if idx2 then
             pcall(function()
                 table.remove(FS.file_dialog_added_buttons, idx2)
-                FS.file_dialog_added_buttons.index["sui_browse_author"] = nil
+                FS.file_dialog_added_buttons.index["mui_browse_author"] = nil
                 for id, i in pairs(FS.file_dialog_added_buttons.index) do
                     if i > idx2 then
                         FS.file_dialog_added_buttons.index[id] = i - 1
@@ -1465,15 +1465,15 @@ function SimpleUIPlugin:onTeardown()
     end
     -- Remove the "Book statistics" button from the Library browser and FileSearcher.
     if FM and FM.instance and FM.instance.removeFileDialogButtons then
-        pcall(function() FM.instance:removeFileDialogButtons("sui_book_stats") end)
+        pcall(function() FM.instance:removeFileDialogButtons("mui_book_stats") end)
     end
     if FS and FS.file_dialog_added_buttons then
         local idx = FS.file_dialog_added_buttons.index
-            and FS.file_dialog_added_buttons.index["sui_book_stats"]
+            and FS.file_dialog_added_buttons.index["mui_book_stats"]
         if idx then
             pcall(function()
                 table.remove(FS.file_dialog_added_buttons, idx)
-                FS.file_dialog_added_buttons.index["sui_book_stats"] = nil
+                FS.file_dialog_added_buttons.index["mui_book_stats"] = nil
                 for id, i in pairs(FS.file_dialog_added_buttons.index) do
                     if i > idx then
                         FS.file_dialog_added_buttons.index[id] = i - 1
@@ -1485,7 +1485,7 @@ function SimpleUIPlugin:onTeardown()
             end)
         end
     end
-    local mod_bm = package.loaded["sui_browsemeta"]
+    local mod_bm = package.loaded["mui_browsemeta"]
     if mod_bm and type(mod_bm.reset) == "function" then
         pcall(mod_bm.reset)
     end
@@ -1511,7 +1511,7 @@ end
 -- System events
 -- ---------------------------------------------------------------------------
 
-function SimpleUIPlugin:onScreenResize()
+function MaxOutUIPlugin:onScreenResize()
     if self._simpleui_suspended then return end
     UI.invalidateDimCache()
     UIManager:scheduleIn(0.2, function()
@@ -1524,7 +1524,7 @@ function SimpleUIPlugin:onScreenResize()
         -- correctly because its layout is built entirely in init(), not via
         -- wrapWithNavbar — the same reason FM uses reinit() (= rotate()) instead
         -- of a simple rewrap.
-        local HS = package.loaded["sui_homescreen"]
+        local HS = package.loaded["mui_homescreen"]
         if HS and HS._instance then
             local hs_inst = HS._instance
             hs_inst._navbar_closing_intentionally = true
@@ -1544,7 +1544,7 @@ function SimpleUIPlugin:onScreenResize()
         self:_refreshCurrentView()
     end)
 end
-function SimpleUIPlugin:onNetworkConnected()
+function MaxOutUIPlugin:onNetworkConnected()
     if self._simpleui_suspended then return end
     local RUI = package.loaded["apps/reader/readerui"]
     -- If this event was fired by doWifiToggle itself, wifi_optimistic is already
@@ -1557,12 +1557,12 @@ function SimpleUIPlugin:onNetworkConnected()
     if RUI and RUI.instance then
         self:_rebuildAllNavbars()
     else
-        local QA = package.loaded["sui_quickactions"] or require("sui_quickactions")
+        local QA = package.loaded["mui_quickactions"] or require("mui_quickactions")
         QA.refreshWifiIcon(self)
     end
 end
 
-function SimpleUIPlugin:onNetworkDisconnected()
+function MaxOutUIPlugin:onNetworkDisconnected()
     if self._simpleui_suspended then return end
     local RUI = package.loaded["apps/reader/readerui"]
     -- Same rationale as onNetworkConnected above.
@@ -1572,12 +1572,12 @@ function SimpleUIPlugin:onNetworkDisconnected()
     if RUI and RUI.instance then
         self:_rebuildAllNavbars()
     else
-        local QA = package.loaded["sui_quickactions"] or require("sui_quickactions")
+        local QA = package.loaded["mui_quickactions"] or require("mui_quickactions")
         QA.refreshWifiIcon(self)
     end
 end
 
-function SimpleUIPlugin:onSuspend()
+function MaxOutUIPlugin:onSuspend()
     self._simpleui_suspended = true
     -- Snapshot whether the reader was open at the moment of suspend.
     -- We cannot rely on RUI.instance being intact by the time onResume fires
@@ -1599,7 +1599,7 @@ function SimpleUIPlugin:onSuspend()
     pcall(function() SUISettings:flush() end)
 end
 
-function SimpleUIPlugin:onResume()
+function MaxOutUIPlugin:onResume()
     self._simpleui_suspended = false
     if SUISettings:nilOrTrue("simpleui_topbar_enabled") then
         -- Small delay to let the wakeup transition finish before refreshing
@@ -1635,7 +1635,7 @@ function SimpleUIPlugin:onResume()
     -- even when nothing changed. Data changes from reading are handled by
     -- onCloseDocument, which invalidates those caches before the next render.
     if not reader_active then
-        local HS = package.loaded["sui_homescreen"]
+        local HS = package.loaded["mui_homescreen"]
         if HS and HS._instance then
             -- Refresh the QA tap callback on the live homescreen instance.
             -- If the device suspended while the homescreen (or the touch menu
@@ -1662,7 +1662,7 @@ function SimpleUIPlugin:onResume()
     end
 end
 
-function SimpleUIPlugin:onReaderReady()
+function MaxOutUIPlugin:onReaderReady()
     -- Warm the sidecar cache for the opened book as soon as it is opened,
     -- so that onCloseDocument has access to its pre-session summary state
     -- even if the file browser didn't scan it recently (e.g. direct boot to book).
@@ -1694,7 +1694,7 @@ function SimpleUIPlugin:onReaderReady()
     end
 end
 
-function SimpleUIPlugin:onCloseDocument()
+function MaxOutUIPlugin:onCloseDocument()
     -- Consume _closing_via_gesture unconditionally before any early return,
     -- so the flag never leaks to a subsequent close if this handler bails out
     -- (e.g. while the plugin is suspended).
@@ -1714,7 +1714,7 @@ function SimpleUIPlugin:onCloseDocument()
     self._suppress_closing_notice = nil
 
     if self._simpleui_suspended then return end
-    local HS = package.loaded["sui_homescreen"]
+    local HS = package.loaded["mui_homescreen"]
     if not HS then return end
 
     -- Filepath of the book that just closed. readhistory.hist[1] is still the
@@ -1735,7 +1735,7 @@ function SimpleUIPlugin:onCloseDocument()
     -- silently falls through to the ordinary text notice further down.
     local cover_shown = false
     if not is_reload then
-        local Patches = package.loaded["sui_patches"]
+        local Patches = package.loaded["mui_patches"]
         if Patches and Patches.CoverTransition and Patches.CoverTransition.isCloseEnabled() then
             local orig_show = UIManager._simpleui_show_orig or UIManager.show
             local live_doc  = self.ui and self.ui.document
@@ -2189,10 +2189,10 @@ end
 -- _cached_books_state to force a full prefetchBooks() pass, and schedule a
 -- homescreen refresh so the corrected metadata appears immediately.
 -- ---------------------------------------------------------------------------
-function SimpleUIPlugin:onBookMetadataChanged(_prop_updated)
+function MaxOutUIPlugin:onBookMetadataChanged(_prop_updated)
     if self._simpleui_suspended then return end
 
-    local HS = package.loaded["sui_homescreen"]
+    local HS = package.loaded["mui_homescreen"]
     if not HS then return end
 
     -- Flush the entire sidecar mtime-cache.  The next prefetchBooks() will
@@ -2215,19 +2215,19 @@ function SimpleUIPlugin:onBookMetadataChanged(_prop_updated)
     end
 end
 
-function SimpleUIPlugin:onFrontlightStateChanged()
+function MaxOutUIPlugin:onFrontlightStateChanged()
     if self._simpleui_suspended then return end
     if not SUISettings:nilOrTrue("simpleui_topbar_enabled") then return end
     Topbar.scheduleRefresh(self, 0)
 end
 
-function SimpleUIPlugin:onCharging()
+function MaxOutUIPlugin:onCharging()
     if self._simpleui_suspended then return end
     if not SUISettings:nilOrTrue("simpleui_topbar_enabled") then return end
     Topbar.scheduleRefresh(self, 0)
 end
 
-function SimpleUIPlugin:onNotCharging()
+function MaxOutUIPlugin:onNotCharging()
     if self._simpleui_suspended then return end
     if not SUISettings:nilOrTrue("simpleui_topbar_enabled") then return end
     Topbar.scheduleRefresh(self, 0)
@@ -2237,16 +2237,16 @@ end
 -- Topbar delegation
 -- ---------------------------------------------------------------------------
 
-function SimpleUIPlugin:_registerTouchZones(fm_self)
+function MaxOutUIPlugin:_registerTouchZones(fm_self)
     Bottombar.registerTouchZones(self, fm_self)
     Topbar.registerTouchZones(self, fm_self)
 end
 
-function SimpleUIPlugin:_scheduleTopbarRefresh(delay)
+function MaxOutUIPlugin:_scheduleTopbarRefresh(delay)
     Topbar.scheduleRefresh(self, delay)
 end
 
-function SimpleUIPlugin:_refreshTopbar()
+function MaxOutUIPlugin:_refreshTopbar()
     Topbar.refresh(self)
 end
 
@@ -2254,47 +2254,47 @@ end
 -- Bottombar delegation
 -- ---------------------------------------------------------------------------
 
-function SimpleUIPlugin:_onTabTap(action_id, fm_self)
+function MaxOutUIPlugin:_onTabTap(action_id, fm_self)
     Bottombar.onTabTap(self, action_id, fm_self)
 end
 
-function SimpleUIPlugin:_navigate(action_id, fm_self, tabs, force)
+function MaxOutUIPlugin:_navigate(action_id, fm_self, tabs, force)
     Bottombar.navigate(self, action_id, fm_self, tabs, force)
 end
 
-function SimpleUIPlugin:_refreshCurrentView()
+function MaxOutUIPlugin:_refreshCurrentView()
     local tabs      = Config.loadTabConfig()
     local action_id = self.active_action or tabs[1] or "home"
     self:_navigate(action_id, self.ui, tabs)
 end
 
-function SimpleUIPlugin:_rebuildAllNavbars()
+function MaxOutUIPlugin:_rebuildAllNavbars()
     Bottombar.rebuildAllNavbars(self)
 end
 
-function SimpleUIPlugin:_rewrapAllWidgets()
+function MaxOutUIPlugin:_rewrapAllWidgets()
     Bottombar.rewrapAllWidgets(self)
 end
 
-function SimpleUIPlugin:_restoreTabInFM(tabs, prev_action)
+function MaxOutUIPlugin:_restoreTabInFM(tabs, prev_action)
     Bottombar.restoreTabInFM(self, tabs, prev_action)
 end
 
-function SimpleUIPlugin:_doWifiToggle()
-    local QA = package.loaded["sui_quickactions"] or require("sui_quickactions")
+function MaxOutUIPlugin:_doWifiToggle()
+    local QA = package.loaded["mui_quickactions"] or require("mui_quickactions")
     QA.doWifiToggle(self)
 end
 
-function SimpleUIPlugin:_doRotateScreen()
+function MaxOutUIPlugin:_doRotateScreen()
     Bottombar.doRotateScreen()
 end
 
-function SimpleUIPlugin:_showFrontlightDialog()
-    local QA = package.loaded["sui_quickactions"] or require("sui_quickactions")
+function MaxOutUIPlugin:_showFrontlightDialog()
+    local QA = package.loaded["mui_quickactions"] or require("mui_quickactions")
     QA.showFrontlightDialog(self)
 end
 
-function SimpleUIPlugin:_scheduleRebuild()
+function MaxOutUIPlugin:_scheduleRebuild()
     if self._rebuild_scheduled then return end
     self._rebuild_scheduled = true
     UIManager:scheduleIn(0.1, function()
@@ -2303,7 +2303,7 @@ function SimpleUIPlugin:_scheduleRebuild()
     end)
 end
 
-function SimpleUIPlugin:_updateFMHomeIcon() end
+function MaxOutUIPlugin:_updateFMHomeIcon() end
 
 -- ---------------------------------------------------------------------------
 -- Main menu entry (sui_menu is lazy-loaded on first access)
@@ -2311,10 +2311,10 @@ function SimpleUIPlugin:_updateFMHomeIcon() end
 
 local _menu_installer = nil
 
-function SimpleUIPlugin:addToMainMenu(menu_items)
-    local _ = require("sui_i18n").translate
+function MaxOutUIPlugin:addToMainMenu(menu_items)
+    local _ = require("mui_i18n").translate
     if not _menu_installer then
-        local ok, result = pcall(require, "sui_menu")
+        local ok, result = pcall(require, "mui_menu")
         if not ok then
             logger.err("simpleui: sui_menu failed to load: " .. tostring(result))
             menu_items.simpleui = { sorting_hint = "tools", text = _("MaxOutUI"), sub_item_table = {} }
@@ -2322,10 +2322,10 @@ function SimpleUIPlugin:addToMainMenu(menu_items)
         end
         _menu_installer = result
         -- Capture the bootstrap stub before installing so we can detect replacement.
-        local bootstrap_fn = rawget(SimpleUIPlugin, "addToMainMenu")
-        _menu_installer(SimpleUIPlugin)
+        local bootstrap_fn = rawget(MaxOutUIPlugin, "addToMainMenu")
+        _menu_installer(MaxOutUIPlugin)
         -- The installer replaces addToMainMenu on the class; call the real one now.
-        local real_fn = rawget(SimpleUIPlugin, "addToMainMenu")
+        local real_fn = rawget(MaxOutUIPlugin, "addToMainMenu")
         if type(real_fn) == "function" and real_fn ~= bootstrap_fn then
             real_fn(self, menu_items)
         else
@@ -2336,4 +2336,4 @@ function SimpleUIPlugin:addToMainMenu(menu_items)
     end
 end
 
-return SimpleUIPlugin
+return MaxOutUIPlugin

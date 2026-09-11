@@ -4,7 +4,7 @@
 local Device          = require("device")
 local Geom            = require("ui/geometry")
 local UIManager       = require("ui/uimanager")
-local _               = require("sui_i18n").translate
+local _               = require("mui_i18n").translate
 local Font            = require("ui/font")
 local Blitbuffer      = require("ffi/blitbuffer")
 local TextWidget      = require("ui/widget/textwidget")
@@ -18,11 +18,11 @@ local HorizontalSpan  = require("ui/widget/horizontalspan")
 local LineWidget      = require("ui/widget/linewidget")
 local ImageWidget     = require("ui/widget/imagewidget")
 
-local SUI         = require("sui_window")
-local SUIStyle    = require("sui_style")
-local SUISettings = require("sui_store")
-local SUIPresets  = require("sui_presets")
-local Config      = require("sui_config")
+local SUI         = require("mui_window")
+local SUIStyle    = require("mui_style")
+local SUISettings = require("mui_store")
+local SUIPresets  = require("mui_presets")
+local Config      = require("mui_config")
 
 -- Landscape-aware scaling for this file's screens comes from ctx.SZ(n),
 -- handed to every screen builder by SUIWindow itself (single source of
@@ -93,7 +93,7 @@ function Onboarding.show(on_finish)
                     st.selected_preset = bp.id
                     if SUIPresets.applyBuiltin then SUIPresets.applyBuiltin(st.selected_preset) end
                     SUISettings:set("simpleui_hs_active_preset", st.selected_preset)
-                    local ok, HS = pcall(require, "sui_homescreen")
+                    local ok, HS = pcall(require, "mui_homescreen")
                     if ok and HS and HS.rebuildLayout then HS.rebuildLayout() end
                     ctx.repaint()
                 end,

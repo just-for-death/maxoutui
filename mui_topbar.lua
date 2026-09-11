@@ -18,11 +18,11 @@ local InfoMessage     = require("ui/widget/infomessage")
 local Device          = require("device")
 local Screen          = Device.screen
 local logger          = require("logger")
-local _ = require("sui_i18n").translate
+local _ = require("mui_i18n").translate
 
-local Config      = require("sui_config")
-local SUISettings = require("sui_store")
-local SUIStyle    = require("sui_style")
+local Config      = require("mui_config")
+local SUISettings = require("mui_store")
+local SUIStyle    = require("mui_style")
 
 local M = {}
 
@@ -103,7 +103,7 @@ end
 -- require() lookup after the first call.
 local _Core
 local function _getCore()
-    _Core = _Core or require("sui_core")
+    _Core = _Core or require("mui_core")
     return _Core
 end
 
@@ -489,7 +489,7 @@ function M.buildTopbarWidget()
 end
 
 local function _showTopbarSettingsWindow(plugin)
-    local SUIWindow = require("sui_window")
+    local SUIWindow = require("mui_window")
 
     local function buildRoot(ctx)
         if not plugin._makeTopbarMenu then plugin:addToMainMenu({}) end
@@ -624,7 +624,7 @@ function M.refresh(plugin)
     -- so we never build a widget or call setDirty during the suspend transition.
     local Device = require("device")
     if (plugin and plugin._simpleui_suspended) or Device.screen_saver_mode then return end
-    local UI    = require("sui_core")
+    local UI    = require("mui_core")
     local stack = UI.getWindowStack()  -- read once
     -- Each widget gets its own topbar instance. Sharing a single object across
     -- multiple _navbar_containers is unsafe: replaceTopbar mutates overlap_offset

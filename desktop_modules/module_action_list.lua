@@ -22,13 +22,13 @@ local VerticalGroup   = require("ui/widget/verticalgroup")
 local VerticalSpan    = require("ui/widget/verticalspan")
 local Screen          = Device.screen
 
-local _  = require("sui_i18n").translate
-local N_ = require("sui_i18n").ngettext
-local Config = require("sui_config")
-local QA          = require("sui_quickactions")
-local UI          = require("sui_core")
-local SUISettings = require("sui_store")
-local SUIStyle    = require("sui_style")
+local _  = require("mui_i18n").translate
+local N_ = require("mui_i18n").ngettext
+local Config = require("mui_config")
+local QA          = require("mui_quickactions")
+local UI          = require("mui_core")
+local SUISettings = require("mui_store")
+local SUIStyle    = require("mui_style")
 local PAD         = UI.PAD
 local CLR_TEXT_SUB = UI.CLR_TEXT_SUB
 
@@ -298,7 +298,7 @@ local function actionAvailable(id)
         return _has_fl
     end
     if QA.getBrowseMode(id) then
-        local ok_bm, BM = pcall(require, "sui_browsemeta")
+        local ok_bm, BM = pcall(require, "mui_browsemeta")
         return ok_bm and BM and BM.isEnabled()
     end
     return true
@@ -346,7 +346,7 @@ function M.build(w, ctx)
     local d         = _getDims(Config.getModuleScale(MOD_ID, ctx.pfx))
     local lbl_scale = Config.getItemLabelScale(MOD_ID, ctx.pfx)
     d.fs = math.max(8, math.floor(d.fs * lbl_scale))
-    local ok_ss, SUIStyle  = pcall(require, "sui_style")
+    local ok_ss, SUIStyle  = pcall(require, "mui_style")
     local _theme_fg        = ok_ss and SUIStyle and SUIStyle.getThemeColor("fg")
     local _theme_secondary = ok_ss and SUIStyle and SUIStyle.getThemeColor("text_secondary")
     local colors = (_theme_fg or _theme_secondary) and {
@@ -470,7 +470,7 @@ function M.getMenuItems(ctx_menu)
         text                = _lc("Quick Actions"),
         sub_item_table_func = function() return items_sub end,
         sui_build = ctx_menu.is_sui and function(ctx, _item)
-            local SUIWindow = require("sui_window")
+            local SUIWindow = require("mui_window")
             return SUIWindow.ListRow{
                 title        = _lc("Quick Actions"),
                     subtitle     = function()
@@ -528,7 +528,7 @@ function M.getMenuItems(ctx_menu)
                                             if #cur >= MAX_AL then
                                                 local InfoMessage = ctx_menu.InfoMessage or require("ui/widget/infomessage")
                                                 local uim = ctx_menu.UIManager or require("ui/uimanager")
-                                                local N_ = ctx_menu.N_ or require("sui_i18n").ngettext
+                                                local N_ = ctx_menu.N_ or require("mui_i18n").ngettext
                                                 uim:show(InfoMessage:new{
                                                     text = string.format(N_("The maximum of %d action per module has been reached. Remove one first.",
                                                            "The maximum of %d actions per module has been reached. Remove one first.", MAX_AL), MAX_AL), timeout = 2,

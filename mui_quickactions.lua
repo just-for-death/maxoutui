@@ -45,12 +45,12 @@ local Device    = require("device")
 local Screen    = Device.screen
 local lfs       = require("libs/libkoreader-lfs")
 local logger    = require("logger")
-local _ = require("sui_i18n").translate
-local N_ = require("sui_i18n").ngettext
+local _ = require("mui_i18n").translate
+local N_ = require("mui_i18n").ngettext
 
-local Config      = require("sui_config")
-local SUISettings = require("sui_store")
-local UI          = require("sui_core")
+local Config      = require("mui_config")
+local SUISettings = require("mui_store")
+local UI          = require("mui_core")
 
 local function _getSuwayomiInstance()
     local FM = package.loaded["apps/filemanager/filemanager"]
@@ -140,7 +140,7 @@ local function _guardedSetIcon(path, on_valid, on_invalid)
         on_valid(path)
         return
     end
-    local ok_ss, SUIStyle = pcall(require, "sui_style")
+    local ok_ss, SUIStyle = pcall(require, "mui_style")
     local safe = ok_ss and SUIStyle and SUIStyle.safeIconPath(path, nil)
     if safe then
         on_valid(safe)
@@ -196,10 +196,10 @@ local _registry_order = {}  -- ordered list of all registered ids
 
 -- Lazy references — loaded on first use to avoid circular requires at boot.
 local function _BM()
-    return package.loaded["sui_browsemeta"] or require("sui_browsemeta")
+    return package.loaded["mui_browsemeta"] or require("mui_browsemeta")
 end
 local function _Bottombar()
-    return package.loaded["sui_bottombar"] or require("sui_bottombar")
+    return package.loaded["mui_bottombar"] or require("mui_bottombar")
 end
 
 -- showUnavailable helper used inside execute closures.
@@ -217,7 +217,7 @@ end
 -- Helper: resolve the live SimpleUIPlugin instance. Tries the given fm first
 -- (set as fm._simpleui_plugin during plugin init), then the live FM, then
 -- ReaderUI (where the plugin is registered as readerui.simpleui).
-local function _resolveSimpleUIPlugin(fm)
+local function _resolveMaxOutUIPlugin(fm)
     if fm and fm._simpleui_plugin then return fm._simpleui_plugin end
     local live_fm = _liveFM()
     if live_fm and live_fm._simpleui_plugin then return live_fm._simpleui_plugin end
@@ -236,7 +236,7 @@ local function _goHome(target_fm)
         home = Device.home_dir
     end
     if not home then return false end
-    local ok_fc_mod, FC_mod = pcall(require, "sui_foldercovers")
+    local ok_fc_mod, FC_mod = pcall(require, "mui_foldercovers")
     local in_virtual = ok_fc_mod and FC_mod.isInSeriesView and FC_mod.isInSeriesView(fc)
     if in_virtual then FC_mod.exitSeriesView(fc) end
     if fc.path == home and not in_virtual then
@@ -299,7 +299,7 @@ local function _doWifiToggle(plugin)
         -- 1. Bottom bar tabs.
         plugin:_rebuildAllNavbars()
         -- 2. Topbar wifi icon — synchronous so it fires before wifi_optimistic is nil.
-        local ok_tb, Topbar = pcall(require, "sui_topbar")
+        local ok_tb, Topbar = pcall(require, "mui_topbar")
         if ok_tb and Topbar then
             local cfg = Config.getTopbarConfig()
             if (cfg.side["wifi"] or "hidden") ~= "hidden" then
@@ -307,7 +307,7 @@ local function _doWifiToggle(plugin)
             end
         end
         -- 3. Homescreen quick-action icons — baked into ImageWidgets, need a full rebuild.
-        local HS = package.loaded["sui_homescreen"]
+        local HS = package.loaded["mui_homescreen"]
         if HS and HS._instance then
             pcall(function() HS.refreshImmediate(false) end)
         end
@@ -332,7 +332,7 @@ local function _refreshWifiIcon(plugin)
         Config.wifi_optimistic = nil
     end
     plugin:_rebuildAllNavbars()
-    local HS = package.loaded["sui_homescreen"]
+    local HS = package.loaded["mui_homescreen"]
     if HS and HS.refreshImmediate then
         pcall(function() HS.refreshImmediate(false) end)
     end
@@ -433,7 +433,7 @@ local function _showBookmarkBrowserSourceDialog(bb_ui)
     local BB         = _Bottombar()
     if plugin then BB.setTempTabActive(plugin, "bookmark_browser", true, prev_action) end
 
-    local HS         = package.loaded["sui_homescreen"]
+    local HS         = package.loaded["mui_homescreen"]
     local hs_was_open = HS and HS._instance ~= nil
     local home_dir   = G_reader_settings:readSetting("home_dir")
     local source_dialog
@@ -458,7 +458,7 @@ local function _showBookmarkBrowserSourceDialog(bb_ui)
             end
             BookmarkBrowser:show(books, bb_ui)
             if hs_was_open then
-                local UI_mod = require("sui_core")
+                local UI_mod = require("mui_core")
                 local stack  = UI_mod.getWindowStack()
                 for i = #stack, 1, -1 do
                     local w = stack[i] and stack[i].widget
@@ -662,7 +662,7 @@ local function _registerBuiltins()
             is_in_place = false,
             execute = function(ctx)
                 local plugin = ctx.plugin or _simpleui_plugin()
-                local ok_hs, HS = pcall(require, "sui_homescreen")
+                local ok_hs, HS = pcall(require, "mui_homescreen")
                 if ok_hs and HS and type(HS.show) == "function" then
                     local saved_page = HS._current_page or 1
                     if ctx.already_active then
@@ -677,7 +677,7 @@ local function _registerBuiltins()
                     end
                     local on_goal_tap = plugin and plugin._goalTapCallback or nil
                       if plugin then
-                        local ok_bb, BB = pcall(require, "sui_bottombar")
+                        local ok_bb, BB = pcall(require, "mui_bottombar")
                         if ok_bb and BB and BB.setActiveAndRefreshFM then
                             local tabs = Config.loadTabConfig()
                             BB.setActiveAndRefreshFM(plugin, "homescreen", tabs)
@@ -730,26 +730,6 @@ local function _registerBuiltins()
             label = _("Continue Reading"),
             icon  = Config.ICON.recent or Config.ICON.history,
             is_in_place = false,
-            is_async_in_place = true,
-            execute = function(ctx)
-                local sw_plugin = _getSuwayomiInstance()
-                if sw_plugin then
-                    if sw_plugin.continueReading then
-                        sw_plugin:continueReading()
-                    elseif sw_plugin.showHistory then
-                        sw_plugin:showHistory()
-                    end
-                else
-                    local su = ctx.show_unavailable or _unavailToast
-                    su(_("Suwayomi plugin not available."))
-                end
-            end,
-        },
-        {
-            id    = "manga_continue_reading",
-            label = _("Continue Reading"),
-            icon  = Config.ICON.recent or Config.ICON.history,
-            is_in_place = true,
             is_async_in_place = true,
             execute = function(ctx)
                 local sw_plugin = _getSuwayomiInstance()
@@ -1107,7 +1087,7 @@ local function _registerBuiltins()
             execute = function(ctx)
                 local su = ctx.show_unavailable or _unavailToast
                 local plugin = ctx.plugin or _simpleui_plugin()
-                local ok, SW = pcall(require, "sui_stats_windows")
+                local ok, SW = pcall(require, "mui_stats_windows")
                 if ok and SW and SW.showReadingInsightsWindow then
                     QA.trackIndicatorViaCallback(plugin, "stats_calendar", function(restore)
                         SW.showReadingInsightsWindow(restore)
@@ -1138,7 +1118,7 @@ local function _registerBuiltins()
             execute = function(ctx)
                 local plugin = ctx.plugin or _simpleui_plugin()
                 QA.trackIndicatorViaCallback(plugin, "sui_settings", function(restore)
-                    require("sui_settings_window"):show(restore)
+                    require("mui_settings_window"):show(restore)
                 end)
             end,
         },
@@ -1501,7 +1481,7 @@ function QA.renameQACollection(old_name, new_name)
 end
 
 function QA.sanitizeQASlots()
-    local Config = require("sui_config")
+    local Config = require("mui_config")
 
     local list = QA.getCustomQAList()
     local clean_list = {}
@@ -1657,7 +1637,7 @@ function QA.performResetAllQAIcons(plugin)
             SUISettings:set("simpleui_qa_" .. qa_id, cfg)
         end
     end
-    local ok_ss, SUIStyle = pcall(require, "sui_style")
+    local ok_ss, SUIStyle = pcall(require, "mui_style")
     if ok_ss and SUIStyle then
         for _, s in ipairs(SUIStyle.SLOTS) do
             if s.group == "sui_qa_defaults" then
@@ -1667,7 +1647,7 @@ function QA.performResetAllQAIcons(plugin)
     end
     QA.invalidateCustomQACache()
     if plugin then plugin:_rebuildAllNavbars() end
-    local ok, HS = pcall(require, "sui_homescreen")
+    local ok, HS = pcall(require, "mui_homescreen")
     if ok and HS and HS._instance then HS._instance:_refreshImmediate(false) end
 end
 
@@ -1705,7 +1685,7 @@ function QA.sui_show_qa_list(plugin, ctx_menu, ctx)
                 subtitle = desc,
                 on_edit = function()
                     QA.showQuickActionDialog(plugin, _id, function()
-                        local ok, HS = pcall(require, "sui_homescreen")
+                        local ok, HS = pcall(require, "mui_homescreen")
                         if ok and HS and HS._instance then HS._instance:_refreshImmediate(false) end
                         if ctx_menu and ctx_menu.refresh then ctx_menu.refresh() end
                         ctx.repaint()
@@ -1722,7 +1702,7 @@ function QA.sui_show_qa_list(plugin, ctx_menu, ctx)
                             Config.invalidateTabsCache()
                             QA.invalidateCustomQACache()
                             plugin:_rebuildAllNavbars()
-                            local ok, HS = pcall(require, "sui_homescreen")
+                            local ok, HS = pcall(require, "mui_homescreen")
                             if ok and HS and HS._instance then HS._instance:_refreshImmediate(false) end
                             if ctx_menu and ctx_menu.refresh then ctx_menu.refresh() end
                             ctx.repaint()
@@ -1731,7 +1711,7 @@ function QA.sui_show_qa_list(plugin, ctx_menu, ctx)
                 end,
                 on_tap = function()
                     QA.showQuickActionDialog(plugin, _id, function()
-                        local ok, HS = pcall(require, "sui_homescreen")
+                        local ok, HS = pcall(require, "mui_homescreen")
                         if ok and HS and HS._instance then HS._instance:_refreshImmediate(false) end
                         if ctx_menu and ctx_menu.refresh then ctx_menu.refresh() end
                         ctx.repaint()
@@ -1761,7 +1741,7 @@ function QA.sui_show_qa_list(plugin, ctx_menu, ctx)
                 return
             end
             QA.showQuickActionDialog(plugin, nil, function()
-                local ok, HS = pcall(require, "sui_homescreen")
+                local ok, HS = pcall(require, "mui_homescreen")
                 if ok and HS and HS._instance then HS._instance:_refreshImmediate(false) end
                 if ctx_menu and ctx_menu.refresh then ctx_menu.refresh() end
                 if ctx2.jump_to_last_page then ctx2.jump_to_last_page() end
@@ -1784,7 +1764,7 @@ function QA.sui_build_qa_icons(plugin, ctx_menu, ctx)
     
     local btn_size = ctx.SZ(Screen:scaleBySize(36))
     local icon_size = math.floor(btn_size * 0.7)
-    local ok_ss, SUIStyle = pcall(require, "sui_style")
+    local ok_ss, SUIStyle = pcall(require, "mui_style")
     local border_sz = ok_ss and SUIStyle.BORDER_SZ or 1
     
     local function makeIconPreview(icon_path, is_nerd, fallback_label)
@@ -1921,7 +1901,7 @@ function QA.sui_build_qa_icons(plugin, ctx_menu, ctx)
                     QA.showIconPicker(current_icon, function(new_icon)
                         local function _guardedSetIcon(path, on_valid)
                             if path == nil then on_valid(nil); return end
-                            local ok_ss, SUIStyle = pcall(require, "sui_style")
+                            local ok_ss, SUIStyle = pcall(require, "mui_style")
                             local safe = ok_ss and SUIStyle and SUIStyle.safeIconPath(path, nil)
                             if safe then on_valid(safe)
                             else
@@ -1938,7 +1918,7 @@ function QA.sui_build_qa_icons(plugin, ctx_menu, ctx)
                             end
                             QA.invalidateCustomQACache()
                             plugin:_rebuildAllNavbars()
-                            local ok, HS = pcall(require, "sui_homescreen")
+                            local ok, HS = pcall(require, "mui_homescreen")
                             if ok and HS and HS._instance then HS._instance:_refreshImmediate(false) end
                             ctx.repaint()
                         else
@@ -1956,7 +1936,7 @@ function QA.sui_build_qa_icons(plugin, ctx_menu, ctx)
                                 end
                                 QA.invalidateCustomQACache()
                                 plugin:_rebuildAllNavbars()
-                                local ok, HS = pcall(require, "sui_homescreen")
+                                local ok, HS = pcall(require, "mui_homescreen")
                                 if ok and HS and HS._instance then HS._instance:_refreshImmediate(false) end
                                 ctx.repaint()
                             end)
@@ -1971,7 +1951,7 @@ function QA.sui_build_qa_icons(plugin, ctx_menu, ctx)
                 text = _("System Actions"):upper(),
                 is_divider = true,
                 sui_build = function(ctx)
-                    return require("sui_window").SectionLabel{ text = _("System Actions"):upper(), inner_w = ctx.inner_w }
+                    return require("mui_window").SectionLabel{ text = _("System Actions"):upper(), inner_w = ctx.inner_w }
                 end
             }
             for _, entry in ipairs(defaults) do add_entry(entry) end
@@ -1981,7 +1961,7 @@ function QA.sui_build_qa_icons(plugin, ctx_menu, ctx)
                 text = _("Custom Actions"):upper(),
                 is_divider = true,
                 sui_build = function(ctx)
-                    return require("sui_window").SectionLabel{ text = _("Custom Actions"):upper(), inner_w = ctx.inner_w }
+                    return require("mui_window").SectionLabel{ text = _("Custom Actions"):upper(), inner_w = ctx.inner_w }
                 end
             }
             for _, entry in ipairs(customs) do add_entry(entry) end
@@ -2020,7 +2000,7 @@ function QA.getEntry(id)
     if id and id:match("^custom_qa_%d+$") then
         local cfg = SUISettings:get("simpleui_qa_" .. id) or {}
         local default_icon
-        local ok_ss, SUIStyle = pcall(require, "sui_style")
+        local ok_ss, SUIStyle = pcall(require, "mui_style")
         if cfg.qa_folder then
             default_icon = (ok_ss and SUIStyle and SUIStyle.getIcon("sui_qa_group")) or Config.CUSTOM_GROUP_ICON or Config.CUSTOM_ICON
         elseif cfg.dispatcher_action and cfg.dispatcher_action ~= "" then
@@ -2384,7 +2364,7 @@ function QA.showQuickActionDialog(plugin, qa_id, on_done)
     local start_path  = cfg.path or G_reader_settings:readSetting("home_dir") or "/"
     local chosen_icon = cfg.icon
     local dlg_title   = qa_id and _("Edit Quick Action") or _("New Quick Action")
-    local TOTAL_H     = require("sui_bottombar").TOTAL_H
+    local TOTAL_H     = require("mui_bottombar").TOTAL_H
 
     local current_action_type = nil
     local current_action_val1 = nil
@@ -2654,7 +2634,7 @@ function QA.showQuickActionDialog(plugin, qa_id, on_done)
             return ok and v == true
         end
         if QA.getBrowseMode(id) then
-            local ok_bm, BM = pcall(require, "sui_browsemeta")
+            local ok_bm, BM = pcall(require, "mui_browsemeta")
             return ok_bm and BM and BM.isEnabled()
         end
         return true
@@ -2776,7 +2756,7 @@ function QA.makeIconsMenuItems(plugin)
                     SUISettings:set("simpleui_qa_" .. qa_id, cfg)
                 end
             end
-            local ok_ss, SUIStyle = pcall(require, "sui_style")
+            local ok_ss, SUIStyle = pcall(require, "mui_style")
             if ok_ss and SUIStyle then
                 for _, s in ipairs(SUIStyle.SLOTS) do
                     if s.group == "sui_qa_defaults" then
@@ -2786,13 +2766,13 @@ function QA.makeIconsMenuItems(plugin)
             end
             QA.invalidateCustomQACache()
             plugin:_rebuildAllNavbars()
-            local ok, HS = pcall(require, "sui_homescreen")
+            local ok, HS = pcall(require, "mui_homescreen")
             if ok and HS and HS._instance then HS._instance:_refreshImmediate(false) end
         end,
         separator = true,
     }
 
-    local ok_ss, SUIStyle = pcall(require, "sui_style")
+    local ok_ss, SUIStyle = pcall(require, "mui_style")
     if ok_ss and SUIStyle then
         for _, slot in ipairs(SUIStyle.SLOTS) do
             if slot.group == "sui_qa_defaults" then
@@ -2814,7 +2794,7 @@ function QA.makeIconsMenuItems(plugin)
                                     SUIStyle.setIcon(slot.id, safe_path)
                                     QA.invalidateCustomQACache()
                                     plugin:_rebuildAllNavbars()
-                                    local ok, HS = pcall(require, "sui_homescreen")
+                                    local ok, HS = pcall(require, "mui_homescreen")
                                     if ok and HS and HS._instance then HS._instance:_refreshImmediate(false) end
                                 end)
                             end,
@@ -2898,7 +2878,7 @@ function QA.makeIconsMenuItems(plugin)
                         end
                         QA.invalidateCustomQACache()
                         plugin:_rebuildAllNavbars()
-                        local ok, HS = pcall(require, "sui_homescreen")
+                        local ok, HS = pcall(require, "mui_homescreen")
                         if ok and HS and HS._instance then HS._instance:_refreshImmediate(false) end
                     end)
                 end, default_label, plugin, "_qa_icon_picker_style")
@@ -2936,7 +2916,7 @@ function QA.makeMenuItems(plugin, ctx_menu)
                 end
                 if suppress_refresh then suppress_refresh() end
                 QA.showQuickActionDialog(plugin, nil, function()
-                    local ok, HS = pcall(require, "sui_homescreen")
+                    local ok, HS = pcall(require, "mui_homescreen")
                     if ok and HS and HS._instance then HS._instance:_refreshImmediate(false) end
                     if ctx_menu and ctx_menu.refresh then ctx_menu.refresh() end
                 end)
@@ -3003,7 +2983,7 @@ function QA.makeMenuItems(plugin, ctx_menu)
                     callback = function(_menu_self, suppress_refresh)
                         if suppress_refresh then suppress_refresh() end
                         QA.showQuickActionDialog(plugin, _id, function()
-                            local ok, HS = pcall(require, "sui_homescreen")
+                            local ok, HS = pcall(require, "mui_homescreen")
                             if ok and HS and HS._instance then HS._instance:_refreshImmediate(false) end
                             if ctx_menu and ctx_menu.refresh then ctx_menu.refresh() end
                         end)
@@ -3161,7 +3141,7 @@ function QA.buildQARowIcon(icon_value, fallback_label, scale_fn)
     local TextWidget     = require("ui/widget/textwidget")
     local Font           = require("ui/font")
     local Geom           = require("ui/geometry")
-    local ok_ss, SUIStyle = pcall(require, "sui_style")
+    local ok_ss, SUIStyle = pcall(require, "mui_style")
 
     -- scale_fn is the caller's ctx.SZ; fall back to UI.SZ (identical value
     -- during a synchronous SUIWindow build) if ever called without a ctx.
@@ -3229,11 +3209,11 @@ end
 -- ---------------------------------------------------------------------------
 
 function QA.showQAFolderDialog(qa_id, title, fm, show_unavailable_fn)
-    local SUIWindow = require("sui_window")
+    local SUIWindow = require("mui_window")
     -- Same plugin-resolution helper runMember() below already relies on —
     -- needed here too so the group's own tab can light up while the window
     -- is open (see trackIndicatorViaCallback below).
-    local plugin = _resolveSimpleUIPlugin(fm)
+    local plugin = _resolveMaxOutUIPlugin(fm)
 
     -- Shared by both grid tiles and the list fallback: executes a member,
     -- routing non-in-place members (folder/collection/library-style QAs)
@@ -3244,7 +3224,7 @@ function QA.showQAFolderDialog(qa_id, title, fm, show_unavailable_fn)
         if QA.isInPlace(_mid) then
             QA.execute(_mid, { fm = fm, show_unavailable = show_unavailable_fn })
         else
-            local plugin = _resolveSimpleUIPlugin(fm)
+            local plugin = _resolveMaxOutUIPlugin(fm)
             if plugin and plugin._navigate then
                 plugin:_navigate(_mid, plugin.ui or fm, Config.loadTabConfig(), false)
             else
@@ -3300,7 +3280,7 @@ function QA.showQAFolderDialog(qa_id, title, fm, show_unavailable_fn)
                 -- (UI.PAD is a fixed device-pixel constant, not itself
                 -- landscape-scaled, so it's wrapped in SZ() here to match
                 -- gap_w/gap_h/target_frame_sz above.)
-                local ok_core, UI_local = pcall(require, "sui_core")
+                local ok_core, UI_local = pcall(require, "mui_core")
                 local pad2 = (ok_core and UI_local and UI_local.PAD and ctx.SZ(UI_local.PAD * 2)) or ctx.SZ(Screen:scaleBySize(28))
 
                 local function on_tap_fn(_mid) runMember(_mid, ctx) end
@@ -3475,7 +3455,7 @@ local function _recentMakeCoverCell(SH, fp, bd, cw, ch)
 end
 
 local function _recentBuildRootScreen(ctx)
-    local SUIWindow       = require("sui_window")
+    local SUIWindow       = require("mui_window")
     local SH              = require("desktop_modules/module_books_shared")
     local HorizontalGroup = require("ui/widget/horizontalgroup")
     local HorizontalSpan  = require("ui/widget/horizontalspan")
@@ -3536,12 +3516,12 @@ local function _recentBuildRootScreen(ctx)
 end
 
 -- fm is optional — omitted when called from the "Simple UI: Recent" gesture
--- (main.lua:onSimpleUIRecentWindow), in which case _resolveSimpleUIPlugin
+-- (main.lua:onSimpleUIRecentWindow), in which case _resolveMaxOutUIPlugin
 -- falls back to the live FM, same degrade-gracefully behaviour as
 -- showQAFolderDialog above.
 function QA.showRecentWindow(fm)
-    local SUIWindow = require("sui_window")
-    local plugin = _resolveSimpleUIPlugin(fm)
+    local SUIWindow = require("mui_window")
+    local plugin = _resolveMaxOutUIPlugin(fm)
 
     QA.trackIndicatorViaCallback(plugin, "recent", function(restore)
         local win = SUIWindow:new{
@@ -3557,7 +3537,7 @@ function QA.showRecentWindow(fm)
 end
 
 local function _pinnedMangaBuildRootScreen(ctx)
-    local SUIWindow       = require("sui_window")
+    local SUIWindow       = require("mui_window")
     local SH              = require("desktop_modules/module_books_shared")
     local Manga           = require("desktop_modules/module_manga")
     local HorizontalGroup = require("ui/widget/horizontalgroup")
@@ -3601,8 +3581,8 @@ local function _pinnedMangaBuildRootScreen(ctx)
 end
 
 function QA.showPinnedMangaWindow(fm)
-    local SUIWindow = require("sui_window")
-    local plugin = _resolveSimpleUIPlugin(fm)
+    local SUIWindow = require("mui_window")
+    local plugin = _resolveMaxOutUIPlugin(fm)
 
     QA.trackIndicatorViaCallback(plugin, "pinned_manga", function(restore)
         local win = SUIWindow:new{

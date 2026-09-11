@@ -6,12 +6,12 @@ local UIManager = require("ui/uimanager")
 local Device    = require("device")
 local Screen    = Device.screen
 local logger    = require("logger")
-local _         = require("sui_i18n").translate
+local _         = require("mui_i18n").translate
 
-local Config    = require("sui_config")
-local UI        = require("sui_core")
-local Bottombar = require("sui_bottombar")
-local SUISettings = require("sui_store")
+local Config    = require("mui_config")
+local UI        = require("mui_core")
+local Bottombar = require("mui_bottombar")
+local SUISettings = require("mui_store")
 
 -- Lazy: only needed on D-pad devices, inside gesture event handlers.
 local _FocusManager
@@ -23,7 +23,7 @@ end
 -- Lazy: only needed inside patchFileManagerClass callbacks, not at load time.
 local _Titlebar
 local function Titlebar()
-    _Titlebar = _Titlebar or require("sui_titlebar")
+    _Titlebar = _Titlebar or require("mui_titlebar")
     return _Titlebar
 end
 
@@ -173,7 +173,7 @@ end
 
 -- Returns the live homescreen module from package.loaded, or nil.
 local function liveHS()
-    return package.loaded["sui_homescreen"]
+    return package.loaded["mui_homescreen"]
 end
 
 -- ---------------------------------------------------------------------------
@@ -292,7 +292,7 @@ function M.patchFileManagerClass(plugin)
         -- Calculate total navbar height (bottom bar + optional top bar).
         local topbar_on = SUISettings:nilOrTrue("simpleui_topbar_enabled")
         fm_self._navbar_height = Bottombar.TOTAL_H()
-            + (topbar_on and require("sui_topbar").TOTAL_TOP_H() or 0)
+            + (topbar_on and require("mui_topbar").TOTAL_TOP_H() or 0)
 
         -- Reset the "first show" guard so onShow reinitialises on the next open.
         fm_self._navbar_already_shown = nil
@@ -759,7 +759,7 @@ function M.patchFileManagerClass(plugin)
                 this._hs_rotation_on_goal_tap = nil
                 UIManager:scheduleIn(0, function()
                     local HS = liveHS() or (function()
-                        local ok, m = pcall(require, "sui_homescreen"); return ok and m
+                        local ok, m = pcall(require, "mui_homescreen"); return ok and m
                     end)()
                     if HS then
                         _ensureGoalCallback(plugin)
@@ -2067,7 +2067,7 @@ function M.patchUIManagerShow(plugin)
                 local screen_h    = Screen:getHeight()
                 local zone_ratio_h
                 if SUISettings:nilOrTrue("simpleui_topbar_enabled") then
-                    local Topbar = require("sui_topbar")
+                    local Topbar = require("mui_topbar")
                     zone_ratio_h = Topbar.TOTAL_TOP_H() / screen_h
                 else
                     zone_ratio_h = DTAP_ZONE_MENU.h
@@ -2608,7 +2608,7 @@ function M.patchMenuInitForPagination(plugin)
 
         -- Apply icon overrides for collections/history/FM menus.
         pcall(function()
-            local ok_ss, SS = pcall(require, "sui_style")
+            local ok_ss, SS = pcall(require, "mui_style")
             if not (ok_ss and SS) then return end
             -- Pagination chevrons: present in all fullscreen menus after init().
             if SS.applyPaginationIcons then
@@ -2886,7 +2886,7 @@ function M.patchMenuForNavpager(plugin)
         -- Delegate to sui_titlebar's isAtRoot which owns the single authoritative
         -- criterion (virtual paths, series-view, lock_home_folder all handled there).
         local fc_cur  = fm_self.file_chooser
-        local ok_ti, TI = pcall(require, "sui_titlebar")
+        local ok_ti, TI = pcall(require, "mui_titlebar")
         local at_root
         if ok_ti and TI and TI.isAtRoot then
             at_root = TI.isAtRoot(fc_cur)
@@ -3006,7 +3006,7 @@ function M.showHSAfterResume(plugin, force)
         if not fm then return end
 
         if not HS2 then
-            local ok, m = pcall(require, "sui_homescreen")
+            local ok, m = pcall(require, "mui_homescreen")
             HS2 = ok and m
         end
         if not HS2 then return end
@@ -3156,7 +3156,7 @@ local function _onStatusChanged(file)
     --    stale ctx.stats survives. We must also clear _ctx_cache so that the
     --    next _updatePage() call re-runs _buildCtx() and fetches fresh stats
     --    from the now-invalidated StatsProvider.
-    local ok_hs, HS = pcall(require, "sui_homescreen")
+    local ok_hs, HS = pcall(require, "mui_homescreen")
     if ok_hs and HS then
         -- Flag for the class-level check in onShow.
         HS._stats_need_refresh = true
@@ -3599,7 +3599,7 @@ local function _closeReaderToHomescreenSync(plugin, readerui, file,
 
     -- Default path: raise or show the Homescreen on top of the FM.
     local HS = liveHS() or (function()
-        local ok, m = pcall(require, "sui_homescreen"); return ok and m
+        local ok, m = pcall(require, "mui_homescreen"); return ok and m
     end)()
     if not HS then return end
 
@@ -3938,7 +3938,7 @@ end
 -- Paint the wallpaper onto bb, anchored at y=0 (top of screen), with opacity.
 local function _paintWallpaper(bg_widget, bb, x, y)
     if not bg_widget then return end
-    local ok_hs, HS = pcall(require, "sui_homescreen")
+    local ok_hs, HS = pcall(require, "mui_homescreen")
     local opacity = ok_hs and HS and HS.styleGetWallpaperOpacityValue() or 0
     bg_widget:paintTo(bb, x, 0)
     if opacity and opacity > 0 then
@@ -3951,7 +3951,7 @@ end
 -- All wallpaper paintTo hooks call this; the single pcall per frame replaces
 -- the previous two separate pcall(require) calls per invocation.
 local function _wallpaperBg()
-    local ok, HS = pcall(require, "sui_homescreen")
+    local ok, HS = pcall(require, "mui_homescreen")
     if not (ok and HS and HS.styleGetWallpaperShowInFM
             and HS.styleGetWallpaperShowInFM()) then return nil end
     if not HS.styleGetBgWidget then return nil end
@@ -3960,7 +3960,7 @@ end
 
 -- Kept for callers that only need the boolean (e.g. setupLayout background clear).
 local function _wallpaperEnabledFM()
-    local ok, HS = pcall(require, "sui_homescreen")
+    local ok, HS = pcall(require, "mui_homescreen")
     return ok and HS and HS.styleGetWallpaperShowInFM and HS.styleGetWallpaperShowInFM()
 end
 
@@ -4587,7 +4587,7 @@ function M.installAll(plugin)
     M.patchFontGetFace(plugin)
     -- Install the FM + Reader tab icon patches so system icon overrides
     -- survive menu rebuilds.
-    local ok_ss, SUIStyle = pcall(require, "sui_style")
+    local ok_ss, SUIStyle = pcall(require, "mui_style")
     if ok_ss and SUIStyle then
         pcall(SUIStyle.installTabIconPatch, plugin)
         pcall(SUIStyle.installReaderTabIconPatch, plugin)
@@ -4600,14 +4600,14 @@ function M.installAll(plugin)
     -- wrapping MosaicMenuItem.update unconditionally, which would hide the
     -- BookInfoManager upvalue from third-party user-patches.
     -- FC.install() is also called from sui_menu.lua when the toggle is turned on.
-    local ok_fc, FC = pcall(require, "sui_foldercovers")
+    local ok_fc, FC = pcall(require, "mui_foldercovers")
     if ok_fc and FC and FC.isEnabled() then
         pcall(FC.install)
     end
     -- Virtual author/series browser — installed only when the feature is enabled
     -- in settings (default: on). When disabled, FileChooser is left unpatched so
     -- third-party user-patches (e.g. 2-author-series.lua) can run unobstructed.
-    local ok_bm, BM = pcall(require, "sui_browsemeta")
+    local ok_bm, BM = pcall(require, "mui_browsemeta")
     if ok_bm and BM and BM.isEnabled() then pcall(BM.install) end
     -- Wallpaper in FM and fullscreen overlay surfaces.
     M.patchWallpaperFM(plugin)
@@ -4809,13 +4809,13 @@ function M.teardownAll(plugin)
     end
     -- Remove the FM tab icon patch installed by SUIStyle.
     if plugin._sysicon_fmmenu_patched then
-        local ok_ss, SUIStyle = pcall(require, "sui_style")
+        local ok_ss, SUIStyle = pcall(require, "mui_style")
         if ok_ss and SUIStyle then pcall(SUIStyle.removeTabIconPatch) end
         plugin._sysicon_fmmenu_patched = nil
     end
     -- Remove the Reader tab icon patch installed by SUIStyle.
     if plugin._sysicon_rdmenu_patched then
-        local ok_ss, SUIStyle = pcall(require, "sui_style")
+        local ok_ss, SUIStyle = pcall(require, "mui_style")
         if ok_ss and SUIStyle then pcall(SUIStyle.removeReaderTabIconPatch) end
         plugin._sysicon_rdmenu_patched = nil
     end
@@ -4859,10 +4859,10 @@ function M.teardownAll(plugin)
     local Registry = package.loaded["desktop_modules/moduleregistry"]
     if Registry then Registry.invalidate() end
 
-    local FC = package.loaded["sui_foldercovers"]
+    local FC = package.loaded["mui_foldercovers"]
     if FC then pcall(FC.uninstall) end
 
-    local BM = package.loaded["sui_browsemeta"]
+    local BM = package.loaded["mui_browsemeta"]
     if BM then
         pcall(BM.uninstall)
         pcall(BM.reset)

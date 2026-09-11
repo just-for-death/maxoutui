@@ -24,17 +24,17 @@ local HorizontalGroup  = require("ui/widget/horizontalgroup")
 local VerticalGroup    = require("ui/widget/verticalgroup")
 local VerticalSpan     = require("ui/widget/verticalspan")
 local logger           = require("logger")
-local _                = require("sui_i18n").translate
-local N_               = require("sui_i18n").ngettext
+local _                = require("mui_i18n").translate
+local N_               = require("mui_i18n").ngettext
 local T                = require("ffi/util").template
-local Config           = require("sui_config")
+local Config           = require("mui_config")
 local Registry         = require("desktop_modules/moduleregistry")
-local SUISettings = require("sui_store")
+local SUISettings = require("mui_store")
 local Event            = require("ui/event")
 local Screen           = Device.screen
-local UI               = require("sui_core")
-local Bottombar        = require("sui_bottombar")
-local SUIStyle         = require("sui_style")
+local UI               = require("mui_core")
+local Bottombar        = require("mui_bottombar")
+local SUIStyle         = require("mui_style")
 local ImageWidget      = require("ui/widget/imagewidget")
 local lfs              = require("libs/libkoreader-lfs")
 
@@ -289,7 +289,7 @@ local _DOT_COLOR_INACTIVE_DEFAULT = Blitbuffer.gray(0.55)
 -- requiring a full rebuild.  Both fall back to the static defaults when no
 -- custom "text_secondary" role is configured.
 local function _getTextMid()
-    local ok, SUIStyle = pcall(require, "sui_style")
+    local ok, SUIStyle = pcall(require, "mui_style")
     if ok and SUIStyle then
         local c = SUIStyle.getThemeColor("text_secondary")
         if c then return c end
@@ -298,7 +298,7 @@ local function _getTextMid()
 end
 
 local function _getDotInactive()
-    local ok, SUIStyle = pcall(require, "sui_style")
+    local ok, SUIStyle = pcall(require, "mui_style")
     if ok and SUIStyle then
         local c = SUIStyle.getThemeColor("text_secondary")
         if c then return c end
@@ -636,7 +636,7 @@ local function buildChevronFooter(goto_fn)
     -- Since these are SimpleUI-created Buttons (not IconButtons), we use
     -- applyPaginationIcons which calls _applyNativeBtn (btn.icon + :init() path).
     pcall(function()
-        local ok_ss, SS = pcall(require, "sui_style")
+        local ok_ss, SS = pcall(require, "mui_style")
         if not (ok_ss and SS and SS.applyPaginationIcons) then return end
         -- Build a pseudo-widget with the four named fields that applyPaginationIcons expects.
         local pseudo = {
@@ -1198,7 +1198,7 @@ function HomescreenWidget:init()
         if on_recent then
             self._kb_focus_idx = nil
             self:_refresh(true)
-            local Patches = require("sui_patches")
+            local Patches = require("mui_patches")
             Patches.enterNavbarKbFocus(function()
                 self_ref._kb_focus_idx = frec
                 self_ref:_refresh(true)
@@ -1212,7 +1212,7 @@ function HomescreenWidget:init()
         else
             self._kb_focus_idx = nil
             self:_refresh(true)
-            local Patches = require("sui_patches")
+            local Patches = require("mui_patches")
             Patches.enterNavbarKbFocus(function()
                 self_ref._kb_focus_idx = 1
                 self_ref:_refresh(true)
@@ -1377,8 +1377,8 @@ function HomescreenWidget:init()
         local topbar_on  = SUISettings:nilOrTrue("simpleui_topbar_enabled")
         local zone_ratio_h
         if topbar_on then
-            local ok_tb, Topbar   = pcall(require, "sui_topbar")
-            local ok_ui, UI_core  = pcall(require, "sui_core")
+            local ok_tb, Topbar   = pcall(require, "mui_topbar")
+            local ok_ui, UI_core  = pcall(require, "mui_core")
             if ok_tb and ok_ui then
                 zone_ratio_h = (Topbar.TOTAL_TOP_H() + UI_core.MOD_GAP) / sh
             else
@@ -1971,7 +1971,7 @@ function HomescreenWidget:_onHoldModRelease(wrapper)
     local hs  = wrapper._sui_hs
     if not mod or not hs then return true end
 
-        local SUIWindow = require("sui_window")
+        local SUIWindow = require("mui_window")
 
         local function buildRoot(ctx)
             local ctx_menu = hs:_getHsCtxMenu()
@@ -3558,7 +3558,7 @@ function Homescreen.show(on_qa_tap, on_goal_tap)
     UIManager:show(w)
 
     if onboarding_pending then
-        local ok, Onboarding = pcall(require, "sui_onboarding")
+        local ok, Onboarding = pcall(require, "mui_onboarding")
         if ok and Onboarding then
             Onboarding.show(function()
                 Homescreen.rebuildLayout()

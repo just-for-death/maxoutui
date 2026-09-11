@@ -20,8 +20,8 @@ local VerticalSpan    = require("ui/widget/verticalspan")
 local Screen          = Device.screen
 local lfs             = require("libs/libkoreader-lfs")
 local util            = require("util")
-local Config          = require("sui_config")
-local SUIStyle        = require("sui_style")
+local Config          = require("mui_config")
+local SUIStyle        = require("mui_style")
 
 local math_floor = math.floor
 local math_max   = math.max
@@ -689,7 +689,7 @@ local _STALE_BOOKS_SETTING_KEY = "simpleui_stale_books_v1"
 local _SUIStore = nil
 local function _getSUIStore()
     if not _SUIStore then
-        local ok, m = pcall(require, "sui_store")
+        local ok, m = pcall(require, "mui_store")
         if ok then _SUIStore = m end
     end
     return _SUIStore

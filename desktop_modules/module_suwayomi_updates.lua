@@ -21,12 +21,12 @@ local VerticalGroup   = require("ui/widget/verticalgroup")
 local VerticalSpan    = require("ui/widget/verticalspan")
 local ImageWidget     = require("ui/widget/imagewidget")
 
-local _ = require("sui_i18n").translate
-local Config      = require("sui_config")
-local UI          = require("sui_core")
-local SUISettings = require("sui_store")
-local SUIStyle    = require("sui_style")
-local RowRenderer = require("desktop_modules/sui_book_row")
+local _ = require("mui_i18n").translate
+local Config      = require("mui_config")
+local UI          = require("mui_core")
+local SUISettings = require("mui_store")
+local SUIStyle    = require("mui_style")
+local RowRenderer = require("desktop_modules/mui_book_row")
 
 local PAD     = UI.PAD
 local MOD_ID  = "suwayomi_updates"
@@ -111,7 +111,7 @@ local function prefetchThumbnailsAsync(credentials, entries)
                             ThumbnailWorker:run(credentials, thumb_url, path, { variant = "thumbnail" })
                         end,
                         on_finish = function()
-                            local HS = package.loaded["sui_homescreen"]
+                            local HS = package.loaded["mui_homescreen"]
                             local hs_inst = HS and HS._instance
                             if hs_inst then
                                 pcall(function()
@@ -163,7 +163,7 @@ local function fetchUpdatesEntriesAsync(callback)
                 _updates_cache = result.entries
                 _updates_cache_time = os.time()
                 prefetchThumbnailsAsync(credentials, _updates_cache)
-                local HS = package.loaded["sui_homescreen"]
+                local HS = package.loaded["mui_homescreen"]
                 local hs_inst = HS and HS._instance
                 if hs_inst then
                     pcall(function()

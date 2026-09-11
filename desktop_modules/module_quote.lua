@@ -42,19 +42,19 @@ local VerticalSpan   = require("ui/widget/verticalspan")
 
 local Screen         = Device.screen
 
-local _ = require("sui_i18n").translate
+local _ = require("mui_i18n").translate
 
 local logger         = require("logger")
 
 
 
-local Config       = require("sui_config")
+local Config       = require("mui_config")
 
 local UIManager       = require("ui/uimanager")
 
-local UI           = require("sui_core")
-local SUISettings  = require("sui_store")
-local SUIStyle     = require("sui_style")
+local UI           = require("mui_core")
+local SUISettings  = require("mui_store")
+local SUIStyle     = require("mui_style")
 
 local PAD          = UI.PAD
 
@@ -1110,7 +1110,7 @@ function M.build(w, ctx)
     local vspan_gap  = VerticalSpan:new{ width = quote_gap }
 
     -- Theme: when fg is set use it for all text; otherwise fall back to module defaults.
-    local ok_ss, SUIStyle  = pcall(require, "sui_style")
+    local ok_ss, SUIStyle  = pcall(require, "mui_style")
     local _theme_fg        = ok_ss and SUIStyle and SUIStyle.getThemeColor("fg")
     local _theme_secondary = ok_ss and SUIStyle and SUIStyle.getThemeColor("text_secondary")
     local _clr_quote       = _theme_fg or _CLR_TEXT_QUOTE

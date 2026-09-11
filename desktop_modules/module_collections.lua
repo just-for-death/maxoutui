@@ -24,13 +24,13 @@ local VerticalSpan    = require("ui/widget/verticalspan")
 local Screen          = Device.screen
 local logger          = require("logger")
 local lfs             = require("libs/libkoreader-lfs")
-local _ = require("sui_i18n").translate
-local N_ = require("sui_i18n").ngettext
-local Config          = require("sui_config")
+local _ = require("mui_i18n").translate
+local N_ = require("mui_i18n").ngettext
+local Config          = require("mui_config")
 
-local UI           = require("sui_core")
-local SUISettings  = require("sui_store")
-local SUIStyle     = require("sui_style")
+local UI           = require("mui_core")
+local SUISettings  = require("mui_store")
+local SUIStyle     = require("mui_style")
 local CLR_TEXT_SUB = UI.CLR_TEXT_SUB
 local PAD     = UI.PAD
 local PAD2    = UI.PAD2
@@ -423,7 +423,7 @@ function M.build(w, ctx)
         d.coll_cell_h = d.coll_h + d.accent_h + d.label_gap + 2 * d.tbw_line_h
     end
     local selected_raw = getSelectedCollections()
-    local ok_ss, SUIStyle = pcall(require, "sui_style")
+    local ok_ss, SUIStyle = pcall(require, "mui_style")
     local _theme_fg        = ok_ss and SUIStyle and SUIStyle.getThemeColor("fg")
     local _theme_secondary = ok_ss and SUIStyle and SUIStyle.getThemeColor("text_secondary")
     local _theme_accent    = ok_ss and SUIStyle and SUIStyle.getThemeColor("accent")
@@ -860,7 +860,7 @@ function M.getMenuItems(ctx_menu)
             })
         end,
         sui_build = ctx_menu.is_sui and function(ctx, _item)
-            local SUIWindow = require("sui_window")
+            local SUIWindow = require("mui_window")
             return SUIWindow.ListRow{
                 title        = _lc("Collections"),
                     subtitle     = function()

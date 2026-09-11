@@ -8,9 +8,9 @@ local math_min          = math.min
 local math_floor        = math.floor
 local Blitbuffer        = require("ffi/blitbuffer")
 local DataStorage       = require("datastorage")
-local SUISettings       = require("sui_store")
+local SUISettings       = require("mui_store")
 local logger            = require("logger")
-local _ = require("sui_i18n").translate
+local _ = require("mui_i18n").translate
 
 local M = {}
 
@@ -140,7 +140,7 @@ M.ACTION_BY_ID = {}
 for _i, a in ipairs(M.ALL_ACTIONS) do M.ACTION_BY_ID[a.id] = a end
 
 -- Custom Quick Actions wrappers (delegates to sui_quickactions to avoid circular require).
-local function _QA_lazy() return package.loaded["sui_quickactions"] or require("sui_quickactions") end
+local function _QA_lazy() return package.loaded["mui_quickactions"] or require("mui_quickactions") end
 function M.getCustomQAList()         return _QA_lazy().getCustomQAList()                                                              end
 function M.saveCustomQAList(list)    return _QA_lazy().saveCustomQAList(list)                                                         end
 function M.getCustomQAConfig(id)     return _QA_lazy().getCustomQAConfig(id)                                                          end
@@ -261,7 +261,7 @@ end
 function M.saveTopbarConfig(cfg)
     SUISettings:set("simpleui_topbar_config", cfg)
     M.invalidateTopbarConfigCache()
-    local tb = package.loaded["sui_topbar"]
+    local tb = package.loaded["mui_topbar"]
     if tb and tb.invalidateConfigCache then tb.invalidateConfigCache() end
 end
 
@@ -397,7 +397,7 @@ local function deviceHasWifi()
 end
 
 function M.wifiIcon()
-    local QA = package.loaded["sui_quickactions"] or require("sui_quickactions")
+    local QA = package.loaded["mui_quickactions"] or require("mui_quickactions")
     local icon_on  = QA.getDefaultActionIcon("wifi_toggle") or M.ICON.ko_wifi_on
     local icon_off = QA.getDefaultActionIcon("wifi_toggle_off") or M.ICON.ko_wifi_off
 
@@ -415,8 +415,8 @@ end
 local _wifi_action_live = { id = "wifi_toggle", label = "", icon = "" }
 
 function M.getActionById(id)
-    local QA = package.loaded["sui_quickactions"]
-        or require("sui_quickactions")
+    local QA = package.loaded["mui_quickactions"]
+        or require("mui_quickactions")
     local entry = QA.getEntry(id)
     if entry and not entry.id then
         return { id = id, label = entry.label, icon = entry.icon }
@@ -425,19 +425,19 @@ function M.getActionById(id)
 end
 
 function M.getDefaultActionLabel(id)
-    local QA = package.loaded["sui_quickactions"] or require("sui_quickactions")
+    local QA = package.loaded["mui_quickactions"] or require("mui_quickactions")
     return QA.getDefaultActionLabel(id)
 end
 function M.getDefaultActionIcon(id)
-    local QA = package.loaded["sui_quickactions"] or require("sui_quickactions")
+    local QA = package.loaded["mui_quickactions"] or require("mui_quickactions")
     return QA.getDefaultActionIcon(id)
 end
 function M.setDefaultActionLabel(id, label)
-    local QA = package.loaded["sui_quickactions"] or require("sui_quickactions")
+    local QA = package.loaded["mui_quickactions"] or require("mui_quickactions")
     QA.setDefaultActionLabel(id, label)
 end
 function M.setDefaultActionIcon(id, icon)
-    local QA = package.loaded["sui_quickactions"] or require("sui_quickactions")
+    local QA = package.loaded["mui_quickactions"] or require("mui_quickactions")
     QA.setDefaultActionIcon(id, icon)
 end
 
@@ -755,11 +755,11 @@ end
 local _BASE_LABEL_TEXT_H = nil
 function M.getScaledLabelH()
     if not _BASE_LABEL_TEXT_H then
-        local ok, SUIStyle = pcall(require, "sui_style")
+        local ok, SUIStyle = pcall(require, "mui_style")
         local base_fs = (ok and SUIStyle and SUIStyle.FS_BODY) or 18  -- FS_BODY (18)
         _BASE_LABEL_TEXT_H = require("device").screen:scaleBySize(base_fs)
     end
-    local PAD2  = require("sui_core").PAD2
+    local PAD2  = require("mui_core").PAD2
     local scale = M.getLabelScale()
     return PAD2 + math_max(8, math_floor(_BASE_LABEL_TEXT_H * scale))
 end
@@ -1293,7 +1293,7 @@ local function _stateFromMenu(menu)
     return page > 1, page < page_num
 end
 function M.getNavpagerState()
-    local UI = package.loaded["sui_core"]
+    local UI = package.loaded["mui_core"]
     if not UI then return false, false end
     local stack = UI.getWindowStack()
     -- Check for a SUIWindow on top of the stack first.
@@ -1322,7 +1322,7 @@ function M.getNavpagerState()
                 local prev2, nxt2 = _stateFromMenu(w.file_chooser)
                 if prev2 ~= nil then return prev2, nxt2 end
             end
-            local HS = package.loaded["sui_homescreen"]
+            local HS = package.loaded["mui_homescreen"]
             if HS and HS._instance == w then
                 local cur, total = HS._instance._current_page or 1, HS._instance._total_pages or 1
                 return cur > 1, cur < total

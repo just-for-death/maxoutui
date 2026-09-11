@@ -62,9 +62,9 @@
 --   SUIStyle.resetTheme()               — clear all theme color overrides
 --   SUIStyle.makeThemeMenuItems()        — returns sub_item_table for Style ▸ Theme Colors
 
-local SUISettings = require("sui_store")
+local SUISettings = require("mui_store")
 local logger      = require("logger")
-local _           = require("sui_i18n").translate
+local _           = require("mui_i18n").translate
 local Blitbuffer  = require("ffi/blitbuffer")
 local Device      = require("device")
 local Screen      = Device.screen
@@ -331,7 +331,7 @@ function M.safeIconPath(path, fallback, slot_id)
         return fallback
     end
 
-    local Config = require("sui_config")
+    local Config = require("mui_config")
     if Config.isNerdIcon(path) then
         return path
     end
@@ -377,7 +377,7 @@ function M.performResetAllSystemIcons(plugin)
     M.resetAll()
     
     local fm = package.loaded["apps/filemanager/filemanager"] and package.loaded["apps/filemanager/filemanager"].instance
-    local ok_tb, TB = pcall(require, "sui_titlebar")
+    local ok_tb, TB = pcall(require, "mui_titlebar")
     if ok_tb and TB then
         local UIManager = require("ui/uimanager")
         pcall(TB.reapplyAll, fm, UIManager._window_stack)
@@ -394,9 +394,9 @@ function M.performResetAllSystemIcons(plugin)
         end
     end
     
-    local ok_qa, QA2 = pcall(require, "sui_quickactions")
+    local ok_qa, QA2 = pcall(require, "mui_quickactions")
     if ok_qa and QA2 and QA2.invalidateCustomQACache then QA2.invalidateCustomQACache() end
-    local ok_fc, FC = pcall(require, "sui_foldercovers")
+    local ok_fc, FC = pcall(require, "mui_foldercovers")
     if ok_fc and FC and FC.invalidateCache then FC.invalidateCache() end
     pcall(M.refreshLiveTabBars)
     
@@ -406,7 +406,7 @@ function M.performResetAllSystemIcons(plugin)
         fm._navbar_suppress_path_change = nil
     end
     if plugin then plugin:_rebuildAllNavbars() end
-    local HS = package.loaded["sui_homescreen"]
+    local HS = package.loaded["mui_homescreen"]
     if HS and HS._instance then HS._instance:_refreshImmediate(false) end
 end
 
@@ -424,7 +424,7 @@ function M.applyIconToBtn(id, btn)
     local path = M.safeIconPath(raw, nil, id)
     if not path then return false end
     
-    local Config = require("sui_config")
+    local Config = require("mui_config")
     local is_nerd = Config.isNerdIcon(path)
     
     -- IconButton stores self.image at self.horizontal_group[2] — that slot is
@@ -507,7 +507,7 @@ function M.applyIconToBtn(id, btn)
             -- Sync btn[w_key] AND horizontal_group[2] so the render tree is consistent.
             _syncIconButtonSlot(w_key, new_w)
 
-            local bb_mod = package.loaded["sui_bottombar"]
+            local bb_mod = package.loaded["mui_bottombar"]
             if bb_mod and bb_mod.patchDimmedIcon then
                 bb_mod.patchDimmedIcon(btn)
             end
@@ -523,7 +523,7 @@ function M.applyIconToBtn(id, btn)
                 -- Sync btn[w_key] AND horizontal_group[2].
                 _syncIconButtonSlot(w_key, new_w)
 
-                local bb_mod = package.loaded["sui_bottombar"]
+                local bb_mod = package.loaded["mui_bottombar"]
                 if bb_mod and bb_mod.patchDimmedIcon then
                     bb_mod.patchDimmedIcon(btn)
                 end
@@ -740,7 +740,7 @@ local _TAB_ICON_NAME_CACHE = {} -- slot_id -> { src = last-registered source pat
 function M.registerTabIconName(slot_id, path)
     if type(path) ~= "string" or path == "" then return nil end
 
-    local ok_cfg, Config = pcall(require, "sui_config")
+    local ok_cfg, Config = pcall(require, "mui_config")
     if ok_cfg and Config.isNerdIcon and Config.isNerdIcon(path) then
         -- Nerd-font glyph references aren't files; nothing to register.
         return nil
@@ -961,7 +961,7 @@ end
 function M.refreshLiveTabBars()
     -- Keep the shared Quick Settings panel tab's icon in sync regardless
     -- of whether the quicksettings-bar feature itself is currently enabled.
-    local ok_qs, QSBar = pcall(require, "sui_quicksettings_bar")
+    local ok_qs, QSBar = pcall(require, "mui_quicksettings_bar")
     if ok_qs and QSBar and QSBar.refreshPanelTabIcon then
         pcall(QSBar.refreshPanelTabIcon)
     end
@@ -990,7 +990,7 @@ end
 
 --- Returns the sub_item_table for Style ▸ Icons ▸ System Icons.
 function M.makeMenuItems(plugin)
-    local QA = require("sui_quickactions")
+    local QA = require("mui_quickactions")
 
     -- Helper: get the current FM instance (may be nil).
     local function _fm()
@@ -1000,7 +1000,7 @@ function M.makeMenuItems(plugin)
 
     -- Helper: reapply titlebar icons to the live FM and all injected widgets.
 local function _reapplyTitlebar()
-        local ok_tb, TB = pcall(require, "sui_titlebar")
+        local ok_tb, TB = pcall(require, "mui_titlebar")
         if not ok_tb or not TB then return end
         local fm = _fm()
         local ok_ui, UIManager = pcall(require, "ui/uimanager")
@@ -1071,13 +1071,13 @@ local function _reapplyTitlebar()
         elseif group == "sui_navpager_icons" then
             if plugin then plugin:_rebuildAllNavbars() end
         elseif group == "sui_qa_defaults" then
-            local ok_qa, QA = pcall(require, "sui_quickactions")
+            local ok_qa, QA = pcall(require, "mui_quickactions")
             if ok_qa and QA.invalidateCustomQACache then QA.invalidateCustomQACache() end
             if plugin then plugin:_rebuildAllNavbars() end
-            local ok_hs, HS = pcall(require, "sui_homescreen")
+            local ok_hs, HS = pcall(require, "mui_homescreen")
             if ok_hs and HS and HS._instance then HS._instance:_refreshImmediate(false) end
         elseif group == "sui_fc_icons" then
-            local ok_fc, FC = pcall(require, "sui_foldercovers")
+            local ok_fc, FC = pcall(require, "mui_foldercovers")
             if ok_fc and FC and FC.invalidateCache then FC.invalidateCache() end
             local fm = _fm()
             if fm and fm.file_chooser then
@@ -1167,7 +1167,7 @@ local function _reapplyTitlebar()
             local orig_cb = row.callback
             row.callback = function()
                 orig_cb()
-                local ok_tb, TB = pcall(require, "sui_titlebar")
+                local ok_tb, TB = pcall(require, "mui_titlebar")
                 if ok_tb and TB and TB.refreshBrowseIcons then
                     TB.refreshBrowseIcons(_fm())
                 end
@@ -1224,7 +1224,7 @@ function M.sui_build_system_icons(plugin, ctx_menu, ctx)
     
     local function makeIconPreview(icon_path, ko_native, fallback_label)
         local icon_widget
-        local Config = require("sui_config")
+        local Config = require("mui_config")
         local is_nerd = icon_path and Config.isNerdIcon(icon_path)
         
         if is_nerd then
@@ -1296,7 +1296,7 @@ function M.sui_build_system_icons(plugin, ctx_menu, ctx)
                             text = group_name:upper(),
                             is_divider = true,
                             sui_build = function(ctx)
-                                return require("sui_window").SectionLabel{ text = group_name:upper(), inner_w = ctx.inner_w }
+                                return require("mui_window").SectionLabel{ text = group_name:upper(), inner_w = ctx.inner_w }
                             end
                         }
                         added_title = true
@@ -1327,7 +1327,7 @@ function M.sui_build_system_icons(plugin, ctx_menu, ctx)
                         right_widget = makeIconPreview(effective_path, ko_native, label),
                         on_hold = function() end,
                         on_tap = function()
-                            local QA = require("sui_quickactions")
+                            local QA = require("mui_quickactions")
                             QA.showIconPicker(path, function(new_path)
                                 local function _guardedSetIcon(ipath, on_valid)
                                     if ipath == nil then on_valid(nil); return end
@@ -1353,7 +1353,7 @@ function M.sui_build_system_icons(plugin, ctx_menu, ctx)
                                     if slot.group == "sui_tabbar_icons" then
                                         pcall(M.refreshLiveTabBars)
                                     end
-                                    local HS = package.loaded["sui_homescreen"]
+                                    local HS = package.loaded["mui_homescreen"]
                                     if HS and HS._instance then HS._instance:_refreshImmediate(false) end
                                     -- Reapply titlebar icons and dirty the root widget so the
                                     -- titlebar repaints in the same paint cycle as the bottombar.
@@ -1361,7 +1361,7 @@ function M.sui_build_system_icons(plugin, ctx_menu, ctx)
                                     -- _rebuildAllNavbars does — no tick scheduling needed because
                                     -- the SUIWindow is a child of this widget and is composited
                                     -- together with it by the UIManager.
-                                    local ok_tb, TB = pcall(require, "sui_titlebar")
+                                    local ok_tb, TB = pcall(require, "mui_titlebar")
                                     if ok_tb and TB then
                                         local ok_ui, UIManager = pcall(require, "ui/uimanager")
                                         pcall(TB.reapplyAll, plugin.ui,
@@ -2089,7 +2089,7 @@ function M.makeThemeMenuItems()
     local function _openInputDialog(role, label_str)
         local ok_id, InputDialog = pcall(require, "ui/widget/inputdialog")
         local ok_ui, UIManager   = pcall(require, "ui/uimanager")
-        local ok_hs, HS          = pcall(require, "sui_homescreen")
+        local ok_hs, HS          = pcall(require, "mui_homescreen")
         if not (ok_id and ok_ui) then return end
 
         local key     = _ROLE_KEYS[role]
@@ -2169,7 +2169,7 @@ function M.makeThemeMenuItems()
                             M.setThemeColor(role, hex)
                         end
                         local ok_ui, UIManager = pcall(require, "ui/uimanager")
-                        local ok_hs, HS        = pcall(require, "sui_homescreen")
+                        local ok_hs, HS        = pcall(require, "mui_homescreen")
                         if ok_ui and UIManager then UIManager:setDirty("all", "ui") end
                         if ok_hs and HS and HS.rebuildLayout then HS.rebuildLayout() end
                     end,
@@ -2189,7 +2189,7 @@ function M.makeThemeMenuItems()
         text     = _("Reset All Theme Colors"),
         callback = function()
             local ok_ui, UIManager = pcall(require, "ui/uimanager")
-            local ok_hs, HS        = pcall(require, "sui_homescreen")
+            local ok_hs, HS        = pcall(require, "mui_homescreen")
             M.resetTheme()
             if ok_ui and UIManager then UIManager:setDirty("all", "ui") end
             if ok_hs and HS and HS.rebuildLayout then HS.rebuildLayout() end

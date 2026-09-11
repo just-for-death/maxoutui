@@ -6,15 +6,15 @@
 -- Sub-pages:    applyToSub(w)  /  restoreSub(w)
 -- Both:         reapplyAll(fm, stack)
 
-local _ = require("sui_i18n").translate
-local Config = require("sui_config")
-local SUISettings = require("sui_store")
+local _ = require("mui_i18n").translate
+local Config = require("mui_config")
+local SUISettings = require("mui_store")
 
 -- Lazy reference to the style module — avoids a circular-require at load time.
 local _SUIStyle
 local function SUIStyle()
     _SUIStyle = _SUIStyle or (function()
-        local ok, m = pcall(require, "sui_style")
+        local ok, m = pcall(require, "mui_style")
         return ok and m or nil
     end)()
     return _SUIStyle
@@ -48,7 +48,7 @@ local M = {}
 local _BM_cache  -- nil = not yet tried; false = unavailable; table = module
 local function _BrowseMeta()
     if _BM_cache == nil then
-        local ok, m = pcall(require, "sui_browsemeta")
+        local ok, m = pcall(require, "mui_browsemeta")
         _BM_cache = (ok and m) or false
     end
     return _BM_cache or nil

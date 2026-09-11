@@ -264,7 +264,7 @@ local function buildPanel(touch_menu)
 
                     local FM  = package.loaded["apps/filemanager/filemanager"]
                     local fm  = FM and FM.instance
-                    local plugin = fm and fm._simpleui_plugin
+                    local plugin = fm and (fm.maxoutui or fm._simpleui_plugin or fm._maxoutui_plugin)
                     
                     if not plugin then
                         local ctx = { fm = fm }
@@ -286,7 +286,7 @@ local function buildPanel(touch_menu)
                     -- Inside the reader, FM.instance may be nil, so fall back to
                     -- the plugin instance registered on ReaderUI.
                     local plugin_resolved = plugin
-                        or (in_reader and in_reader.simpleui)
+                        or (in_reader and (in_reader.maxoutui or in_reader.simpleui))
 
                     if stay_open then
                         local ctx = { plugin = plugin_resolved, fm = fm }
@@ -301,7 +301,7 @@ local function buildPanel(touch_menu)
                     UIManager:scheduleIn(0, function()
                         local FM_live = package.loaded["apps/filemanager/filemanager"]
                         local fm_live = FM_live and FM_live.instance
-                        local plugin_live = fm_live and fm_live._simpleui_plugin or plugin
+                        local plugin_live = fm_live and fm_(live.maxoutui or live._simpleui_plugin or live._maxoutui_plugin) or plugin
 
                         if in_reader and not is_in_place then
                             if _aid == "homescreen" then
@@ -316,7 +316,7 @@ local function buildPanel(touch_menu)
                                 UIManager:scheduleIn(0, function()
                                     local FM_new = package.loaded["apps/filemanager/filemanager"]
                                     local fm_new = FM_new and FM_new.instance
-                                    local plugin_new = fm_new and fm_new._simpleui_plugin or plugin_live
+                                    local plugin_new = fm_new and (fm_new.maxoutui or fm_new._simpleui_plugin or fm_new._maxoutui_plugin) or plugin_live
                                     plugin_new:_navigate(_aid, fm_new, _Config().loadTabConfig(), false)
                                 end)
                             end

@@ -581,7 +581,7 @@ function SUIWindow:close()
                 local mode = (ok_cfg and Config2 and Config2.getNavbarMode and
                     Config2.getNavbarMode()) or "icons"
                 local FM = package.loaded["apps/filemanager/filemanager"]
-                local plugin = FM and FM.instance and FM.instance._simpleui_plugin
+                local plugin = FM and FM.instance and (FM.instance.maxoutui or FM.instance._simpleui_plugin or FM.instance._maxoutui_plugin)
                 local active = plugin and plugin.active_action
                 local new_bar = Bottombar.buildBarWidgetWithArrows(active, tabs, mode, has_prev, has_next)
                 Bottombar.replaceBar(target, new_bar, tabs)

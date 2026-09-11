@@ -457,7 +457,7 @@ function M.patchFileManagerClass(plugin)
                 end
 
                 -- 4. Rebuild the navbar with the Library ("home") tab active.
-                local sui = fm_self._simpleui_plugin
+                local sui = fm_self._maxoutui_plugin or fm_self._simpleui_plugin
                 if sui then sui.active_action = "home" end
                 local tabs = Config.loadTabConfig()
                 if fm_self._navbar_container then
@@ -664,7 +664,10 @@ function M.patchFileManagerClass(plugin)
             UI.wrapWithNavbar(inner_widget, _wrap_active, tabs)
         UI.applyNavbarState(fm_self, navbar_container, bar, topbar, bar_idx, topbar_on2, topbar_idx, tabs)
         fm_self[1] = wrapped
-        fm_self._simpleui_plugin = plugin
+        fm_self._maxoutui_plugin = plugin
+        fm_self._simpleui_plugin = plugin  -- legacy alias
+        fm_self.maxoutui = plugin
+
 
         -- Resize pagination buttons (chevrons) on every setupLayout call so that
         -- they use the correct Simple UI size after rotation rebuilds the FM.

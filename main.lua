@@ -67,7 +67,7 @@ local function _requireStatistics()
 end
 
 local MaxOutUIPlugin = WidgetContainer:new{
-    name = "simpleui",
+    name = "maxoutui",
 
     active_action             = nil,
     _rebuild_scheduled        = false,

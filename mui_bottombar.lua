@@ -1431,7 +1431,7 @@ function M.navigate(plugin, action_id, fm_self, tabs, force)
             fm = live
             -- Also sync active_action to the live plugin so the indicator is
             -- updated on the correct plugin instance.
-            local live_plugin = live._simpleui_plugin
+            local live_plugin = (live.maxoutui or live._simpleui_plugin or live._maxoutui_plugin)
             if live_plugin and live_plugin ~= plugin then
                 live_plugin.active_action = plugin.active_action
                 plugin = live_plugin

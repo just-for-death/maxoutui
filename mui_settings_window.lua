@@ -172,13 +172,13 @@ local function buildScreens(st)
     -- Checks FileManager first (normal path), then falls back to ReaderUI for
     -- when the settings window is opened from inside the reader and FM is not
     -- the active context (_simpleui_plugin is only set on FM.instance, but the
-    -- plugin is always registered on ReaderUI as readerui.simpleui).
+    -- plugin is always registered on ReaderUI as reade(rui.maxoutui or rui.simpleui)).
     local function getPlugin()
         local FM = package.loaded["apps/filemanager/filemanager"]
-        local plugin = FM and FM.instance and FM.instance._simpleui_plugin
+        local plugin = FM and FM.instance and (FM.instance.maxoutui or FM.instance._simpleui_plugin or FM.instance._maxoutui_plugin)
         if not plugin then
             local RUI = package.loaded["apps/reader/readerui"]
-            plugin = RUI and RUI.instance and RUI.instance.simpleui
+            plugin = RUI and RUI.instance and (RUI.instance.maxoutui or RUI.instance.simpleui)
         end
         if plugin and type(plugin.makeWallpaperMenuItems) ~= "function" then
             local fake = {}

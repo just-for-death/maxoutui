@@ -596,7 +596,7 @@ local function _tick()
     --   window where the UIManager has already dequeued this timer for execution
     --   in the current tick before either flag was set.
     local FM = package.loaded["apps/filemanager/filemanager"]
-    local plugin = FM and FM.instance and FM.instance._simpleui_plugin
+    local plugin = FM and FM.instance and (FM.instance.maxoutui or FM.instance._simpleui_plugin or FM.instance._maxoutui_plugin)
     if hs._suspended or (plugin and plugin._simpleui_suspended) or Device.screen_saver_mode then
         return
     end

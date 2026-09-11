@@ -101,8 +101,8 @@ local function _getBookOrbitInstance()
 end
 
 local function _getMangaModule()
-    if not package.path:find("simpleui.koplugin", 1, true) then
-        package.path = package.path .. ";./plugins/simpleui.koplugin/?.lua;./plugins/simpleui.koplugin/?/init.lua"
+    if not package.path:find("maxoutui.koplugin", 1, true) then
+        package.path = package.path .. ";./plugins/maxoutui.koplugin/?.lua;./plugins/maxoutui.koplugin/?/init.lua"
     end
     local ok, Manga = pcall(require, "desktop_modules/module_manga")
     if ok and Manga then return Manga end
@@ -215,15 +215,15 @@ local function _liveFM()
 end
 
 -- Helper: resolve the live SimpleUIPlugin instance. Tries the given fm first
--- (set as fm._simpleui_plugin during plugin init), then the live FM, then
--- ReaderUI (where the plugin is registered as readerui.simpleui).
+-- (set as (fm.maxoutui or fm._simpleui_plugin or fm._maxoutui_plugin) during plugin init), then the live FM, then
+-- ReaderUI (where the plugin is registered as reade(rui.maxoutui or rui.simpleui)).
 local function _resolveMaxOutUIPlugin(fm)
-    if fm and fm._simpleui_plugin then return fm._simpleui_plugin end
+    if fm and (fm.maxoutui or fm._simpleui_plugin or fm._maxoutui_plugin) then return (fm.maxoutui or fm._simpleui_plugin or fm._maxoutui_plugin) end
     local live_fm = _liveFM()
-    if live_fm and live_fm._simpleui_plugin then return live_fm._simpleui_plugin end
+    if live_fm and live_(fm.maxoutui or fm._simpleui_plugin or fm._maxoutui_plugin) then return live_(fm.maxoutui or fm._simpleui_plugin or fm._maxoutui_plugin) end
     local RUI = package.loaded["apps/reader/readerui"]
     local rui = RUI and RUI.instance
-    return rui and rui.simpleui
+    return rui and (rui.maxoutui or rui.simpleui)
 end
 
 -- _goHome: replicates FileChooser:goHome() used in navigate().
@@ -428,7 +428,7 @@ local function _showBookmarkBrowserSourceDialog(bb_ui)
         return
     end
     local FM         = package.loaded["apps/filemanager/filemanager"]
-    local plugin     = FM and FM.instance and FM.instance._simpleui_plugin
+    local plugin     = FM and FM.instance and (FM.instance.maxoutui or FM.instance._simpleui_plugin or FM.instance._maxoutui_plugin)
     local prev_action = plugin and plugin.active_action
     local BB         = _Bottombar()
     if plugin then BB.setTempTabActive(plugin, "bookmark_browser", true, prev_action) end
@@ -618,12 +618,12 @@ local function _registerBuiltins()
     local function _simpleui_plugin()
         -- Resolve the live plugin instance via the FM first.
         local fm = _liveFM()
-        if fm and fm._simpleui_plugin then return fm._simpleui_plugin end
+        if fm and (fm.maxoutui or fm._simpleui_plugin or fm._maxoutui_plugin) then return (fm.maxoutui or fm._simpleui_plugin or fm._maxoutui_plugin) end
         -- Inside the reader the FM may not be the active instance.
-        -- The plugin is registered on ReaderUI as readerui.simpleui.
+        -- The plugin is registered on ReaderUI as reade(rui.maxoutui or rui.simpleui).
         local RUI = package.loaded["apps/reader/readerui"]
         local rui = RUI and RUI.instance
-        return rui and rui.simpleui
+        return rui and (rui.maxoutui or rui.simpleui)
     end
 
     local builtins = {

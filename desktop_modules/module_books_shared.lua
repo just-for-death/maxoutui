@@ -576,6 +576,9 @@ function SH.getBookData(filepath, prefetched)
             if suwayomi_info.author or suwayomi_info.artist then
                 meta.authors = suwayomi_info.author or suwayomi_info.artist
             end
+            if suwayomi_info.chapter_name and suwayomi_info.chapter_name ~= "" then
+                meta.chapter_name = suwayomi_info.chapter_name
+            end
         end
         if not meta.title or meta.title == "" then
             local ok_m, Manga = pcall(require, "desktop_modules/module_manga")

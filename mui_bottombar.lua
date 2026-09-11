@@ -1281,13 +1281,17 @@ function M.onTabTap(plugin, action_id, fm_self)
         local HS = package.loaded["mui_homescreen"]
         return HS and HS._instance ~= nil
     end)()
+local function _barRefreshType()
+    return SUISettings:isTrue("maxoutui_style_wallpaper_enabled") and "flashui" or "ui"
+end
+
     local injected_open = fm_self ~= plugin.ui and fm_self._navbar_injected
     if fm_self._navbar_container and action_id ~= "homescreen" and not hs_open
             and not already_active and not injected_open then
         M.replaceBar(fm_self, M.buildBarWidget(indicator_tab, tabs), tabs)
         -- setDirty(fm_self) covers the full screen and recurses into navbar_container.
         -- The previous double-dirty (navbar_container + fm_self) queued two e-ink cycles.
-        UIManager:setDirty(fm_self, "ui")
+        UIManager:setDirty(fm_self, _barRefreshType())
     end
     -- When the homescreen is open, update its bar immediately so the active
     -- indicator reflects the new tab before navigate() closes the HS.
@@ -1299,7 +1303,7 @@ function M.onTabTap(plugin, action_id, fm_self)
         local hs_inst = HS and HS._instance
         if hs_inst and hs_inst._navbar_container then
             M.replaceBar(hs_inst, M.buildBarWidget(indicator_tab, tabs), tabs)
-            UIManager:setDirty(hs_inst, "ui")
+            UIManager:setDirty(hs_inst, _barRefreshType())
         end
     end
     pcall(function() plugin:_updateFMHomeIcon() end)
@@ -1324,7 +1328,7 @@ local function setActiveAndRefreshFM(plugin, action_id, tabs)
     local fm = plugin.ui
     if fm and fm._navbar_container then
         M.replaceBar(fm, M.buildBarWidget(action_id, fm._navbar_tabs or tabs), tabs)
-        UIManager:setDirty(fm, "ui")
+        UIManager:setDirty(fm, _barRefreshType())
     end
     return action_id
 end
@@ -1473,7 +1477,7 @@ function M.navigate(plugin, action_id, fm_self, tabs, force)
         -- and already stored in plugin.active_action.
         if fm._navbar_container then
             M.replaceBar(fm, M.buildBarWidget(indicator_tab, tabs), tabs)
-            UIManager:setDirty(fm, "ui")
+            UIManager:setDirty(fm, _barRefreshType())
         end
         -- For other actions, fall through with fm_self = fm.
         fm_self = fm
@@ -1506,7 +1510,7 @@ function M.navigate(plugin, action_id, fm_self, tabs, force)
 
     if fm_self ~= fm and fm._navbar_container then
         M.replaceBar(fm, M.buildBarWidget(_resolveActiveTab(action_id, tabs), tabs), tabs)
-        UIManager:setDirty(fm, "ui")
+        UIManager:setDirty(fm, _barRefreshType())
     end
 
     -- Fully delegated to QA.execute.

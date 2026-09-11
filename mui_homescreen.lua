@@ -87,7 +87,11 @@ local function _styleWallpapersDir()
         dir = DataStorage:getSettingsDir() .. "/maxoutui/mui_wallpapers"
     else
         local src = debug.getinfo(1, "S").source or ""
-        dir = (src:match("^@(.+/)[^/]+$") or "./") .. "sui_wallpapers"
+        local base = src:match("^@(.+/)[^/]+$") or "./"
+        dir = base .. "mui_wallpapers"
+        if lfs.attributes(dir, "mode") ~= "directory" and lfs.attributes(base .. "sui_wallpapers", "mode") == "directory" then
+            dir = base .. "sui_wallpapers"
+        end
     end
     if lfs.attributes(dir, "mode") ~= "directory" then lfs.mkdir(dir) end
     return dir
@@ -1110,6 +1114,7 @@ function HomescreenWidget:init()
                 if new_page ~= cur or total == 1 then
                     self._current_page = new_page
                     self.page          = new_page
+                    self._is_page_turn = true
                     self:_refresh(true)
                 end
                 return true
@@ -1241,6 +1246,7 @@ function HomescreenWidget:init()
         if new_page ~= cur then
             self._current_page = new_page
             self.page          = new_page
+            self._is_page_turn = true
             self:_refresh(true)
         end
         return true
@@ -1253,6 +1259,7 @@ function HomescreenWidget:init()
         if new_page ~= cur then
             self._current_page = new_page
             self.page          = new_page
+            self._is_page_turn = true
             self:_refresh(true)
         end
         return true
@@ -1263,6 +1270,7 @@ function HomescreenWidget:init()
         local new_page = _resolvePageNav(1, total, page)  -- page is a spread index
         self._current_page = new_page
         self.page          = new_page
+        self._is_page_turn = true
         self:_refresh(true)
         return true
     end
@@ -1453,6 +1461,7 @@ function HomescreenWidget:init()
                 if new_page ~= cur then
                     self_ref_fc._current_page = new_page
                     self_ref_fc.page          = new_page
+                    self_ref_fc._is_page_turn = true
                     self_ref_fc:_refresh(true)
                 end
                 return true
@@ -1568,6 +1577,7 @@ function HomescreenWidget:_initLayout()
         target_raw = math.max(1, math.min(target_raw, total))
         if target_raw ~= cur_raw then
             self_ref._current_page = target_raw
+            self_ref._is_page_turn = true
             self_ref:_refresh(true)
         end
     end
@@ -2655,7 +2665,10 @@ function HomescreenWidget:_refresh(keep_cache, books_only, stats_only, skip_sync
         -- _updatePage (quote rebuild + settings flush) before the async path.
         if not skip_sync_paint then
             self:_updatePage(true)
-            UIManager:setDirty(self, "ui")
+            local has_wp = (_styleGetBgWidget() ~= nil)
+            local r_type = (self._is_page_turn or has_wp) and "flashui" or "ui"
+            self._is_page_turn = nil
+            UIManager:setDirty(self, r_type)
         end
 
         if defer_async then
@@ -2988,7 +3001,8 @@ function HomescreenWidget:_refreshImmediate(keep_cache)
     end
     if not self._navbar_container then return end
     self:_updatePage(keep_cache or false)
-    UIManager:setDirty(self, "ui")
+    local has_wp = (_styleGetBgWidget() ~= nil)
+    UIManager:setDirty(self, has_wp and "flashui" or "ui")
 end
 
 -- ---------------------------------------------------------------------------
@@ -3164,7 +3178,8 @@ function HomescreenWidget:onShow()
         end
         
         self:_updatePage(true)
-        UIManager:setDirty(self, "ui")
+        local has_wp = (_styleGetBgWidget() ~= nil)
+        UIManager:setDirty(self, has_wp and "flashui" or "ui")
         local ClockMod = Registry.get("clock")
         if ClockMod and Registry.isEnabled(ClockMod, PFX) and ClockMod.scheduleRefresh then
             ClockMod.scheduleRefresh(self)
@@ -3664,8 +3679,12 @@ function Homescreen.styleScanWallpapers()
     local seen    = {}
     local exts    = { jpg=true, jpeg=true, png=true, bmp=true, gif=true, webp=true }
     local src     = debug.getinfo(1, "S").source or ""
-    local plug_dir = (src:match("^@(.+/)[^/]+$") or "./") .. "sui_wallpapers"
-    local dirs    = { dir, plug_dir }
+    local base    = src:match("^@(.+/)[^/]+$") or "./"
+    local plug_dir = base .. "mui_wallpapers"
+    local legacy_plug_dir = base .. "sui_wallpapers"
+    local ok_ds, DataStorage = pcall(require, "datastorage")
+    local legacy_user_dir = ok_ds and DataStorage and (DataStorage:getSettingsDir() .. "/maxoutui/sui_wallpapers")
+    local dirs    = { dir, plug_dir, legacy_plug_dir, legacy_user_dir }
 
     for _, d in ipairs(dirs) do
         if lfs.attributes(d, "mode") == "directory" then

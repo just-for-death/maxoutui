@@ -232,13 +232,7 @@ local pinned_manga_module = RowRenderer.makeModule{
     getFileList = Manga.getPinnedMangaList,
     extra_menu_items_before = Manga.arrangeMenuItems,
     labelForItem = function(bd)
-        if bd.percent and bd.percent > 0 then
-            return string.format(_("%d%% Read"), math.floor(bd.percent * 100 + 0.5))
-        elseif bd.unread and bd.unread > 0 then
-            return string.format(_("%d unread"), bd.unread)
-        else
-            return _("Pinned")
-        end
+        return (bd.title and bd.title ~= "" and bd.title) or _("Pinned")
     end,
     toggles     = { progress = "off", text = "on", overlay = "off" },
 

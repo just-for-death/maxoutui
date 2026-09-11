@@ -166,7 +166,13 @@ local M = RowRenderer.makeModule{
     end,
 
     labelForItem = function(bd)
-        return bd.chapter_name or _("Recent")
+        local ch = bd.chapter_name
+        if ch and ch ~= "" then
+            ch = ch:gsub("^Chapter%s+", "Ch. ")
+            ch = ch:gsub("^Volume%s+", "Vol. ")
+            return ch
+        end
+        return (bd.title and bd.title ~= "" and bd.title) or _("Recent")
     end,
 
     toggles = { progress = "off", text = "on", overlay = "off" },

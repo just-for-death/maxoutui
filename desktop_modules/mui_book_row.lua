@@ -203,7 +203,7 @@ function RowRenderer.build(w, ctx, opts)
     else
         cw  = math.max(1, math.floor(autofit_cw * cs))
         ch  = math.max(1, math.floor(cw * (D.RECENT_H / D.RECENT_W)))
-        gap = max_items > 1 and math.floor((inner_w - max_items * cw) / (max_items - 1)) or 0
+        gap = max_items > 1 and math.max(0, math.floor((inner_w - max_items * cw) / (max_items - 1))) or 0
     end
     local pct_face = Font:getFace(SUIStyle.FACE_REGULAR, pct_fs)
 
@@ -291,6 +291,8 @@ function RowRenderer.build(w, ctx, opts)
                 bold      = true,
                 fgcolor   = _clr_sub,
                 width     = cw,
+                max_width = cw,
+                truncate_with_ellipsis = true,
                 alignment = "center",
             }
         end

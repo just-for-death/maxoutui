@@ -807,6 +807,16 @@ local function _registerBuiltins()
             end,
         },
         {
+            id    = "suwayomi_auto_download",
+            label = _("Auto Download"),
+            icon  = Config.ICON.manga_auto_download,
+            is_in_place = true,
+            is_async_in_place = true,
+            execute = function(ctx)
+                QA.showAutoDownloadMangaWindow(ctx.fm)
+            end,
+        },
+        {
             id    = "pinned_manga",
             label = _("Pinned Manga"),
             icon  = Config.ICON.manga_pinned,
@@ -3556,6 +3566,437 @@ function QA.showPinnedMangaWindow(fm)
             name        = "sui_win_pinned_manga",
             title       = _("Pinned Manga"),
             screens     = { __root__ = _pinnedMangaBuildRootScreen },
+            position    = "bottom",
+            auto_height = true,
+            on_close    = restore,
+        }
+        win:show()
+    end)
+end
+
+local function _autoDownloadMangaBuildRootScreen(ctx)
+    local SUIWindow       = require("mui_window")
+    local ButtonDialog    = require("ui/widget/buttondialog")
+    local InfoMessage     = require("ui/widget/infomessage")
+    local HorizontalGroup = require("ui/widget/horizontalgroup")
+    local HorizontalSpan  = require("ui/widget/horizontalspan")
+    local VerticalGroup   = require("ui/widget/verticalgroup")
+    local VerticalSpan    = require("ui/widget/verticalspan")
+    local FrameContainer  = require("ui/widget/container/framecontainer")
+    local CenterContainer = require("ui/widget/container/centercontainer")
+    local TextWidget      = require("ui/widget/textwidget")
+    local TextBoxWidget   = require("ui/widget/textboxwidget")
+    local ImageWidget     = require("ui/widget/imagewidget")
+    local Blitbuffer      = require("ffi/blitbuffer")
+    local Font            = require("ui/font")
+    local Geom            = require("ui/geometry")
+    local GestureRange    = require("ui/gesturerange")
+    local InputContainer  = require("ui/widget/container/inputcontainer")
+    local SUIStyle        = require("mui_style")
+
+    local inner_w = ctx.inner_w
+    local sw = _getSuwayomiInstance()
+    local ok_st, SuwayomiSettings = pcall(require, "suwayomi/settings")
+    local ok_tc, ThumbnailCache   = pcall(require, "suwayomi/ui/thumbnail_cache")
+    local credentials = ok_st and SuwayomiSettings and SuwayomiSettings.load and SuwayomiSettings:load()
+
+    local manga_list = (ok_st and SuwayomiSettings and SuwayomiSettings.loadAutoDownloadManga
+        and SuwayomiSettings:loadAutoDownloadManga()) or {}
+
+    local rows = {}
+
+    local function modeLabel(mode)
+        if mode == "latest" then
+            return _("Latest")
+        end
+        return _("Missing")
+    end
+
+    local function prefetchThumbs()
+        if not ok_tc or not ThumbnailCache or not credentials or not manga_list or not sw then return end
+        for _, manga in ipairs(manga_list) do
+            local thumb_url = manga.thumbnail_url
+            if thumb_url and thumb_url ~= "" then
+                local cached = ThumbnailCache.find(credentials, thumb_url, { variant = "thumbnail" })
+                if not cached then
+                    local started = SwBridge.startThumbJob(function(done)
+                        local SubprocessJob   = package.loaded["suwayomi/subprocess/job"] or require("suwayomi/subprocess/job")
+                        local ThumbnailWorker = package.loaded["suwayomi/ui/thumbnail_worker"] or require("suwayomi/ui/thumbnail_worker")
+                        local FFIUtil         = require("ffi/util")
+                        SubprocessJob.start({
+                            active = {
+                                request = { action = "download_thumbnail" },
+                                result_path = SubprocessJob.buildResultPath("thumb_request"),
+                            },
+                            ffi_util    = FFIUtil,
+                            ui_manager  = UIManager,
+                            timeout_seconds = 15,
+                            run = function(path)
+                                ThumbnailWorker:run(credentials, thumb_url, path, { variant = "thumbnail" })
+                            end,
+                            on_finish = function()
+                                done()
+                                if ctx and ctx.repaint then ctx.repaint() end
+                            end,
+                            on_timeout = function()
+                                done()
+                            end,
+                        })
+                    end)
+                    if not started then break end
+                end
+            end
+        end
+    end
+
+    if #manga_list > 0 then
+        prefetchThumbs()
+    end
+
+    local function showHoldMenu(entry)
+        if not sw then return end
+        local dialog
+        dialog = ButtonDialog:new{
+            title = entry.title or entry.id,
+            buttons = {
+                {
+                    {
+                        text = _("Open Manga"),
+                        callback = function()
+                            UIManager:close(dialog)
+                            ctx.close()
+                            if sw.showMangaActions then
+                                sw:showMangaActions(entry)
+                            elseif sw.showChaptersForManga then
+                                sw:showChaptersForManga(entry)
+                            end
+                        end,
+                    },
+                },
+                {
+                    {
+                        text = _("Mode: Missing"),
+                        callback = function()
+                            UIManager:close(dialog)
+                            if sw.setAutoDownloadMangaMode then
+                                sw:setAutoDownloadMangaMode(entry, "missing")
+                            end
+                            ctx.repaint()
+                        end,
+                    },
+                },
+                {
+                    {
+                        text = _("Mode: Latest"),
+                        callback = function()
+                            UIManager:close(dialog)
+                            if sw.setAutoDownloadMangaMode then
+                                sw:setAutoDownloadMangaMode(entry, "latest")
+                            end
+                            ctx.repaint()
+                        end,
+                    },
+                },
+                {
+                    {
+                        text = _("Download now"),
+                        callback = function()
+                            UIManager:close(dialog)
+                            if sw.enqueueAutoDownloadForManga then
+                                sw:enqueueAutoDownloadForManga(entry, entry.mode or "missing")
+                            end
+                        end,
+                    },
+                },
+                {
+                    {
+                        text = _("Remove"),
+                        callback = function()
+                            UIManager:close(dialog)
+                            if sw.removeMangaFromAutoDownload then
+                                sw:removeMangaFromAutoDownload(entry)
+                            end
+                            ctx.repaint()
+                        end,
+                    },
+                },
+            },
+        }
+        UIManager:show(dialog)
+    end
+
+    local function showAddDialog()
+        if not sw then
+            UIManager:show(InfoMessage:new{ text = _("Suwayomi plugin not available."), timeout = 2 })
+            return
+        end
+        local tracked_ids = {}
+        for _, e in ipairs(manga_list) do
+            tracked_ids[tostring(e.id)] = true
+        end
+
+        local picker
+        local function presentPicker(list)
+            local buttons = {}
+            local count = 0
+            for _, manga in ipairs(list or {}) do
+                local id = tostring(manga.id or "")
+                if id ~= "" and not tracked_ids[id] then
+                    count = count + 1
+                    if count > 40 then break end
+                    local title = manga.title or id
+                    local _manga = manga
+                    table.insert(buttons, {
+                        {
+                            text = title,
+                            callback = function()
+                                if picker then UIManager:close(picker) end
+                                local mode_dialog
+                                mode_dialog = ButtonDialog:new{
+                                    title = title,
+                                    buttons = {
+                                        {
+                                            {
+                                                text = _("Missing chapters"),
+                                                callback = function()
+                                                    UIManager:close(mode_dialog)
+                                                    sw:addMangaToAutoDownload(_manga, "missing")
+                                                    ctx.repaint()
+                                                end,
+                                            },
+                                        },
+                                        {
+                                            {
+                                                text = _("Latest chapters"),
+                                                callback = function()
+                                                    UIManager:close(mode_dialog)
+                                                    sw:addMangaToAutoDownload(_manga, "latest")
+                                                    ctx.repaint()
+                                                end,
+                                            },
+                                        },
+                                    },
+                                }
+                                UIManager:show(mode_dialog)
+                            end,
+                        },
+                    })
+                end
+            end
+            if #buttons == 0 then
+                UIManager:show(InfoMessage:new{
+                    text = _("No library manga left to add (or library not loaded yet)."),
+                    timeout = 3,
+                })
+                return
+            end
+            picker = ButtonDialog:new{
+                title = _("Add to auto-download"),
+                buttons = buttons,
+            }
+            UIManager:show(picker)
+        end
+
+        if sw.getClient and SuwayomiSettings then
+            local creds = SuwayomiSettings:load()
+            local NetworkRequestJob = package.loaded["suwayomi/network/request_job"] or require("suwayomi/network/request_job")
+            NetworkRequestJob.start({
+                owner = sw,
+                credentials = creds,
+                request = { action = "fetch_library_manga_pages" },
+                timeout_seconds = 30,
+                on_finish = function(result)
+                    if result and result.ok and result.manga then
+                        presentPicker(result.manga)
+                    else
+                        UIManager:show(InfoMessage:new{ text = _("Could not load library manga."), timeout = 3 })
+                    end
+                end,
+            })
+            return
+        end
+        presentPicker({})
+    end
+
+    -- Action bar: + Add Manga | Download All | Manage
+    local btn_gap = ctx.SZ(Screen:scaleBySize(8))
+    local num_btns = 3
+    local btn_w = math.floor((inner_w - (num_btns - 1) * btn_gap) / num_btns)
+
+    local actions_hg = HorizontalGroup:new{ align = "center" }
+    actions_hg[#actions_hg + 1] = SUIWindow.Button{
+        inner_w = btn_w,
+        width   = btn_w,
+        text    = _("+ Add Manga"),
+        on_tap  = function() showAddDialog() end,
+    }
+    actions_hg[#actions_hg + 1] = HorizontalSpan:new{ width = btn_gap }
+    actions_hg[#actions_hg + 1] = SUIWindow.Button{
+        inner_w = btn_w,
+        width   = btn_w,
+        text    = _("Download All"),
+        enabled = #manga_list > 0,
+        on_tap  = function()
+            if sw and sw.syncAllAutoDownloadManga then
+                sw:syncAllAutoDownloadManga()
+                UIManager:show(InfoMessage:new{ text = _("Syncing auto-downloads..."), timeout = 2 })
+            end
+        end,
+    }
+    actions_hg[#actions_hg + 1] = HorizontalSpan:new{ width = btn_gap }
+    actions_hg[#actions_hg + 1] = SUIWindow.Button{
+        inner_w = btn_w,
+        width   = btn_w,
+        text    = _("Manage"),
+        on_tap  = function()
+            if sw and sw.showAutoDownloadMangaManager then
+                sw:showAutoDownloadMangaManager({ refresh = function() ctx.repaint() end })
+            end
+        end,
+    }
+
+    rows[#rows + 1] = actions_hg
+    rows[#rows + 1] = VerticalSpan:new{ width = ctx.SZ(Screen:scaleBySize(12)) }
+
+    if #manga_list == 0 then
+        rows[#rows + 1] = SUIWindow.ListRow{
+            inner_w = inner_w,
+            title = _("No auto-download manga tracked."),
+            subtitle = _("Tap '+ Add Manga' above to track manga from your library."),
+        }
+        return rows
+    end
+
+    -- Manga cover grid
+    local cols = 4
+    local gap  = ctx.SZ(Screen:scaleBySize(10))
+    local cw   = math.floor((inner_w - (cols - 1) * gap) / cols)
+    local ch   = math.floor(cw * 3 / 2)
+
+    local function makeMangaCell(entry)
+        local cover_widget
+        local thumb_url = entry.thumbnail_url
+        local cached_path = ok_tc and ThumbnailCache and credentials and thumb_url
+            and ThumbnailCache.find(credentials, thumb_url, { variant = "thumbnail" })
+        local decoded_bmp = cached_path and ThumbnailCache.loadDecoded(cached_path)
+
+        if decoded_bmp then
+            cover_widget = ImageWidget:new{
+                image = decoded_bmp,
+                width = cw,
+                height = ch,
+                scale_factor = 0,
+            }
+        else
+            cover_widget = FrameContainer:new{
+                width = cw,
+                height = ch,
+                bordersize = 1,
+                color = Blitbuffer.gray(0.6),
+                background = Blitbuffer.gray(0.9),
+                padding = 4,
+                CenterContainer:new{
+                    dimen = Geom:new{ w = cw - 8, h = ch - 8 },
+                    TextBoxWidget:new{
+                        text = entry.title or tostring(entry.id),
+                        face = Font:getFace(SUIStyle.FACE_REGULAR, ctx.SZ(11)),
+                        width = cw - 8,
+                        alignment = "center",
+                    },
+                },
+            }
+        end
+
+        local badge_text = modeLabel(entry.mode)
+        local badge_widget = TextWidget:new{
+            text = badge_text,
+            face = Font:getFace(SUIStyle.FACE_BOLD, ctx.SZ(10)),
+            fgcolor = Blitbuffer.gray(0.3),
+        }
+
+        local title_widget = TextWidget:new{
+            text = entry.title or tostring(entry.id),
+            face = Font:getFace(SUIStyle.FACE_REGULAR, ctx.SZ(11)),
+            fgcolor = Blitbuffer.COLOR_BLACK,
+            max_width = cw,
+            truncate_with_ellipsis = true,
+        }
+
+        local cell = VerticalGroup:new{
+            align = "center",
+            cover_widget,
+            VerticalSpan:new{ width = Screen:scaleBySize(3) },
+            title_widget,
+            VerticalSpan:new{ width = Screen:scaleBySize(2) },
+            badge_widget,
+        }
+
+        local total_h = ch + Screen:scaleBySize(36)
+        local ic = InputContainer:new{
+            dimen = Geom:new{ w = cw, h = total_h },
+            cell,
+        }
+        ic.ges_events = {
+            Tap = { GestureRange:new{
+                ges = "tap",
+                range = function() return ic.dimen end,
+            }},
+            Hold = { GestureRange:new{
+                ges = "hold",
+                range = function() return ic.dimen end,
+            }},
+        }
+        function ic:onTap()
+            if sw then
+                ctx.close()
+                if sw.showMangaActions then
+                    sw:showMangaActions(entry)
+                elseif sw.showChaptersForManga then
+                    sw:showChaptersForManga(entry)
+                end
+            else
+                showHoldMenu(entry)
+            end
+            return true
+        end
+        function ic:onHold()
+            showHoldMenu(entry)
+            return true
+        end
+        return ic
+    end
+
+    local i = 1
+    while i <= #manga_list do
+        local hg = HorizontalGroup:new{ align = "top" }
+        for c = 1, cols do
+            local entry = manga_list[i]
+            if entry then
+                hg[#hg + 1] = makeMangaCell(entry)
+                i = i + 1
+                if c < cols and manga_list[i] then
+                    hg[#hg + 1] = HorizontalSpan:new{ width = gap }
+                end
+            end
+        end
+        rows[#rows + 1] = hg
+        if i <= #manga_list then
+            rows[#rows + 1] = VerticalSpan:new{ width = gap }
+        end
+    end
+
+    return rows
+end
+
+function QA.showAutoDownloadMangaWindow(fm)
+    local SUIWindow = require("mui_window")
+    local plugin = _resolveMaxOutUIPlugin(fm)
+
+    QA.trackIndicatorViaCallback(plugin, "suwayomi_auto_download", function(restore)
+        local win = SUIWindow:new{
+            name        = "sui_win_auto_download_manga",
+            title       = _("Auto Download Manga"),
+            screens     = { __root__ = _autoDownloadMangaBuildRootScreen },
             position    = "bottom",
             auto_height = true,
             on_close    = restore,

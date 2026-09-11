@@ -73,7 +73,6 @@ local MODULES = {
     { require_mod = "desktop_modules/module_suwayomi_categories" },
     { require_mod = "desktop_modules/module_suwayomi_status"     },
     { require_mod = "desktop_modules/module_suwayomi_pinned"     },
-    { require_mod = "desktop_modules/module_suwayomi_auto_download" },
 }
 
 local _loaded        = nil

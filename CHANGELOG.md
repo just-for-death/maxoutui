@@ -2,6 +2,16 @@
 
 All notable changes to MaxOutUI will be documented in this file.
 
+## [v1.1.4] - 2026-09-11
+
+### Changed
+- Shifted **Auto Download** from a homescreen desktop module to a dedicated Quick Action (`suwayomi_auto_download`) for Quick Action rows and bottom bar.
+- Unregistered auto-download module from homescreen module registry.
+
+### Added
+- Dedicated Quick Action logo/icon: `icons/manga_auto_download.svg`.
+- Quick Action window (`sui_win_auto_download_manga`): displays tracked manga covers with mode badges, tap to open manga, hold for options (Missing/Latest, Download now, Remove), top actions to add manga from library, download all now, or manage in Suwayomi+.
+
 ## [v1.1.3] - 2026-09-11
 
 ### Fixed

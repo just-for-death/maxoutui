@@ -83,6 +83,7 @@ M.ICON = {
     manga_sources   = _P .. "manga_sources.svg",
     manga_updates   = _P .. "manga_updates.svg",
     manga_downloads = _P .. "manga_downloads.svg",
+    manga_auto_download = _P .. "manga_auto_download.svg",
     manga_pinned    = _P .. "manga_pinned.svg",
     manga_pin       = _P .. "manga_pin.svg",
     nav_prev       = _KO .. "chevron.left.svg",

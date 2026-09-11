@@ -1246,6 +1246,10 @@ end
 -- Tab tap handler
 -- ---------------------------------------------------------------------------
 
+local function _barRefreshType()
+    return SUISettings:isTrue("maxoutui_style_wallpaper_enabled") and "flashui" or "ui"
+end
+
 function M.onTabTap(plugin, action_id, fm_self)
     -- Action-only tabs: fire their action without changing the active tab.
     -- Delegated entirely to QA.execute — no action-specific knowledge needed here.
@@ -1281,9 +1285,6 @@ function M.onTabTap(plugin, action_id, fm_self)
         local HS = package.loaded["mui_homescreen"]
         return HS and HS._instance ~= nil
     end)()
-local function _barRefreshType()
-    return SUISettings:isTrue("maxoutui_style_wallpaper_enabled") and "flashui" or "ui"
-end
 
     local injected_open = fm_self ~= plugin.ui and fm_self._navbar_injected
     if fm_self._navbar_container and action_id ~= "homescreen" and not hs_open

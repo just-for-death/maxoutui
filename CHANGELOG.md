@@ -2,6 +2,19 @@
 
 All notable changes to MaxOutUI will be documented in this file.
 
+## [v1.1.5] - 2026-09-11
+
+### Changed
+- **Pinned Manga Title**: Card labels in the Pinned Manga row now display the manga title instead of defaulting to `"Pinned"`.
+- **Compact Bottom Bar**: Made bottom navigation bar slightly smaller and sleeker (~14% height reduction, scaled icons, text, and margins) while maintaining comfortable touch targets.
+- **MUI Wallpapers Directory**: Renamed wallpaper asset directory from `sui_wallpapers/` to `mui_wallpapers/` with full backwards-compatibility fallback.
+
+### Fixed
+- **Card and Label Overlaps**: Fixed text overflow in `RowRenderer` cards by enforcing `max_width = cw` and `truncate_with_ellipsis = true`, preventing long titles and chapter names from colliding with adjacent cards.
+- **Negative Gap on Cover Scale**: Clamped card gap calculation to prevent negative spacing when scaling up covers.
+- **E-Ink Wallpaper Ghosting**: Eliminated residual gray shadows when switching tabs or pages with an active wallpaper by promoting repaints to `"flashui"`.
+- **Suwayomi+ Modules Standardization**: Standardized `suwayomi_library`, `suwayomi_updates`, and `suwayomi_history` on `RowRenderer` architecture with swipe pagination, unified cover caching, and chapter name formatting.
+
 ## [v1.1.4] - 2026-09-11
 
 ### Changed

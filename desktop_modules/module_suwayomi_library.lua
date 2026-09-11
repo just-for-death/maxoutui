@@ -106,17 +106,8 @@ local function prefetchThumbnailsAsync(credentials, manga_list)
                         end,
                         on_finish = function()
                             done()
-                            local HS = package.loaded["mui_homescreen"]
-                            local hs_inst = HS and HS._instance
-                            if hs_inst then
-                                pcall(function()
-                                    if hs_inst._refreshImmediate then
-                                        hs_inst:_refreshImmediate(true)
-                                    else
-                                        UIManager:setDirty(hs_inst, "ui")
-                                    end
-                                end)
-                            end
+                            -- Debounce: many thumbs finishing must not rebuild the whole home.
+                            SwBridge.refreshHomescreenModule(MOD_ID, { debounce = 0.35 })
                         end,
                         on_timeout = function()
                             done()
@@ -129,11 +120,17 @@ local function prefetchThumbnailsAsync(credentials, manga_list)
     end
 end
 
+local _library_fetch_inflight = false
+
 --- Fetch the library manga list asynchronously. Results are sorted by unread count and cached.
 local function fetchLibraryAsync(callback)
     local now = os.time()
     if _library_cache and (now - _library_cache_time < 300) then
         if callback then callback(_library_cache) end
+        return
+    end
+    if _library_fetch_inflight then
+        if callback then callback(_library_cache or {}) end
         return
     end
 
@@ -152,28 +149,21 @@ local function fetchLibraryAsync(callback)
         return
     end
 
+    _library_fetch_inflight = true
     NetworkRequestJob.start({
         owner       = sw,
         credentials = credentials,
         request     = { action = "fetch_library_manga_pages" },
         timeout_seconds = 30,
         on_finish = function(result)
+            _library_fetch_inflight = false
             if result and result.ok and result.manga then
                 local sorted = sortByUnread(result.manga)
                 _library_cache      = sorted
                 _library_cache_time = os.time()
                 prefetchThumbnailsAsync(credentials, _library_cache)
-                local HS = package.loaded["mui_homescreen"]
-                local hs_inst = HS and HS._instance
-                if hs_inst then
-                    pcall(function()
-                        if hs_inst._refreshImmediate then
-                            hs_inst:_refreshImmediate(true)
-                        else
-                            UIManager:setDirty(hs_inst, "ui")
-                        end
-                    end)
-                end
+                -- Rebuild this module slot only — not quote/clock/full page.
+                SwBridge.refreshHomescreenModule(MOD_ID)
                 if callback then callback(_library_cache) end
             else
                 if callback then callback(_library_cache or {}) end

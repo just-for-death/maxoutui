@@ -33,6 +33,7 @@ M.name        = _("Manga Categories (Suwayomi)")
 M.label       = _("My Categories")
 M.default_on  = false
 M.enabled_key = MOD_ID .. "_enabled"
+M.is_book_mod = true
 
 -- Module-level cache (5-minute TTL)
 local _categories_cache      = nil
@@ -53,16 +54,7 @@ end
 
 --- Trigger a homescreen refresh after background data arrives.
 local function _triggerHSRefresh()
-    local HS      = package.loaded["mui_homescreen"]
-    local hs_inst = HS and HS._instance
-    if not hs_inst then return end
-    pcall(function()
-        if hs_inst._refreshImmediate then
-            hs_inst:_refreshImmediate(true)
-        else
-            UIManager:setDirty(hs_inst, "ui")
-        end
-    end)
+    SwBridge.refreshHomescreenModule(MOD_ID)
 end
 
 --- Asynchronously fetch library categories from Suwayomi; caches result for 5 minutes.

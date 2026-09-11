@@ -2658,7 +2658,7 @@ end
 -- ---------------------------------------------------------------------------
 -- _refresh — debounced rebuild. Page turns call _updatePage directly.
 -- ---------------------------------------------------------------------------
-function HomescreenWidget:_refresh(keep_cache, books_only, stats_only)
+function HomescreenWidget:_refresh(keep_cache, books_only, stats_only, skip_sync_paint)
     local defer_async = false
     if not keep_cache and self._body and self._ctx_cache then
         defer_async = true
@@ -2666,8 +2666,12 @@ function HomescreenWidget:_refresh(keep_cache, books_only, stats_only)
     end
 
     if keep_cache and self._body then
-        self:_updatePage(true)
-        UIManager:setDirty(self, "ui")
+        -- skip_sync_paint: onShow already painted once; avoid a second full
+        -- _updatePage (quote rebuild + settings flush) before the async path.
+        if not skip_sync_paint then
+            self:_updatePage(true)
+            UIManager:setDirty(self, "ui")
+        end
 
         if defer_async then
             if self._refresh_scheduled then return end
@@ -3183,7 +3187,9 @@ function HomescreenWidget:onShow()
         
         if need_async then
             self._defer_stats = false
-            self:_refresh(false)
+            -- First paint already done above; only run the deferred async
+            -- book/stats path — do not rebuild the page a second time now.
+            self:_refresh(false, nil, nil, true)
         end
     end
 end

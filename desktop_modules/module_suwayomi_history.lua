@@ -89,17 +89,7 @@ local function prefetchThumbnailsAsync(credentials, entries)
                         end,
                         on_finish = function()
                             done()
-                            local HS = package.loaded["mui_homescreen"]
-                            local hs_inst = HS and HS._instance
-                            if hs_inst then
-                                pcall(function()
-                                    if hs_inst._refreshImmediate then
-                                        hs_inst:_refreshImmediate(true)
-                                    else
-                                        UIManager:setDirty(hs_inst, "ui")
-                                    end
-                                end)
-                            end
+                            SwBridge.refreshHomescreenModule(MOD_ID, { debounce = 0.35 })
                         end,
                         on_timeout = function()
                             done()
@@ -113,10 +103,15 @@ local function prefetchThumbnailsAsync(credentials, entries)
 end
 
 --- Tries to fetch latest history entries silently if suwayomiplus is available
+local _history_fetch_inflight = false
 local function fetchHistoryEntriesAsync(callback)
     local now = os.time()
     if _history_cache and (now - _history_cache_time < 300) then
         if callback then callback(_history_cache) end
+        return
+    end
+    if _history_fetch_inflight then
+        if callback then callback(_history_cache or {}) end
         return
     end
 
@@ -135,27 +130,19 @@ local function fetchHistoryEntriesAsync(callback)
         return
     end
 
+    _history_fetch_inflight = true
     NetworkRequestJob.start({
         owner = sw,
         credentials = credentials,
         request = { action = "fetch_history", first = 15 },
         timeout_seconds = 10,
         on_finish = function(result)
+            _history_fetch_inflight = false
             if result and result.ok and result.entries then
                 _history_cache = result.entries
                 _history_cache_time = os.time()
                 prefetchThumbnailsAsync(credentials, _history_cache)
-                local HS = package.loaded["mui_homescreen"]
-                local hs_inst = HS and HS._instance
-                if hs_inst then
-                    pcall(function()
-                        if hs_inst._refreshImmediate then
-                            hs_inst:_refreshImmediate(true)
-                        else
-                            UIManager:setDirty(hs_inst, "ui")
-                        end
-                    end)
-                end
+                SwBridge.refreshHomescreenModule(MOD_ID)
                 if callback then callback(_history_cache) end
             else
                 if callback then callback(_history_cache or {}) end
@@ -181,12 +168,8 @@ function M.build(w, ctx)
     local cw = (cs == 1.0) and autofit_cw or math.max(1, math.floor(autofit_cw * cs))
     local rh = math.max(1, math.floor(cw * (D.RECENT_H / D.RECENT_W)))
 
-    -- Trigger async fetch if needed
-    fetchHistoryEntriesAsync(function(entries)
-        if entries and #entries > 0 and ctx and ctx.hs and ctx.hs._refreshImmediate then
-            -- Trigger UI refresh if new data arrived
-        end
-    end)
+    -- Trigger async fetch if needed (scoped refresh happens in on_finish)
+    fetchHistoryEntriesAsync(function(_entries) end)
 
     local entries = _history_cache or {}
     local item_group = HorizontalGroup:new{}

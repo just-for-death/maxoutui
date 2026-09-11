@@ -336,6 +336,11 @@ local _POS_KEY   = "simpleui_quote_deck_pos"
 
 local _COUNT_KEY = "simpleui_quote_deck_count"
 
+-- In-memory deck + short reuse window for home rebuild storms.
+local _mem_deck, _mem_pos, _mem_n
+local _deck_flush_scheduled = false
+local _reuse_quote = nil
+local _reuse_deadline = 0
 
 
 _shuffle = function(n)
@@ -359,113 +364,83 @@ end
 
 
 local function _saveDeck(deck, pos)
-
-    SUISettings:saveSetting(_DECK_KEY,  table.concat(deck, ","))
-
-    SUISettings:saveSetting(_POS_KEY,   pos)
-
-    SUISettings:saveSetting(_COUNT_KEY, #deck)
-
+    _mem_deck, _mem_pos, _mem_n = deck, pos, #deck
+    -- Keep settings in memory; coalesce disk flush so open-home rebuild storms
+    -- do not rewrite sui_settings.lua three times in a row.
+    SUISettings:setNoFlush(_DECK_KEY,  table.concat(deck, ","))
+    SUISettings:setNoFlush(_POS_KEY,   pos)
+    SUISettings:setNoFlush(_COUNT_KEY, #deck)
+    if not _deck_flush_scheduled then
+        _deck_flush_scheduled = true
+        UIManager:scheduleIn(2, function()
+            _deck_flush_scheduled = false
+            pcall(function() SUISettings:flush() end)
+        end)
+    end
 end
-
-
 
 local function _loadDeck(n)
+    if _mem_deck and _mem_n == n and type(_mem_pos) == "number" then
+        return _mem_deck, _mem_pos
+    end
 
     local count = SUISettings:readSetting(_COUNT_KEY)
-
     local pos   = SUISettings:readSetting(_POS_KEY)
-
     local raw   = SUISettings:readSetting(_DECK_KEY)
-
     -- Invalidate if quote count changed (user edited quotes.lua)
-
     if type(count) ~= "number" or count ~= n
-
             or type(pos) ~= "number" or pos < 1 or pos > n
-
             or type(raw) ~= "string" then
-
         return nil, nil
-
     end
-
     local deck = {}
-
     for v in raw:gmatch("%d+") do
-
         deck[#deck + 1] = tonumber(v)
-
     end
-
     if #deck ~= n then return nil, nil end
-
+    _mem_deck, _mem_pos, _mem_n = deck, pos, n
     return deck, pos
-
 end
 
-
-
 local function pickQuote()
-
     local quotes = loadQuotes()
-
     local n = #quotes
-
     if n == 0 then return nil end
 
-
+    -- Reuse the same quote for ~1s so multi-_updatePage storms on home open
+    -- do not advance the deck (and flush settings) three times.
+    local now = os.clock()
+    if _reuse_quote and now < _reuse_deadline then
+        return _reuse_quote
+    end
 
     local deck, pos = _loadDeck(n)
-
     if not deck then
-
         -- First run or quote list changed: build a fresh shuffled deck.
-
         deck = _shuffle(n)
-
         pos  = 1
-
         logger.warn("simpleui quote: new deck n=" .. n .. " pos=" .. pos)
-
     else
-
         logger.warn("simpleui quote: loaded deck pos=" .. pos .. "/" .. n)
-
     end
-
-
 
     local idx = deck[pos]
-
     pos = pos + 1
-
     if pos > n then
-
         local last = idx
-
         deck = _shuffle(n)
-
         if n > 1 and deck[1] == last then
-
             deck[1], deck[2] = deck[2], deck[1]
-
         end
-
         pos = 1
-
         logger.warn("simpleui quote: reshuffled, next pos=1")
-
     end
 
-
-
     _saveDeck(deck, pos)
-
+    _reuse_quote = quotes[idx]
+    _reuse_deadline = now + 1.0
     logger.warn("simpleui quote: showing idx=" .. idx .. " saved pos=" .. pos)
-
-    return quotes[idx]
-
+    return _reuse_quote
 end
 
 

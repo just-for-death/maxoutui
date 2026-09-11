@@ -94,6 +94,44 @@ function M.startThumbJob(fn)
     return true
 end
 
+-- Debounced per-module homescreen slot refresh. Avoids full-page
+-- _refreshImmediate (which rebuilds quote/clock/stats too) when Suwayomi
+-- library/updates/history data or thumbnails arrive.
+M._slot_refresh_pending = {}
+
+--- Refresh only one homescreen module slot (is_book_mod surgical path).
+-- @param mod_id string module id (e.g. "suwayomi_library")
+-- @param opts optional { debounce = seconds } — coalesce rapid thumb arrivals
+function M.refreshHomescreenModule(mod_id, opts)
+    if not mod_id or mod_id == "" then return end
+    opts = opts or {}
+    local debounce = tonumber(opts.debounce) or 0
+
+    local function do_refresh()
+        M._slot_refresh_pending[mod_id] = nil
+        local HS = package.loaded["mui_homescreen"]
+        local hs = HS and HS._instance
+        if not hs then return end
+        local ok = false
+        if hs._refreshBookModSlot then
+            ok = hs:_refreshBookModSlot(mod_id)
+        end
+        if not ok then
+            -- Slot missing (module off-page / not built yet): dirty only —
+            -- never fall back to full-page rebuild for background data.
+            UIManager:setDirty(hs, "ui")
+        end
+    end
+
+    if debounce > 0 then
+        if M._slot_refresh_pending[mod_id] then return end
+        M._slot_refresh_pending[mod_id] = true
+        UIManager:scheduleIn(debounce, do_refresh)
+    else
+        pcall(do_refresh)
+    end
+end
+
 --- Wrap a child widget so taps work after layout (same pattern as mui_book_row).
 -- @param child widget
 -- @param w number width in pixels

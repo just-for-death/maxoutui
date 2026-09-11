@@ -860,7 +860,7 @@ end
 
 local function makeScreenTitles(st)
     return {
-        __root__               = _("Simple UI Settings"),
+        __root__               = _("MaxOutUI Settings"),
         home_screen_settings   = _("Home Screen"),
         bars_settings          = _("Bars"),
         library_settings       = _("Library"),

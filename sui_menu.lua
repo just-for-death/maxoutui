@@ -2593,7 +2593,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                     },
                     {
                         text           = _("High-Quality Cover"),
-                        help_text      = _("The cover shown right as a book opens normally comes from the library's cached thumbnail, which can look soft on higher-resolution screens. When on, SimpleUI instead reads the cover straight from the book file for that moment (also covers books never opened before, which otherwise show no cover at all) — at the cost of a brief extra pause while opening, since the file has to be read twice. Cover on close is unaffected either way: it already reads the full-quality cover from the open book."),
+                        help_text      = _("The cover shown right as a book opens normally comes from the library's cached thumbnail, which can look soft on higher-resolution screens. When on, MaxOutUI instead reads the cover straight from the book file for that moment (also covers books never opened before, which otherwise show no cover at all) — at the cost of a brief extra pause while opening, since the file has to be read twice. Cover on close is unaffected either way: it already reads the full-quality cover from the open book."),
                         checked_func   = function()
                             return SUISettings:isTrue("simpleui_reader_cover_bestquality")
                         end,
@@ -2679,7 +2679,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
         if Device:isPocketBook() then
             table.insert(items, 3, {
                 text           = _("PocketBook Home Button Opens Home Screen"),
-                help_text      = _("Makes the device's physical Home button always open the SimpleUI Home Screen — while reading and while browsing files — instead of KOReader's native Home behaviour."),
+                help_text      = _("Makes the device's physical Home button always open the MaxOutUI Home Screen — while reading and while browsing files — instead of KOReader's native Home behaviour."),
                 checked_func   = function()
                     return SUISettings:isTrue("simpleui_pb_home_opens_hs")
                 end,
@@ -4335,7 +4335,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                     local SpinWidget = require("ui/widget/spinwidget")
                     UIManager:show(SpinWidget:new{
                         title_text    = _("Global Text Size"),
-                        info_text     = _("Global scale applied to all of KOReader's interface text — menus, dialogs, titles, and Simple UI. It does not change the book's reading font size, which has its own setting.\n100% is the default size. Useful when a chosen UI font (see UI Font above) renders smaller or larger than usual."),
+                        info_text     = _("Global scale applied to all of KOReader's interface text — menus, dialogs, titles, and MaxOutUI. It does not change the book's reading font size, which has its own setting.\n100% is the default size. Useful when a chosen UI font (see UI Font above) renders smaller or larger than usual."),
                         value         = Config.getFontScalePct(),
                         value_min     = Config.FONT_SCALE_MIN,
                         value_max     = Config.FONT_SCALE_MAX,
@@ -4467,7 +4467,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                     local ConfirmBoxWidget = ctx_menu and ctx_menu.ConfirmBox or ConfirmBox()
                     local UIM = ctx_menu and ctx_menu.UIManager or UIManager
                     UIM:show(ConfirmBoxWidget:new{
-                        text        = _("This will delete all Simple UI settings and restart KOReader.\nAre you sure?"),
+                        text        = _("This will delete all MaxOutUI settings and restart KOReader.\nAre you sure?"),
                         ok_text     = _("Delete Settings"),
                         cancel_text = _("Cancel"),
                         ok_callback = function()
@@ -4528,12 +4528,12 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
     --   └── About
     menu_items.simpleui = {
         sorting_hint = "tools",
-        text = _("Simple UI"),
+        text = _("MaxOutUI"),
         sub_item_table = {
             -- ── Enable / Disable toggle ───────────────────────────────────────
             {
                 text_func    = function()
-                    return _("Simple UI") .. " — " .. (SUISettings:nilOrTrue("simpleui_enabled") and _("On") or _("Off"))
+                    return _("MaxOutUI") .. " — " .. (SUISettings:nilOrTrue("simpleui_enabled") and _("On") or _("Off"))
                 end,
                 checked_func = function() return SUISettings:nilOrTrue("simpleui_enabled") end,
                 callback     = function()
@@ -4550,7 +4550,7 @@ SimpleUIPlugin.addToMainMenu = function(self, menu_items)
                     -- the next time KOReader starts with the plugin installed.
                     SUISettings:flush()
                     UIManager:show(ConfirmBox():new{
-                        text        = string.format(_("Simple UI will be %s after restart.\n\nRestart now?"), on and _("disabled") or _("enabled")),
+                        text        = string.format(_("MaxOutUI will be %s after restart.\n\nRestart now?"), on and _("disabled") or _("enabled")),
                         ok_text     = _("Restart"), cancel_text = _("Later"),
                         ok_callback = function()
                             UIManager:restartKOReader()

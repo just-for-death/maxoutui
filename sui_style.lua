@@ -274,7 +274,7 @@ M.SLOTS = {
     },
     {
         id         = "sui_tab_qs_panel",
-        label      = function() return _("Tab: SimpleUI Quick Settings") end,
+        label      = function() return _("Tab: MaxOutUI Quick Settings") end,
         group      = "sui_tabbar_icons",
         tab_id     = "_sui_qs_panel",
         default_ko = "simpleui_settings",

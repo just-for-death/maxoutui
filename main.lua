@@ -158,7 +158,7 @@ function SimpleUIPlugin:init()
                     local _t = require("sui_i18n").translate
                     UIManager:show(InfoMessage:new{
                         text = string.format(
-                            _t("Simple UI was updated (%s → %s).\n\nA restart is recommended to apply all changes cleanly."),
+                            _t("MaxOutUI was updated (%s → %s).\n\nA restart is recommended to apply all changes cleanly."),
                             prev_version, current_version
                         ),
                         timeout = 6,
@@ -866,31 +866,31 @@ function SimpleUIPlugin:init()
         Dispatcher:registerAction("simpleui_go_homescreen", {
             category = "none",
             event    = "SimpleUIGoHomescreen",
-            title    = _("Simple UI: Go to Homescreen"),
+            title    = _("MaxOutUI: Go to Homescreen"),
             general  = true,
         })
         Dispatcher:registerAction("simpleui_go_library", {
             category = "none",
             event    = "SimpleUIGoLibrary",
-            title    = _("Simple UI: Go to Library"),
+            title    = _("MaxOutUI: Go to Library"),
             general  = true,
         })
         Dispatcher:registerAction("simpleui_toggle_home_library", {
             category = "none",
             event    = "SimpleUIToggleHomeLibrary",
-            title    = _("Simple UI: Toggle Homescreen / Library"),
+            title    = _("MaxOutUI: Toggle Homescreen / Library"),
             general  = true,
         })
     Dispatcher:registerAction("simpleui_settings_window", {
         category = "none",
         event    = "SimpleUISettingsWindow",
-        title    = _("Simple UI: Settings"),
+        title    = _("MaxOutUI: Settings"),
         general  = true,
     })
     Dispatcher:registerAction("simpleui_recent_window", {
         category = "none",
         event    = "SimpleUIRecentWindow",
-        title    = _("Simple UI: Recent"),
+        title    = _("MaxOutUI: Recent"),
         general  = true,
     })
 
@@ -2317,7 +2317,7 @@ function SimpleUIPlugin:addToMainMenu(menu_items)
         local ok, result = pcall(require, "sui_menu")
         if not ok then
             logger.err("simpleui: sui_menu failed to load: " .. tostring(result))
-            menu_items.simpleui = { sorting_hint = "tools", text = _("Simple UI"), sub_item_table = {} }
+            menu_items.simpleui = { sorting_hint = "tools", text = _("MaxOutUI"), sub_item_table = {} }
             return
         end
         _menu_installer = result
@@ -2330,7 +2330,7 @@ function SimpleUIPlugin:addToMainMenu(menu_items)
             real_fn(self, menu_items)
         else
             logger.err("simpleui: sui_menu installer did not replace addToMainMenu")
-            menu_items.simpleui = { sorting_hint = "tools", text = _("Simple UI"), sub_item_table = {} }
+            menu_items.simpleui = { sorting_hint = "tools", text = _("MaxOutUI"), sub_item_table = {} }
         end
         return
     end

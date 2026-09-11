@@ -726,6 +726,46 @@ local function _registerBuiltins()
             end,
         },
         {
+            id    = "suwayomi_continue",
+            label = _("Continue Reading"),
+            icon  = Config.ICON.recent or Config.ICON.history,
+            is_in_place = false,
+            is_async_in_place = true,
+            execute = function(ctx)
+                local sw_plugin = _getSuwayomiInstance()
+                if sw_plugin then
+                    if sw_plugin.continueReading then
+                        sw_plugin:continueReading()
+                    elseif sw_plugin.showHistory then
+                        sw_plugin:showHistory()
+                    end
+                else
+                    local su = ctx.show_unavailable or _unavailToast
+                    su(_("Suwayomi plugin not available."))
+                end
+            end,
+        },
+        {
+            id    = "manga_continue_reading",
+            label = _("Continue Reading"),
+            icon  = Config.ICON.recent or Config.ICON.history,
+            is_in_place = true,
+            is_async_in_place = true,
+            execute = function(ctx)
+                local sw_plugin = _getSuwayomiInstance()
+                if sw_plugin then
+                    if sw_plugin.continueReading then
+                        sw_plugin:continueReading()
+                    elseif sw_plugin.showHistory then
+                        sw_plugin:showHistory()
+                    end
+                else
+                    local su = ctx.show_unavailable or _unavailToast
+                    su(_("Suwayomi plugin not available."))
+                end
+            end,
+        },
+        {
             id    = "recent_manga",
             label = _("Recent Manga"),
             icon  = Config.ICON.recent,
@@ -3103,7 +3143,7 @@ function QA.executeCustomQA(action_id, fm, show_unavailable_fn)
         end
 
     else
-        _unavail(_("No folder, collection or plugin configured.\nGo to Simple UI → Settings → Quick Actions to set one."))
+        _unavail(_("No folder, collection or plugin configured.\nGo to MaxOutUI → Settings → Quick Actions to set one."))
     end
 end
 

@@ -130,7 +130,7 @@ function Onboarding.show(on_finish)
                 },
                 VerticalSpan:new{ width = ctx.SZ(Screen:scaleBySize(4)) },
                 TextBoxWidget:new{
-                    text      = _("Simple UI is designed to be simple and flexible. Here are a few tips to get the most out of it."),
+                    text      = _("MaxOutUI is designed to be simple and flexible. Here are a few tips to get the most out of it."),
                     face      = Font:getFace(SUIStyle.FACE_REGULAR, ctx.SZ(SUIStyle.FS_BODY)),
                     width     = iw - ctx.SZ(Screen:scaleBySize(40)),
                     alignment = "left",
@@ -230,8 +230,8 @@ function Onboarding.show(on_finish)
         name          = "sui_win_onboarding",
         height        = math.floor(Screen:getHeight() * 0.75),
         screen_titles = {
-            __root__    = _("Welcome to Simple UI"),
-            presets     = _("Welcome to Simple UI"),
+            __root__    = _("Welcome to MaxOutUI"),
+            presets     = _("Welcome to MaxOutUI"),
             tips_header = _("Quick Tips"),
             tips        = _("Quick Tips"),
         },
@@ -268,7 +268,7 @@ function Onboarding.show(on_finish)
             end,
             tips = function(ctx)
                 return SUI.CenteredButtonFooter(ctx, {
-                    text   = _("Start using Simple UI"),
+                    text   = _("Start using MaxOutUI"),
                     on_tap = function()
                         if SUIPresets.applyBuiltin then SUIPresets.applyBuiltin(st.selected_preset) end
                         SUISettings:set("simpleui_hs_active_preset", st.selected_preset)

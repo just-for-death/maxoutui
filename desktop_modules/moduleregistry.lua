@@ -67,6 +67,8 @@ local MODULES = {
     { require_mod = "desktop_modules/module_quick_actions" },
     { require_mod = "desktop_modules/module_action_list"   },
     { require_mod = "desktop_modules/module_spacer"        },
+    { require_mod = "desktop_modules/module_suwayomi_library" },
+    { require_mod = "desktop_modules/module_suwayomi_updates" },
 }
 
 local _loaded        = nil

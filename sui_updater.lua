@@ -25,8 +25,8 @@ local _           = require("sui_i18n").translate
 -- Configuration
 -- ---------------------------------------------------------------------------
 local GITHUB_OWNER = "doctorhetfield-cmd"
-local GITHUB_REPO  = "simpleui.koplugin"
-local ASSET_NAME   = "simpleui.koplugin.zip"
+local GITHUB_REPO  = "maxoutui"
+local ASSET_NAME   = "maxoutui.koplugin.zip"
 
 local AUTO_CHECK_INTERVAL = 24 * 3600  -- seconds between automatic checks
 
@@ -56,7 +56,7 @@ local _dl_url       = nil  -- URL for the asset ZIP, or nil
 
 -- Plugin directory — resolved once at module load time.
 local _plugin_dir = (debug.getinfo(1, "S").source or ""):match("^@?(.+)/[^/]+$")
-    or "/mnt/us/extensions/simpleui.koplugin"
+    or "/mnt/us/extensions/maxoutui.koplugin"
 
 -- ---------------------------------------------------------------------------
 -- Helpers: version
@@ -178,7 +178,7 @@ local function _httpGet(url)
         url     = url,
         method  = "GET",
         headers = {
-            ["User-Agent"] = "KOReader-SimpleUI-Updater/2.0",
+            ["User-Agent"] = "KOReader-MaxOutUI-Updater/2.0",
             ["Accept"]     = "application/vnd.github.v3+json",
         },
         sink     = ltn12.sink.table(chunks),
@@ -222,7 +222,7 @@ local function _httpGetToFile(url, dest_path)
     local code, headers, status = socket.skip(1, http.request({
         url     = url,
         method  = "GET",
-        headers = { ["User-Agent"] = "KOReader-SimpleUI-Updater/2.0" },
+        headers = { ["User-Agent"] = "KOReader-MaxOutUI-Updater/2.0" },
         sink    = ltn12.sink.file(fh),   -- stream directly to disk
         redirect = true,
     }))
@@ -391,7 +391,7 @@ local function _applyUpdate(download_url, new_version)
     local parent_dir = _plugin_dir:match("^(.+)/[^/]+$") or _plugin_dir
 
     local progress_msg = _toast(
-        string.format(_("Downloading Simple UI %s…"), new_version), 120
+        string.format(_("Downloading MaxOutUI %s…"), new_version), 120
     )
 
     local ok_tr, Trapper = pcall(require, "ui/trapper")
@@ -425,7 +425,7 @@ local function _applyUpdate(download_url, new_version)
         _clear_update_state()
         UIManager:show(ConfirmBox:new{
             text        = string.format(
-                _("Simple UI %s installed.\n\nRestart KOReader to apply the update?"),
+                _("MaxOutUI %s installed.\n\nRestart KOReader to apply the update?"),
                 new_version
             ),
             ok_text     = _("Restart"),
@@ -466,13 +466,13 @@ local function _showUpdateDialog(release, current)
 
     if not _versionGt(latest, current) then
         logger.info("simpleui updater: already up to date (" .. current .. ")")
-        _toast(string.format(_("Simple UI is up to date (%s)."), current))
+        _toast(string.format(_("MaxOutUI is up to date (%s)."), current))
         return
     end
 
     logger.info("simpleui updater: new version available:", latest)
 
-    local header     = string.format(_("Simple UI %s is available!\nYou have %s."), latest, current)
+    local header     = string.format(_("MaxOutUI %s is available!\nYou have %s."), latest, current)
     local notes_block = notes and ("\n\n" .. _("What's new:") .. "\n" .. notes) or ""
 
     if not download_url then

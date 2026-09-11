@@ -1,4 +1,4 @@
--- module_suwayomi_categories.lua — Simple UI
+-- module_suwayomi_categories.lua — MaxOutUI
 -- Suwayomi Categories home module: displays the user's Suwayomi library categories as a
 -- horizontally scrollable row of tap buttons. Tapping a category opens that category's
 -- manga list via suwayomiplus (showLibraryByCategory), or falls back to showLibrary().

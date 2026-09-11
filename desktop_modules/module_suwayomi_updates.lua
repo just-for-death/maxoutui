@@ -1,4 +1,4 @@
--- module_suwayomi_updates.lua — Simple UI
+-- module_suwayomi_updates.lua — MaxOutUI
 -- Suwayomi Updates home module: displays recently updated manga chapters from Suwayomi server.
 -- Covers are loaded from Suwayomi's local ThumbnailCache if cached, or placeholder if not.
 -- Tapping any item or the module header opens Suwayomi Updates screen via suwayomiplus plugin.
@@ -71,7 +71,7 @@ local function prefetchThumbnailsAsync(credentials, entries)
         if thumb_url and thumb_url ~= "" then
             local cached = TC.find(credentials, thumb_url, { variant = "thumbnail" })
             if not cached then
-                pcall(function()
+                local started = SwBridge.startThumbJob(function(done)
                     local SubprocessJob   = package.loaded["suwayomi/subprocess/job"] or require("suwayomi/subprocess/job")
                     local ThumbnailWorker = package.loaded["suwayomi/ui/thumbnail_worker"] or require("suwayomi/ui/thumbnail_worker")
                     local FFIUtil         = require("ffi/util")
@@ -88,6 +88,7 @@ local function prefetchThumbnailsAsync(credentials, entries)
                             ThumbnailWorker:run(credentials, thumb_url, path, { variant = "thumbnail" })
                         end,
                         on_finish = function()
+                            done()
                             local HS = package.loaded["mui_homescreen"]
                             local hs_inst = HS and HS._instance
                             if hs_inst then
@@ -100,8 +101,12 @@ local function prefetchThumbnailsAsync(credentials, entries)
                                 end)
                             end
                         end,
+                        on_timeout = function()
+                            done()
+                        end,
                     })
                 end)
+                if not started then break end
             end
         end
     end

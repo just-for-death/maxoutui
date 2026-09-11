@@ -1,4 +1,4 @@
--- module_suwayomi_library.lua — Simple UI
+-- module_suwayomi_library.lua — MaxOutUI
 -- Suwayomi Library home module: displays the user's Suwayomi manga library on the home
 -- screen, sorted by unread count. Covers are loaded from Suwayomi's local ThumbnailCache
 -- if cached, or a placeholder if not. Tapping an item with unread chapters resumes reading
@@ -76,6 +76,7 @@ end
 
 --- Prefetch uncached cover thumbnails in the background.
 --- manga_list is a flat array of manga objects (each with .thumbnail_url).
+--- Concurrent downloads are capped via SwBridge.startThumbJob (max 2).
 local function prefetchThumbnailsAsync(credentials, manga_list)
     local TC = getThumbnailCache()
     if not TC or not credentials or not manga_list then return end
@@ -87,7 +88,7 @@ local function prefetchThumbnailsAsync(credentials, manga_list)
         if thumb_url and thumb_url ~= "" then
             local cached = TC.find(credentials, thumb_url, { variant = "thumbnail" })
             if not cached then
-                pcall(function()
+                local started = SwBridge.startThumbJob(function(done)
                     local SubprocessJob   = package.loaded["suwayomi/subprocess/job"] or require("suwayomi/subprocess/job")
                     local ThumbnailWorker = package.loaded["suwayomi/ui/thumbnail_worker"] or require("suwayomi/ui/thumbnail_worker")
                     local FFIUtil         = require("ffi/util")
@@ -104,6 +105,7 @@ local function prefetchThumbnailsAsync(credentials, manga_list)
                             ThumbnailWorker:run(credentials, thumb_url, path, { variant = "thumbnail" })
                         end,
                         on_finish = function()
+                            done()
                             local HS = package.loaded["mui_homescreen"]
                             local hs_inst = HS and HS._instance
                             if hs_inst then
@@ -116,8 +118,12 @@ local function prefetchThumbnailsAsync(credentials, manga_list)
                                 end)
                             end
                         end,
+                        on_timeout = function()
+                            done()
+                        end,
                     })
                 end)
+                if not started then break end
             end
         end
     end
@@ -363,9 +369,7 @@ function M.getMenuItems(ctx_menu)
         text           = _lc("Refresh Library"),
         keep_menu_open = true,
         callback       = function()
-            _library_cache      = nil
-            _library_cache_time = 0
-            fetchLibraryAsync(function()
+            M.refresh(function()
                 refresh()
             end)
         end,
@@ -398,6 +402,18 @@ end
 function M.reset()
     _library_cache      = nil
     _library_cache_time = 0
+end
+
+--- Fetch if cache is empty/stale (respects TTL). Safe to call from Status build.
+function M.ensureFetched(callback)
+    fetchLibraryAsync(callback)
+end
+
+--- Clear the TTL cache and refetch library manga. Used by the library menu
+--- and by module_suwayomi_status so Refresh actually hits the network.
+function M.refresh(callback)
+    M.reset()
+    fetchLibraryAsync(callback)
 end
 
 --- Returns a snapshot of cached library stats for use by sibling modules

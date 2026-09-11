@@ -1,11 +1,11 @@
--- module_suwayomi_status.lua — Simple UI
+-- module_suwayomi_status.lua — MaxOutUI
 -- Suwayomi Reading Status home module: compact summary showing total manga in
 -- library, total unread chapters, and last sync time.
 --
--- Data is sourced from module_suwayomi_library's getCacheStats() when that
--- module is already loaded (shared via package.loaded), so no extra network
--- request is made when both modules are active. Each stat card falls back to
--- "—" when data is unavailable.
+-- Prefers module_suwayomi_library's getCacheStats() when that module has already
+-- fetched (shared via package.loaded). If the cache is empty, triggers a library
+-- refresh so Status works even when the Library module is disabled. Refresh Stats
+-- clears and refetches, then redraws.
 
 local Device      = require("device")
 local Screen      = Device.screen
@@ -44,15 +44,64 @@ M.enabled_key = MOD_ID .. "_enabled"
 -- Helpers
 -- ---------------------------------------------------------------------------
 
---- Pull stats from module_suwayomi_library's shared cache (zero network cost).
+local function getLibraryModule()
+    local ok, lib_mod = pcall(require, "desktop_modules/module_suwayomi_library")
+    if ok and lib_mod then return lib_mod end
+    return package.loaded["desktop_modules/module_suwayomi_library"]
+end
+
+--- Pull stats from module_suwayomi_library's shared cache.
 --- Returns { total_manga, total_unread, cache_time } or nil.
 local function getLibraryStats()
-    local lib_mod = package.loaded["desktop_modules/module_suwayomi_library"]
+    local lib_mod = getLibraryModule()
     if lib_mod and lib_mod.getCacheStats then
         local ok, stats = pcall(lib_mod.getCacheStats)
         if ok then return stats end
     end
     return nil
+end
+
+--- Ensure library data is loading when cache is empty (Status-only home layout).
+local function ensureLibraryFetched()
+    local lib_mod = getLibraryModule()
+    if not lib_mod then return end
+    if lib_mod.getCacheStats then
+        local ok, stats = pcall(lib_mod.getCacheStats)
+        if ok and stats then return end
+    end
+    -- Soft fetch (respects library TTL); redraw happens in library on_finish.
+    if lib_mod.ensureFetched then
+        pcall(lib_mod.ensureFetched)
+    elseif lib_mod.refresh then
+        pcall(lib_mod.refresh)
+    end
+end
+
+--- Optional MangaSync pending-queue count from DataStorage settings file.
+local function getMangaSyncQueueCount()
+    local ok_ds, DataStorage = pcall(require, "datastorage")
+    if not ok_ds or not DataStorage then return 0 end
+    local path = DataStorage:getSettingsDir() .. "/mangasync_queue.lua"
+    local f = io.open(path, "r")
+    if not f then return 0 end
+    local content = f:read(65537) or ""
+    f:close()
+    if content == "" or #content > 65536 then return 0 end
+    local loader
+    if rawget(_G, "loadstring") then
+        loader = loadstring(content)
+        if loader and rawget(_G, "setfenv") then
+            setfenv(loader, {})
+        end
+    else
+        loader = load(content, "mangasync_queue", "t", {})
+    end
+    if not loader then return 0 end
+    local ok, result = pcall(loader)
+    if ok and type(result) == "table" then
+        return #result
+    end
+    return 0
 end
 
 --- Format a POSIX timestamp into a human-readable "Xm ago" / "Xh ago" string.
@@ -131,8 +180,10 @@ function M.build(w, ctx)
     -- Three cards with two gaps between them
     local card_w  = math.max(50, math.floor((inner_w - PAD * 2) / 3))
 
-    -- Read cached stats from the library module (no network call)
     local stats = getLibraryStats()
+    if not stats then
+        ensureLibraryFetched()
+    end
 
     local manga_val  = stats and tostring(stats.total_manga)  or "—"
     local unread_val = stats and tostring(stats.total_unread) or "—"
@@ -146,13 +197,34 @@ function M.build(w, ctx)
     row[#row + 1] = HorizontalSpan:new{ width = PAD }
     row[#row + 1] = buildStatCard(card_w, card_h, sync_val,   _("Synced"), scale)
 
+    local body_h = card_h
+    local sync_q = getMangaSyncQueueCount()
+    local content_inner
+    if sync_q > 0 then
+        local note = TextWidget:new{
+            text    = _("MangaSync queue:") .. " " .. tostring(sync_q),
+            face    = Font:getFace(SUIStyle.FACE_REGULAR, math.max(9, math.floor(11 * scale))),
+            fgcolor = Blitbuffer.gray(0.4),
+        }
+        local note_h = Screen:scaleBySize(14)
+        body_h = card_h + Screen:scaleBySize(4) + note_h
+        content_inner = VerticalGroup:new{
+            align = "center",
+            row,
+            VerticalSpan:new{ width = Screen:scaleBySize(4) },
+            note,
+        }
+    else
+        content_inner = row
+    end
+
     local show_frame = RowRenderer and RowRenderer.showFrame and RowRenderer.showFrame(pfx, MOD_ID)
     local solid_bg   = RowRenderer and RowRenderer.solidBg   and RowRenderer.solidBg(pfx, MOD_ID)
     local has_box    = show_frame or solid_bg
     local border_sz  = show_frame and SUIStyle.BORDER_SZ or 0
     local radius     = has_box and math.floor(Screen:scaleBySize(12) * scale) or 0
 
-    local content = SwBridge.makeTappable(row, inner_w, card_h, function()
+    local content = SwBridge.makeTappable(content_inner, inner_w, body_h, function()
         local sw_inst = SwBridge.requireSuwayomi()
         if sw_inst and sw_inst.showLibrary then
             sw_inst:showLibrary()
@@ -176,6 +248,9 @@ function M.getHeight(_ctx)
     local scale  = Config.getModuleScale(MOD_ID, pfx)
     local card_h = math.max(48, math.floor(Screen:scaleBySize(60) * scale))
     local h      = card_h
+    if getMangaSyncQueueCount() > 0 then
+        h = h + Screen:scaleBySize(4) + Screen:scaleBySize(14)
+    end
     if RowRenderer and (RowRenderer.showFrame(pfx, MOD_ID) or RowRenderer.solidBg(pfx, MOD_ID)) then
         h = h + PAD * 2
     end
@@ -200,20 +275,30 @@ function M.getMenuItems(ctx_menu)
 
     items[#items + 1] = Config.makeLabelToggleItem(MOD_ID, M.label, refresh, _lc)
 
-    -- Trigger a library refresh via the library module if loaded
+    -- Refetch library stats then redraw (mirrors library module Refresh).
     items[#items + 1] = {
         text           = _lc("Refresh Stats"),
         keep_menu_open = true,
         callback       = function()
-            local lib_mod = package.loaded["desktop_modules/module_suwayomi_library"]
-            if lib_mod and lib_mod.reset then
+            local lib_mod = getLibraryModule()
+            if lib_mod and lib_mod.refresh then
+                lib_mod.refresh(function()
+                    refresh()
+                end)
+            elseif lib_mod and lib_mod.reset then
                 lib_mod.reset()
+                refresh()
+            else
+                refresh()
             end
-            refresh()
         end,
     }
 
     return items
+end
+
+function M.reset()
+    -- No local cache; library module owns the shared stats cache.
 end
 
 return M

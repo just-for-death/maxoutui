@@ -65,6 +65,35 @@ function M.requireSuwayomi(msg)
     return nil
 end
 
+-- Cap concurrent thumbnail SubprocessJob downloads across home modules.
+M._thumb_inflight = 0
+M.MAX_THUMB_JOBS = 2
+
+--- Run `fn` only if under the thumbnail concurrency cap.
+-- `fn` must call the returned `done` callback (or the wrapped on_finish) when
+-- the job finishes so the slot is released. Returns false if at capacity.
+-- Preferred usage with SubprocessJob:
+--   SwBridge.startThumbJob(function(done)
+--       SubprocessJob.start({ ..., on_finish = function(...) done(); ... end })
+--   end)
+function M.startThumbJob(fn)
+    if type(fn) ~= "function" then return false end
+    if M._thumb_inflight >= M.MAX_THUMB_JOBS then return false end
+    M._thumb_inflight = M._thumb_inflight + 1
+    local finished = false
+    local function done()
+        if finished then return end
+        finished = true
+        M._thumb_inflight = math.max(0, M._thumb_inflight - 1)
+    end
+    local ok = pcall(fn, done)
+    if not ok then
+        done()
+        return false
+    end
+    return true
+end
+
 --- Wrap a child widget so taps work after layout (same pattern as mui_book_row).
 -- @param child widget
 -- @param w number width in pixels

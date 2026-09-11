@@ -1,6 +1,6 @@
 # MaxOutUI for KOReader
 
-**Version 1.0.0** — a manga-first KOReader UI built around [Suwayomi+](https://github.com/just-for-death/suwayomiplus).
+**Version 1.0.2** — a manga-first KOReader UI built around [Suwayomi+](https://github.com/just-for-death/suwayomiplus).
 
 MaxOutUI gives you a customizable home screen, bottom navigation, status bar, and deep online-manga modules so your Kindle (or any KOReader device) can be a primary manga reader — not just an offline book browser.
 

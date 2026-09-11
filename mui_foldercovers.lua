@@ -538,16 +538,23 @@ end
 
 local _COVER_EXTS = { ".jpg", ".jpeg", ".png", ".webp", ".gif" }
 
--- Returns the path to a .cover.* file in dir_path, or nil.
+-- Returns the path to a cover file in dir_path, or nil.
+-- Checks .cover.* first, then cover.* / folder.* (common folder-cover names).
 local function findCover(dir_path)
     local cached = _cfcGet(dir_path)
     if cached ~= nil then return cached or nil end
-    local base = dir_path .. "/.cover"
-    for i = 1, #_COVER_EXTS do
-        local fname = base .. _COVER_EXTS[i]
-        if lfs.attributes(fname, "mode") == "file" then
-            _cfcSet(dir_path, fname)
-            return fname
+    local candidates = {
+        dir_path .. "/.cover",
+        dir_path .. "/cover",
+        dir_path .. "/folder",
+    }
+    for _, base in ipairs(candidates) do
+        for i = 1, #_COVER_EXTS do
+            local fname = base .. _COVER_EXTS[i]
+            if lfs.attributes(fname, "mode") == "file" then
+                _cfcSet(dir_path, fname)
+                return fname
+            end
         end
     end
     _cfcSet(dir_path, false)

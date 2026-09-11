@@ -780,20 +780,8 @@ local function openBook(filepath, pos0, page)
     local is_suwayomi = tostring(filepath):match("^suwayomi://manga/(%d+)")
     if is_suwayomi then
         local manga_id = tonumber(is_suwayomi)
-        local FM = package.loaded["apps/filemanager/filemanager"]
-        local fm = FM and FM.instance
-        local sw_plugin = fm and (fm.suwayomiplus or (fm._modules and fm._modules.suwayomiplus))
-        if not sw_plugin then
-            local RUI = package.loaded["apps/reader/readerui"]
-            local rui = RUI and RUI.instance
-            sw_plugin = rui and (rui.suwayomiplus or (rui._modules and rui._modules.suwayomiplus))
-        end
-        if not sw_plugin then
-            local ok_pl, PluginLoader = pcall(require, "pluginloader")
-            if ok_pl and PluginLoader and PluginLoader.getPluginInstance then
-                sw_plugin = PluginLoader:getPluginInstance("suwayomiplus")
-            end
-        end
+        local SwBridge = require("desktop_modules/suwayomi_bridge")
+        local sw_plugin = SwBridge.getSuwayomiPlugin()
         if sw_plugin then
             local ok_m, Manga = pcall(require, "desktop_modules/module_manga")
             local title = ok_m and Manga and Manga.getPinnedMangaTitle and Manga.getPinnedMangaTitle(filepath)

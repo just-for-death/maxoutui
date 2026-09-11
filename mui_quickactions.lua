@@ -51,29 +51,10 @@ local N_ = require("mui_i18n").ngettext
 local Config      = require("mui_config")
 local SUISettings = require("mui_store")
 local UI          = require("mui_core")
+local SwBridge    = require("desktop_modules/suwayomi_bridge")
 
 local function _getSuwayomiInstance()
-    local FM = package.loaded["apps/filemanager/filemanager"]
-    local fm = FM and FM.instance
-    if fm then
-        if fm.suwayomiplus then return fm.suwayomiplus end
-        if fm._modules and fm._modules.suwayomiplus then return fm._modules.suwayomiplus end
-    end
-    local RUI = package.loaded["apps/reader/readerui"]
-    local rui = RUI and RUI.instance
-    if rui then
-        if rui.suwayomiplus then return rui.suwayomiplus end
-        if rui._modules and rui._modules.suwayomiplus then return rui._modules.suwayomiplus end
-    end
-    for key, m in pairs(package.loaded) do
-        if type(key) == "string" and key:find("suwayomi", 1, true) and type(m) == "table" then
-            local inst = m.instance or m
-            if type(inst) == "table" and (inst.showHistory or inst.showLibrary or inst.browseSuwayomi or inst.showChaptersForManga or inst.resumeMangaStream) then
-                return inst
-            end
-        end
-    end
-    return nil
+    return SwBridge.getSuwayomiPlugin()
 end
 
 local function _getBookOrbitInstance()
@@ -769,8 +750,8 @@ local function _registerBuiltins()
             is_async_in_place = true,
             execute = function(ctx)
                 local sw_plugin = _getSuwayomiInstance()
-                if sw_plugin and (sw_plugin.showLibrary or sw_plugin.showLibraryMangaMenu) then
-                    if sw_plugin.showLibrary then sw_plugin:showLibrary() else sw_plugin:showLibraryMangaMenu() end
+                if sw_plugin and sw_plugin.showLibrary then
+                    sw_plugin:showLibrary()
                 else
                     local su = ctx.show_unavailable or _unavailToast
                     su(_("Suwayomi plugin not available."))
@@ -785,8 +766,8 @@ local function _registerBuiltins()
             is_async_in_place = true,
             execute = function(ctx)
                 local sw_plugin = _getSuwayomiInstance()
-                if sw_plugin and (sw_plugin.browseSuwayomi or sw_plugin.showSourcesMenu) then
-                    if sw_plugin.browseSuwayomi then sw_plugin:browseSuwayomi() else sw_plugin:showSourcesMenu() end
+                if sw_plugin and sw_plugin.browseSuwayomi then
+                    sw_plugin:browseSuwayomi()
                 else
                     local su = ctx.show_unavailable or _unavailToast
                     su(_("Suwayomi plugin not available."))

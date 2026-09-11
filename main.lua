@@ -1276,7 +1276,12 @@ local _PLUGIN_MODULES = {
     "desktop_modules/module_book_rows",
     "desktop_modules/module_tbr",
     "desktop_modules/module_manga",
+    "desktop_modules/suwayomi_bridge",
+    "desktop_modules/module_suwayomi_library",
     "desktop_modules/module_suwayomi_history",
+    "desktop_modules/module_suwayomi_updates",
+    "desktop_modules/module_suwayomi_categories",
+    "desktop_modules/module_suwayomi_status",
     "desktop_modules/module_coll_row",
     "desktop_modules/quotes",
 }
@@ -1398,6 +1403,22 @@ function MaxOutUIPlugin:onTeardown()
     local mod_sw_hist = package.loaded["desktop_modules/module_suwayomi_history"]
     if mod_sw_hist and type(mod_sw_hist.reset) == "function" then
         pcall(mod_sw_hist.reset)
+    end
+    local mod_sw_lib = package.loaded["desktop_modules/module_suwayomi_library"]
+    if mod_sw_lib and type(mod_sw_lib.reset) == "function" then
+        pcall(mod_sw_lib.reset)
+    end
+    local mod_sw_upd = package.loaded["desktop_modules/module_suwayomi_updates"]
+    if mod_sw_upd and type(mod_sw_upd.reset) == "function" then
+        pcall(mod_sw_upd.reset)
+    end
+    local mod_sw_cat = package.loaded["desktop_modules/module_suwayomi_categories"]
+    if mod_sw_cat and type(mod_sw_cat.reset) == "function" then
+        pcall(mod_sw_cat.reset)
+    end
+    local mod_sw_status = package.loaded["desktop_modules/module_suwayomi_status"]
+    if mod_sw_status and type(mod_sw_status.reset) == "function" then
+        pcall(mod_sw_status.reset)
     end
     -- Remove the TBR & Pinned Manga buttons from the Library browser dialog and search results.
     local FM = package.loaded["apps/filemanager/filemanager"]
